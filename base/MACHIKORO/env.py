@@ -1,5 +1,10 @@
+import pandas as pd
 import numpy as np
+import re
+import numba
 from numba import vectorize, jit, cuda, float64, njit, prange
+import os
+import time
 
 
 @njit(fastmath=True, cache=True)
@@ -540,6 +545,42 @@ def system_check_end(env_state):
             return False
     return True
 
+def one_game_print_mode(list_player, file_temp, file_per, all_card_fee):
+    global all_action_mean
+    env_state = reset()
+    count_turn = 0
+    while system_check_end(env_state) and count_turn < 500:
+        # player_state = state_to_player(env_state)
+        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+        print(f'Turn: {count_turn} player {env_state[-2]} {all_action_mean[action]} {env_state[20*int(env_state[-2]):20*int(env_state[-2]+1)]} và {[env_state[0], env_state[20], env_state[40],env_state[60]]}')
+        env_state = step(env_state, action, all_card_fee)
+        if action == 1 or action == 2:
+            print(f'Xúc sắc ra {int(env_state[-4])}')
+
+        count_turn += 1
+
+    winner = check_winner(env_state)
+    for id_player in range(4):
+        id_action = env_state[-2]
+        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+        env_state[-2] = (env_state[-2] + 1)%4
+    return winner, file_per
+
+def normal_main_print_mode(list_player, times, file_per):
+    count = np.zeros(len(list_player)+1)
+    all_card_fee = np.array([1, 1, 1, 2, 2, 3, 5, 3, 6, 3, 3, 2, 6, 7, 8, 22, 16, 10, 4])
+    all_id_player = np.arange(len(list_player))
+    for van in range(times):
+        shuffle = np.random.choice(all_id_player, 4, replace=False)
+        shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
+        file_temp = [[0],[0],[0],[0]]
+        winner, file_per = one_game_print_mode(shuffle_player, file_temp, file_per, all_card_fee)
+        if winner == -1:
+            count[winner] += 1
+        else:
+            count[shuffle[winner]] += 1
+    return count, file_per
+
 def one_game(list_player, file_temp, file_per, all_card_fee):
     # global all_action_mean
     env_state = reset()
@@ -548,19 +589,16 @@ def one_game(list_player, file_temp, file_per, all_card_fee):
         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
         env_state = step(env_state, action, all_card_fee)
         count_turn += 1
-    print(count_turn)
     winner = check_winner(env_state)
     for id_player in range(4):
         env_state[-1] = 1
         id_action = env_state[-2]
-        player_state = state_to_player(env_state)
         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
         env_state[-2] = (env_state[-2] + 1)%4
     return winner, file_per
 
-def normal_main(list_player, times, print_mode):
+def normal_main(list_player, times, file_per):
     count = np.zeros(len(list_player)+1)
-    file_per = [0]
     all_card_fee = np.array([1, 1, 1, 2, 2, 3, 5, 3, 6, 3, 3, 2, 6, 7, 8, 22, 16, 10, 4])
     all_id_player = np.arange(len(list_player))
     for van in range(times):
@@ -591,10 +629,8 @@ def random_policy(state,file_temp,file_per):
         file_per.append(file_temp)
     return action,file_temp,file_per
 
-# list_player = [random_policy]*3 + [player_random]
+all_action_mean = list(pd.read_excel('MACHIKORO.xlsx')['Mean'])
 
-# count_all, file_per_all = normal_main(list_player, 1, 1)
 # list_player = [player_random]*4
-
-# count_all, file_per_all = normal_main(list_player, 1, 1)
+# count_all, file_per_all = normal_main(list_player, 1, [0])
 # count_all, file_per_all

@@ -4,6 +4,7 @@ import numba
 from numba import vectorize, jit, cuda, float64, njit, prange
 import os
 import time
+import pandas as pd
 
 @njit(fastmath=True, cache=True)
 def all_card_in4():
@@ -520,7 +521,23 @@ def system_check_end(env_state):
 #         env_state = phase5(env_state, action, card_in4, card_point_in4)
 #     return env_state
 
+def one_game_print_mode(list_player, file_temp, file_per, card_in4, card_point_in4):
+    env_state = reset(card_in4, card_point_in4)
+    count_turn = 0
+    while system_check_end(env_state) and count_turn < 1000:
+        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)    
+        print(f'Turn: {count_turn} player {int(env_state[-1])} action {action} {all_action_mean[action]}  có {np.sum(env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)][2:6])} nguyên liệu và {env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)][:2]} điểm')     #có {env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)]}
+        env_state = step(env_state, action, card_in4, card_point_in4)
+        count_turn += 1
 
+    winner = check_winner(env_state)
+    for id_player in range(5):
+        env_state[-2] = 1
+        id_action = env_state[-1]
+        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+        env_state[-1] = (env_state[-1] + 1)%5
+    
+    return winner, file_per
 
 @njit(fastmath=True, cache=True)
 def step(env_state, action, card_in4, card_point_in4):
@@ -781,9 +798,8 @@ def one_game(list_player, file_temp, file_per, card_in4, card_point_in4):
     
     return winner, file_per
 
-def normal_main(list_player, times, print_mode):
+def normal_main(list_player, times, file_per):
     count = np.zeros(len(list_player)+1)
-    file_per = [0]
     card_in4 = all_card_in4()
     card_point_in4 = all_card_point_in4()
     all_id_player = np.arange(len(list_player))
@@ -799,5 +815,8 @@ def normal_main(list_player, times, print_mode):
             count[shuffle[winner]] += 1
     return count, file_per
 
-list_player = [player_random]*5
-count_all, file_per_all = normal_main(list_player, 1000, 1)
+all_action_mean = list(pd.read_excel('CENTURY.xlsx')['Mean'])
+
+
+# list_player = [player_random]*5
+# count_all, file_per_all = normal_main(list_player, 1000, [0])
