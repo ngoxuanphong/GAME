@@ -1,9 +1,9 @@
 import os
 import sys
-game = 'Splendor_OnlyPlayerView'
+game_name = 'Splendor_OnlyPlayerView'
 player = 'Trang'
 def setup_game():
-    sys.path.append(os.path.abspath(f"base/{game}"))
+    sys.path.append(os.path.abspath(f"base/{game_name}"))
     import env
     return env
 def setup_player():
