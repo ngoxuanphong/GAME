@@ -4,8 +4,8 @@ game = setup_game()
 p1 = setup_player()
 
 #Train của chị Trang
-print('train')
-p1.train(1)
+# print('train')
+# p1.train(1)
 
 print('test')
 list_player = fight()

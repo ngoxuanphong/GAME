@@ -97,7 +97,7 @@ def hand_of_cards(arr_card):
     return np.array(arr_return)
 
 @njit
-def get_arr_action(p_state):
+def get_list_action(p_state):
     arr_card = np.where(p_state[0:52] == 0)[0]
     arr_hand = hand_of_cards(arr_card)
 
@@ -162,6 +162,10 @@ def amount_action():
     return 403
 
 @njit
+def amount_player():
+    return 4
+
+@njit
 def check_victory(p_state):
     a = np.count_nonzero(p_state[0:52]==0)
     b = np.min(p_state[55:58])
@@ -176,7 +180,7 @@ def check_victory(p_state):
 @njit
 def step(action, e_state):
     p_state = get_player_state(e_state)
-    arr_action = get_arr_action(p_state)
+    arr_action = get_list_action(p_state)
 
     if action not in arr_action:
         '''
@@ -294,12 +298,31 @@ def print_ingame(act, arr_card_in_hand, e_state):
     print_player_cards(e_state)
 
 def random_player(p_state, temp_file, per_file):
-    arr_action = get_arr_action(p_state)
+    arr_action = get_list_action(p_state)
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx], temp_file, per_file
 
 # --------------------        MAIN        --------------------
-def one_game(list_player, env, print_mode, per_file):
+def one_game(list_player, env, per_file):
+    reset(env)
+    while not check_env(env):
+        reset(env)
+    
+    temp_file = [[0], [0], [0], [0]]
+    while True:
+        act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
+        arr_card_in_hand = step(act, env)
+        if close_game(env) != -1:
+            break
+    
+    winner = close_game(env)
+    for i in range(4):
+        env[52] = i
+        act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
+    
+    return winner, per_file
+
+def one_game_print(list_player, env, print_mode, per_file):
     reset(env)
     while not check_env(env):
         reset(env)
@@ -326,6 +349,24 @@ def one_game(list_player, env, print_mode, per_file):
         act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
     
     return winner, per_file
+
+def normal_main(list_player, num_game, per_file):
+    if len(list_player) != 4:
+        print('Game chỉ cho phép có đúng 4 người chơi')
+        return [-1,-1,-1,-1], per_file
+    
+    env = np.full(60,0)
+    count_win = [0,0,0,0]
+    p_lst_idx = [0,1,2,3]
+    for _n in range(num_game):
+        rd.shuffle(p_lst_idx)
+        winner, per_file = one_game(
+            [list_player[p_lst_idx[0]], list_player[p_lst_idx[1]], list_player[p_lst_idx[2]], list_player[p_lst_idx[3]]], env, per_file
+        )
+
+        count_win[p_lst_idx[winner]] += 1
+    
+    return count_win, per_file
 
 def n_games(list_player, num_game, print_mode):
     per_file = [0]

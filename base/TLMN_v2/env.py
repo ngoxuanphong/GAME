@@ -165,6 +165,10 @@ def amount_action():
     return 68
 
 @njit
+def amount_player():
+    return 4
+
+@njit
 def check_victory(p_state):
     a = np.count_nonzero(p_state[0:52]==0)
     b = np.min(p_state[55:58])
@@ -314,7 +318,26 @@ def random_player(p_state, temp_file, per_file):
     return arr_action[act_idx], temp_file, per_file
 
 # --------------------        MAIN        --------------------
-def one_game(list_player, env, print_mode, per_file):
+def one_game(list_player, env, per_file):
+    reset(env)
+    while not check_env(env):
+        reset(env)
+    
+    temp_file = [[0], [0], [0], [0]]
+    while True:
+        act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
+        arr_card_in_hand = step(act, env)
+        if close_game(env) != -1:
+            break
+    
+    winner = close_game(env)
+    for i in range(4):
+        env[52] = i
+        act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
+    
+    return winner, per_file
+
+def one_game_print(list_player, env, print_mode, per_file):
     reset(env)
     while not check_env(env):
         reset(env)
@@ -346,6 +369,24 @@ def one_game(list_player, env, print_mode, per_file):
         act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
     
     return winner, per_file
+
+def normal_main(list_player, num_game, per_file):
+    if len(list_player) != 4:
+        print('Game chỉ cho phép có đúng 4 người chơi')
+        return [-1,-1,-1,-1], per_file
+    
+    env = np.full(62,0)
+    count_win = [0,0,0,0]
+    p_lst_idx = [0,1,2,3]
+    for _n in range(num_game):
+        rd.shuffle(p_lst_idx)
+        winner, per_file = one_game(
+            [list_player[p_lst_idx[0]], list_player[p_lst_idx[1]], list_player[p_lst_idx[2]], list_player[p_lst_idx[3]]], env, per_file
+        )
+
+        count_win[p_lst_idx[winner]] += 1
+    
+    return count_win, per_file
 
 def n_games(list_player, num_game, print_mode):
     per_file = [0]

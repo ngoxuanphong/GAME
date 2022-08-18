@@ -328,6 +328,10 @@ def amount_action():
     return 198
 
 @njit
+def amount_player():
+    return 4
+
+@njit
 def check_victory(p_state):
     score_arr = p_state[np.array([117,129,141,153])]
     max_score = np.max(score_arr)
@@ -367,9 +371,50 @@ def check_victory(p_state):
                 return 1
             else:
                 return 0
-
-def one_game(list_player, env, lv1, lv2, lv3, print_mode, per_file):
+            
+def one_game(list_player, env, lv1, lv2, lv3, per_file):
     reset(env, lv1, lv2, lv3)
+    temp_file = [[0],[0],[0],[0]]
+    while env[154] <= 400:
+        p_idx = env[154]%4
+        act, temp_file[p_idx], per_file = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file)
+        step(act, env, lv1, lv2, lv3)
+        if close_game(env) != 0:
+            break
+    
+    turn = env[154]
+    for i in range(4):
+        env[154] = i
+        act, temp_file[i], per_file = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file)
+    
+    env[154] = turn
+    return close_game(env), per_file
+
+def normal_main(list_player, num_game, per_file):
+    if len(list_player) != 4:
+        print('Game chỉ cho phép có đúng 4 người chơi')
+        return [-1,-1,-1,-1,-1], per_file
+        
+    env, lv1, lv2, lv3 = generate()
+    num_won = [0,0,0,0,0]
+    p_lst_idx = [0,1,2,3]
+    for _n in range(num_game):
+        rd.shuffle(p_lst_idx)
+        winner, per_file = one_game(
+            [list_player[p_lst_idx[0]], list_player[p_lst_idx[1]], list_player[p_lst_idx[2]], list_player[p_lst_idx[3]]], env, lv1, lv2, lv3, per_file
+        )
+
+        if winner != 0:
+            num_won[p_lst_idx[winner-1]] += 1
+        else:
+            num_won[4] += 1
+
+    return num_won, per_file
+        
+
+def one_game_print(list_player, env, lv1, lv2, lv3, print_mode, per_file):
+    reset(env, lv1, lv2, lv3)
+    
 
     def _print_():
         print('----------------------------------------------------------------------------------------------------')
@@ -384,7 +429,7 @@ def one_game(list_player, env, lv1, lv2, lv3, print_mode, per_file):
     if print_mode:
         _print_()
 
-    temp_file = [[],[],[],[]]
+    temp_file = [[0],[0],[0],[0]]
     _cc = 0
     while env[154] <= 400 and _cc <= 10000:
         p_idx = env[154]%4
