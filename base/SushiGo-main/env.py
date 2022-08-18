@@ -321,10 +321,10 @@ def normal_main(list_player,amount_game,file_per):
             num_won[player_list_index[win]] += 1
     return num_won,file_per
 
-if __name__ == "__main__":
-    list_player = [player_random,player_random,player_random,player_random,player_random]
-    start = time.time()
-    a,b = normal_main(list_player,1,[0])
-    end = time.time()
-    print(a,b,end-start)
-# reset(2)
+# if __name__ == "__main__":
+#     list_player = [player_random,player_random,player_random,player_random,player_random]
+#     start = time.time()
+#     a,b = normal_main(list_player,1,[0])
+#     end = time.time()
+#     print(a,b,end-start)
+# # reset(2)
