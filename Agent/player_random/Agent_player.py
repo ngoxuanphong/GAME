@@ -1,5 +1,11 @@
 import numpy as np
-from base.Splendor_OnlyPlayerView.env import *
+
+import os
+import sys
+from setup import game_name
+from setup import player
+sys.path.append(os.path.abspath(f"base/{game_name}"))
+from env import *
 
 def test(p_state, temp_file, per_file):
     arr_action = get_list_action(p_state)

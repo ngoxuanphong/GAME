@@ -257,6 +257,49 @@ def move_card(state,card,amount,start_1 = 0,end_1=0,start_2 = 0,end_2 = 0):
     state[index_relative_from] = state[index_relative_to]
     state[index_relative_to] = temp
     return state
+def one_game_print(list_player,per_file):
+    amount_player = len(list_player)
+    state_sys = reset(amount_player)
+    temp_file = [[0] for i in range(amount_player)]
+    amount_player = state_sys[2]
+    turn = state_sys[1]
+
+    while turn<(12-amount_player)*3:
+        round = state_sys[0]-1
+        turn = state_sys[1]
+        print("Luot: ",turn,state_sys)
+        list_action = [[-1,-1,-1] for i in range(amount_player)]
+        for id_player in range(len(list_player)):
+            player_state = get_player_state(state_sys,id_player)
+            count = 0
+            while player_state[-1] > 0:
+                print(list_action[id_player])
+                action, temp_file[id_player], per_file = list_player[id_player](player_state,temp_file[id_player],per_file)
+                list_action[id_player][count] = action
+                count += 1
+                player_state = test_action(player_state,action)
+            player_state = get_player_state(state_sys,id_player)
+            print(id_player,player_state)
+        list_action = np.array(list_action)
+        print(list_action)
+        state_sys = step(state_sys,list_action,amount_player,turn,round)
+        if turn % (12-amount_player) == 0:
+            state_sys = caculater_score(state_sys,amount_player)
+            if state_sys[0] < 3:
+                state_sys[0] += 1
+                state_sys = reset_card_player(state_sys)
+        if turn == (12-amount_player)*3:
+            state_sys = caculator_pudding(state_sys,amount_player)
+        if turn <= (12-amount_player)*3:
+            state_sys[1] += 1
+        print(state_sys)
+    # print(state_sys)
+    for id_player in range(len(list_player)):
+        list_action[id_player], temp_file[id_player], per_file = list_player[id_player](get_player_state(state_sys,id_player),temp_file[id_player],per_file)    
+    list_score = state_sys[3+3*amount_player*(12-amount_player)::14-amount_player]
+    max_score = max(list_score)
+    winner = np.where(list_score == max_score)[0]
+    return winner,per_file
 
 def one_game(list_player,per_file):
     amount_player = len(list_player)
@@ -304,9 +347,7 @@ def one_game(list_player,per_file):
 
 def player_random(player_state,file_temp,file_per):
     a = get_list_action(player_state)
-    # print("--------------",player_state,a,"--------------")
     b = random.randint(0,len(a)-1)
-    # print(check_victory(player_state))
     return a[b],file_temp,file_per
 
 def normal_main(list_player,amount_game,file_per):
@@ -317,6 +358,17 @@ def normal_main(list_player,amount_game,file_per):
         random.shuffle(player_list_index)
         list_player_shuffle = [list_player[player_list_index[i]] for i in player_list_index]
         winner, file_per = one_game(list_player_shuffle,file_per)
+        for win in winner:
+            num_won[player_list_index[win]] += 1
+    return num_won,file_per
+def normal_main_print(list_player,amount_game,file_per):
+    amount_player = len(list_player)
+    player_list_index = [ i for i in range(amount_player)]
+    num_won = [0 for i in range(amount_player)]
+    for game in range(amount_game):
+        random.shuffle(player_list_index)
+        list_player_shuffle = [list_player[player_list_index[i]] for i in player_list_index]
+        winner, file_per = one_game_print(list_player_shuffle,file_per)
         for win in winner:
             num_won[player_list_index[win]] += 1
     return num_won,file_per

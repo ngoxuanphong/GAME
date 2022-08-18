@@ -246,6 +246,280 @@ def system_check_end(env_state):
 
 '''
 
+# @njit
+# def phase1(env_state, action, card_in4, card_point_in4):
+#     id_action = int(env_state[-1])
+#     player_in4 = env_state[51*id_action:51*(id_action+1)]
+#     #nếu người chơi nghỉ
+#     if action == 0:
+#         card_hand_player = player_in4[6:51]
+#         card_hand_player = np.where(card_hand_player == -1, 1, card_hand_player)
+#         player_in4[6:51] = card_hand_player
+#         env_state[51*id_action:51*(id_action+1)] = player_in4
+#         env_state[-2] = 1
+#         env_state[-1] = (env_state[-1] + 1)%5
+#     #nếu người chơi mua thẻ trên bàn
+#     elif action in range(1,7):
+#         if action == 1:     #nếu mua thẻ đầu
+#             #lấy thông tin 
+#             list_card_player = player_in4[6:]
+#             list_card_board = env_state[348:391]
+#             idx_card_buy = action - 1
+#             card_buy = int(list_card_board[idx_card_buy])
+#             all_token_free = env_state[303:323]
+#             token_free = all_token_free[4*idx_card_buy:4*(idx_card_buy + 1)]
+#             all_token_free = np.concatenate((all_token_free[4:], np.zeros(4)))          #9/8 cập nhật giảm token free
+#             #cập nhật giá trị
+#             list_card_player[card_buy] = 1
+#             list_card_board[idx_card_buy:] = np.append(list_card_board[idx_card_buy+1:], -1)
+#             top_6_card = np.zeros((6, 8))
+#             for i in range(6):
+#                 id = list_card_board[:6][i]
+#                 top_6_card[i] = card_in4[int(id)]
+#             top_6_card = top_6_card.flatten()
+#             player_in4[6:] = list_card_player       #cập nhật thẻ mới mua
+#             player_in4[2:6] += token_free            #cập nhật token free nếu có
+#             env_state[51*id_action:51*(id_action+1)] = player_in4
+#             env_state[348:391] = list_card_board    #cập nhật danh sách thẻ trên bàn
+#             env_state[255:303] = top_6_card         #cập nhật 6 thẻ người chơi có thể mua
+#             env_state[303:323] = all_token_free         #9/8 cập nhật giảm token free
+#             #kiểm tra có phải trả tài nguyên ko
+#             if np.sum(player_in4[2:6]) > 10:
+#                 env_state[-6] = np.sum(player_in4[2:6]) - 10
+#                 env_state[-2] = 4
+#             else:
+#                 #chuyển người chơi
+#                 env_state[-2] = 1
+#                 env_state[-1] = (env_state[-1] + 1)%5
+
+#         else:     #nếu mua thẻ cần đặt token
+#             #lấy thông tin 
+#             idx_card_buy = action - 1
+#             #đẩy thông tin vào hệ thống
+#             env_state[-6] = idx_card_buy
+#             env_state[-7] = idx_card_buy
+#             #chuyển phase
+#             env_state[-2] = 2
+        
+#     elif action in range(7,12):
+#         #lấy thông tin
+#         list_card_point_board = env_state[391:427]
+#         list_coin = env_state[-5:-3]
+#         idx_card_buy = action - 7
+#         card_buy = int(list_card_point_board[idx_card_buy])
+#         token_fee = card_point_in4[card_buy][:4]
+#         free_score = 0
+#         if idx_card_buy < 2:
+#             if idx_card_buy == 0:
+#                 if list_coin[-1] != 0:
+#                     free_score = 3
+#                     env_state[-4] -= 1
+#                 else:
+#                     if list_coin[0] != 0:
+#                         free_score = 1
+#                         env_state[-5] -= 1
+#             else:
+#                 if list_coin[1] != 0 and list_coin[0] != 0:
+#                     free_score = 1
+#                     env_state[-5] -= 1
+#         #Cập nhật giá trị
+#         # print('list_coin: ', list_coin, card_buy, card_point_in4[card_buy],idx_card_buy, free_score)
+#         player_in4[0] += (free_score + card_point_in4[card_buy][-1])
+#         player_in4[1] += 1
+#         player_in4[2:6] -= token_fee
+#         list_card_point_board[idx_card_buy:] = np.append(list_card_point_board[idx_card_buy+1:], -1)
+#         # top_5_card_point = card_point_in4[np.array(list_card_point_board[:5], dtype=int)].flatten()
+#         # top_5_card_point = np.array([card_point_in4[int(id)] for id in list_card_point_board[:5]]).flatten()
+#         top_5_card_point = np.zeros((5, 5))
+#         for i in range(5):
+#             id = list_card_point_board[:5][i]
+#             top_5_card_point[i] = card_point_in4[int(id)]
+#         # top_6_card = np.array([card_in4[int(id)] for id in list_card_board[:6]]).flatten()
+#         top_5_card_point = top_5_card_point.flatten()
+
+
+#         env_state[51*id_action:51*(id_action+1)] = player_in4
+#         env_state[391:427] = list_card_point_board
+#         env_state[323:348] = top_5_card_point
+#         #Chuyển người chơi
+#         env_state[-2] = 1
+#         env_state[-1] = (env_state[-1] + 1)%5
+
+#     elif action in range(12, 57):
+#         #lấy thông tin 
+#         card_hand_player = player_in4[6:51]
+#         id_card_use = action - 12
+#         token_fee_get = card_in4[id_card_use]
+#         card_hand_player[id_card_use] = -1
+
+#         if np.sum(token_fee_get) == 0:  #nếu là thẻ nâng cấp
+#             player_in4[6:51] = card_hand_player 
+#             env_state[51*id_action:51*(id_action+1)] = player_in4
+#             env_state[-8] = id_card_use - 41
+#             env_state[-2] = 5
+#         else:
+#             #Cập nhật giá trị
+#             player_in4[2:6] = player_in4[2:6] - token_fee_get[:4] + token_fee_get[4:]
+#             player_in4[6:51] = card_hand_player
+#             env_state[51*id_action:51*(id_action+1)] = player_in4
+#             #nếu thẻ được dùng nhiều lần
+#             if np.sum(token_fee_get[:4]) > 0 and np.sum(token_fee_get[:4] > player_in4[2:6]) == 0:
+#                 env_state[-7] = id_card_use     #lưu trữ thẻ dùng gần nhất
+#                 env_state[-3] = action          #lưu trữ action_main gần nhất
+#                 env_state[-2] = 3               #chuyển phase
+#             else:   #dùng 1 lần rồi bỏ
+#                 if np.sum(player_in4[2:6]) > 10:    #nếu thừa nguyên liệu thì đi lược bỏ
+#                     env_state[-6] = np.sum(player_in4[2:6]) - 10
+#                     env_state[-2] = 4
+#                 else:
+#                     env_state[-2] = 1
+#                     env_state[-1] = (env_state[-1] + 1)%5
+
+#     return env_state
+
+# @njit
+# def phase2(env_state, action, card_in4, card_point_in4):
+#     id_action = int(env_state[-1])
+#     player_in4 = env_state[51*id_action:51*(id_action+1)]
+#     #lấy thông tin
+#     stay_drop = int(env_state[-6])-1
+#     all_token_free = env_state[303:323]
+#     token_drop = action - 57
+#     #Cập nhật thông tin
+#     player_in4[2:6][token_drop] -= 1
+#     all_token_free[4*stay_drop + token_drop] += 1
+#     env_state[-6] -= 1
+
+#     if env_state[-6] == 0:      #Hoàn tất đặt nguyên liệu thì lấy thẻ
+#         #lấy thông tin 
+#         list_card_player = player_in4[6:]
+#         list_card_board = env_state[348:391]
+#         idx_card_buy =  int(env_state[-7])
+#         card_buy = int(list_card_board[idx_card_buy])
+#         token_free = np.zeros(4)
+#         if idx_card_buy != 5:
+#             token_free = all_token_free[4*idx_card_buy:4*(idx_card_buy + 1)]
+#             all_token_free = np.concatenate((all_token_free[: 4*idx_card_buy], all_token_free[4*(idx_card_buy+1): ], np.zeros(4)))      #9/8 cập nhật giảm token free
+#         #cập nhật giá trị
+#         list_card_player[card_buy] = 1
+#         list_card_board[idx_card_buy:] = np.append(list_card_board[idx_card_buy+1:], -1)
+#         # top_6_card = card_in4[np.array(list_card_board[:6], dtype = int)].flatten()
+#         top_6_card = np.zeros((6, 8))
+#         for i in range(6):
+#             id = list_card_board[:6][i]
+#             top_6_card[i] = card_in4[int(id)]
+            
+#         # top_6_card = np.array([card_in4[int(id)] for id in list_card_board[:6]]).flatten()
+#         top_6_card = top_6_card.flatten()
+#         player_in4[6:] = list_card_player       #cập nhật thẻ mới mua
+#         player_in4[2:6] = player_in4[2:6] + token_free            #cập nhật token free nếu có
+#         env_state[51*id_action:51*(id_action+1)] = player_in4
+#         env_state[303:323] = all_token_free     #cập nhật token free
+#         env_state[348:391] = list_card_board    #cập nhật danh sách thẻ trên bàn
+#         env_state[255:303] = top_6_card         #cập nhật 6 thẻ người chơi có thể mua
+#         env_state[303:323] = all_token_free         #9/8 cập nhật giảm token free
+#         #Khôi phục các giá trị lưu trữ
+#         env_state[-7] = -0.5
+#         #kiểm tra có phải trả tài nguyên ko
+#         if np.sum(player_in4[2:6]) > 10:
+#             env_state[-6] = np.sum(player_in4[2:6]) - 10
+#             env_state[-2] = 4
+#         else:
+#             #chuyển người chơi
+#             env_state[-2] = 1
+#             env_state[-1] = (env_state[-1] + 1)%5
+
+#     else:
+#         env_state[51*id_action:51*(id_action+1)] = player_in4
+#         env_state[303:323] = all_token_free     #cập nhật token free
+
+#     return env_state
+
+# @njit 
+# def phase3(env_state, action, card_in4, card_point_in4):
+#     id_action = int(env_state[-1])
+#     player_in4 = env_state[51*id_action:51*(id_action+1)]
+#     if action == 61:#nếu ko action tiếp
+#         env_state[-7] = -0.5     #lưu trữ thẻ dùng gần nhất
+#         env_state[-3] = 0        #lưu trữ action_main gần nhất
+#         if np.sum(player_in4[2:6]) > 10:    #nếu thừa nguyên liệu thì đi lược bỏ
+#             env_state[-6] = np.sum(player_in4[2:6]) - 10
+#             env_state[-2] = 4
+#         else:
+#             env_state[-2] = 1
+#             env_state[-1] = (env_state[-1] + 1)%5
+#     else:
+#         #Lấy thông tin
+#         id_card_use = int(env_state[-7])
+#         token_fee_get = card_in4[id_card_use]
+#         #Cập nhật thông tin
+#         player_in4[2:6] = player_in4[2:6] - token_fee_get[:4] + token_fee_get[4:]
+#         env_state[51*id_action:51*(id_action+1)] = player_in4
+#         if np.sum(token_fee_get[:4] > player_in4[2:6]) == 0:
+#             # env_state[-7] = id_card_use     #lưu trữ thẻ dùng gần nhất
+#             # env_state[-3] = action          #lưu trữ action_main gần nhất
+#             env_state[-2] = 3               #chuyển phase
+#         else:  
+#             env_state[-7] = -0.5
+#             env_state[-3] = 0
+#             if np.sum(player_in4[2:6]) > 10:    #nếu thừa nguyên liệu thì đi lược bỏ
+#                 env_state[-6] = np.sum(player_in4[2:6]) - 10
+#                 env_state[-2] = 4
+#             else:
+#                 env_state[-2] = 1
+#                 env_state[-1] = (env_state[-1] + 1)%5
+#     return env_state
+
+# @njit 
+# def phase4(env_state, action, card_in4, card_point_in4):
+#     id_action = int(env_state[-1])
+#     player_in4 = env_state[51*id_action:51*(id_action+1)]
+#     #lấy thông tin
+#     # stay_drop = env_state[-6]
+#     token_drop = action - 57 
+#     #Cập nhật thông tin
+#     player_in4[2:6][token_drop] -= 1
+#     env_state[51*id_action:51*(id_action+1)] = player_in4
+#     env_state[-6] -= 1
+#     if env_state[-6] == 0:
+#         # print('DONE trả nguyên liệu')
+#         env_state[-2] = 1
+#         env_state[-1] = (env_state[-1] + 1)%5
+#     return env_state
+
+# @njit 
+# def phase5(env_state, action, card_in4, card_point_in4):
+#     id_action = int(env_state[-1])
+#     player_in4 = env_state[51*id_action:51*(id_action+1)]
+#     number_use = env_state[-8]
+#     id_update = action - 62
+#     player_in4[2:6][id_update] -= 1
+#     player_in4[2:6][id_update+1] += 1
+#     env_state[51*id_action:51*(id_action+1)] = player_in4
+#     env_state[-8] -= 1
+#     if env_state[-8] == 0 or np.sum(player_in4[2:5] > 0) == 0:
+#         env_state[-2] = 1
+#         env_state[-1] = (env_state[-1] + 1)%5
+#         # print('DONE nâng cấp')
+#     else:
+#         # print('Nâng cấp được tiếp')
+#         pass
+#     return env_state
+
+# @njit
+# def step(env_state, action, card_in4, card_point_in4):
+#     phase_env = int(env_state[-2])
+#     if phase_env == 1:
+#         env_state = phase1(env_state, action, card_in4, card_point_in4)
+#     elif phase_env == 2:
+#         env_state = phase2(env_state, action, card_in4, card_point_in4)
+#     elif phase_env == 3:
+#         env_state = phase3(env_state, action, card_in4, card_point_in4)
+#     elif phase_env == 4:
+#         env_state = phase4(env_state, action, card_in4, card_point_in4)
+#     elif phase_env == 5:
+#         env_state = phase5(env_state, action, card_in4, card_point_in4)
+#     return env_state
 
 def one_game_print_mode(list_player, file_temp, file_per, card_in4, card_point_in4):
     env_state = reset(card_in4, card_point_in4)
