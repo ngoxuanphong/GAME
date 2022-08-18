@@ -62,7 +62,7 @@ def player_Matran_Score(play_state,file_temp,file_per):
 
 
 # Buoc 3:
-def player_Matran_Win(play_state,file_temp,file_per):
+def test(play_state,file_temp,file_per):
     a = get_list_action(play_state)
     
     if len(file_temp) < 2:
@@ -85,7 +85,7 @@ def player_Matran_Win(play_state,file_temp,file_per):
 
 #  Buoc 4: chay lai buoc 2
 #  Ham tong hop 
-def Func(number_tran):
+def train(number_tran):
 # number_tran la so nguyen duong >=1, neu muon chay X0.000 tran thi hay dien number_tran = x
     # Buoc1:
     list_player= [player_Matran_Random,player_Matran_Random,player_Matran_Random,player_random]
@@ -98,7 +98,7 @@ def Func(number_tran):
     np.save(f'{path_save_player}Trang_Win.npy',matran_Win)
         
     for buoc3 in range(2*number_tran-1):
-        list_player = [player_Matran_Random,player_Matran_Random,player_Matran_Win,player_random]
+        list_player = [player_Matran_Random,player_Matran_Random,test,player_random]
         kq, file_ = normal_main(list_player,1500, [0])
         file_.append(file_2[0][np.where(file_2[1] == max(file_2[1]))[0][0]])
         np.save(f'{path_save_player}Trang_Matran.npy',file_)

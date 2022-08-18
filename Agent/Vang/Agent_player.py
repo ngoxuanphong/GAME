@@ -1,10 +1,10 @@
-from main import get_list_action,amount_action,normal_main,check_victory,player_random
+from Setup import get_list_action,amount_action,normal_main,check_victory,player_random
 import random
 import tensorflow as tf
 import numpy as np
 import time
 
-PATH_DATA=""
+PATH_DATA="Agent/Vang/Data/"
 
 def NW(state,matrix):
     return np.dot(state,matrix)

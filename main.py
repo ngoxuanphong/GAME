@@ -1,13 +1,16 @@
-from base.Splendor_OnlyPlayerView.env import *
-from Agent.Trang.Agent import *
-import random as rd
+from Agent.player_random import player_random
+from setup import setup_game, setup_player
+game = setup_game()
+p1 = setup_player()
+print(p1)
 
 #Train của chị Trang
-# Func(1)
-# list_player= [player_Matran_Win,player_random,player_random,player_random]
-# kq, file_2 = normal_main(list_player,1000, [0])
+p1.train(1)
+#Test thử với random
+list_player= [p1.test]*1 + [player_random]*3
+kq, file_2 = game.normal_main(list_player,1000, [0])
 
-#Player_random, normal main gồm 3 tham số, list_player, số trận, và file_per
-list_player = [player_random]*amount_player()
-count, file_per = normal_main(list_player, 10, [0])
-print(count)
+#Player_random, normal main gồm 3 tham số, list_player, số trận, và 
+# list_player = [player_random]*game.amount_player()
+# count, file_per = game.normal_main(list_player, 10, [0])
+# print(count)
