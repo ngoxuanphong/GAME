@@ -10,11 +10,11 @@
   - Trong hệ thống đã có sẵn code chị Trang để mọi người tham khảo
 
 # Agent
-  - Mỗi người là một folder, đặt tên theo quy tắc tên_ngàynạpcode ví dụ: **Phong_08_12_2022**
+  - Mỗi người là một folder, đặt tên theo quy tắc ***tên_ngàynạpcode*** ví dụ: *Phong_08_12_2022*
   - Trong mỗi folder sẽ có:
       - file **Agent_player.py**: Lưu thuật toán của mọi người(chỉ có hàm)
       - folder **Data**: Nơi lưu data của từng game 
-  - **Agent_Player.py**
+  - **Agent_Player.py** Tham khảo folder Trang có sẵn trong hệ thống
       - Có 2 hàm ***bắt buộc***:
         - **train(n)** n là tham số đầu vào(1 là 10000 ván, ...)
         - **test()** là hàm đọc file để test với random và người chơi khác
