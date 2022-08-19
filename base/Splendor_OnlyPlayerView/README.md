@@ -1,14 +1,14 @@
 ## Báo cáo SPLENDOR góc nhìn của mình
 1.   `Tốc độ chạy`
-      - **1000 Game**: 20s
+      - **1000 Game**: 7.3s
       - **10000 Game**: 166s
-2. `Chuẩn form`: Tạm thời test oke với random
-3. `Đúng luật`: Tạm thời đúng
-4. `Không bị loop vô hạn`: Đúng
-5. `Các hàm player truyền vào`: 1000game: 56s
-6. `Số ván check_vic > victory_thật`: 10000 ván thì có(thắng thật:2277, check_victory:2300)
-7. `Giá trị state, action ở note`: 
-8. `Tối thiểu số lần truyền vào player`: 250(từ 300-350)
+2. `Chuẩn form`: **Đã test**
+3. `Đúng luật`: **Đã check**
+4. `Không bị loop vô hạn`: **Đã test** với 1000000 ván
+5. `Tốc độ chạy các hàm con mà người chơi dùng`: 1000game: 24s
+6. `Số ván check_vic > victory_thật`: 10000 ván thì có(thắng thật:2511, check_victory:2565)
+7. `Giá trị state, action:`  **note phía dưới**: 
+8. `Tối thiểu số lần truyền vào player`: 1000 ván, (212, 382) lần truyền vào player
 
 ## ENV_state
 *   [0:90] các thẻ trên bàn: 5 là đang ở trên bàn, -(p_id) là đang úp, p_id là người chơi đã mua được
@@ -27,6 +27,8 @@
 *   [127:148]:    3 thẻ úp trên tay, mỗi thẻ có 7 state gồm: [điểm, loại thẻ, 5 nguyên liệu mua]
 *   [148: 153]:  5 nguyên liệu đã lấy trong phase lấy nguyên liệu
 *   [153:156]: điểm của 3 người chơi còn lại
+*   [156:159]: Có thể úp được thẻ ẩn không, 1 là có, 2 là không. Gồm có 3 thẻ ẩn của 3 loại
+*   [159]: Số thẻ có thể úp trên bàn
 
 ## action
 * [0]   :Là action bỏ lượt, 
