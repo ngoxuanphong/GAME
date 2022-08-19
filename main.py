@@ -6,7 +6,7 @@ p1 = setup_player()
 import warnings 
 warnings.filterwarnings('ignore')
 
-Train của chị Trang
+#Train của chị Trang
 print('train')
 p1.train(1)
 
