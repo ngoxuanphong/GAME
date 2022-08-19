@@ -379,4 +379,4 @@ def normal_main_print(list_player,amount_game,file_per):
 #     a,b = normal_main(list_player,1,[0])
 #     end = time.time()
 #     print(a,b,end-start)
-# # reset(2)
+# reset(2)

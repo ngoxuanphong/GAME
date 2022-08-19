@@ -1,11 +1,14 @@
 #Player_random, normal main gồm 3 tham số, list_player, số trận, và 
+import imp
 from setup import setup_game, setup_player, fight
 game = setup_game()
 p1 = setup_player()
+import warnings 
+warnings.filterwarnings('ignore')
 
-#Train của chị Trang
-# print('train')
-# p1.train(1)
+Train của chị Trang
+print('train')
+p1.train(1)
 
 print('test')
 list_player = fight()
