@@ -7,8 +7,8 @@
 4. `Không bị loop vô hạn`: **Đã test** với 1000000 ván
 5. `Tốc độ chạy các hàm con mà người chơi dùng`: 1000game: 24s
 6. `Số ván check_vic > victory_thật`: 10000 ván thì có(thắng thật:2511, check_victory:2565)
-7. `Giá trị state, action:`  **note phía dưới**: 
-8. `Tối thiểu số lần truyền vào player`: 1000 ván, (212, 382) lần truyền vào player
+7. `Giá trị state, action:`
+9. `Tối thiểu số lần truyền vào player`: 1000 ván, (212, 382) lần truyền vào player
 
 ## :globe_with_meridians: ENV_state
 *   [0:90] **các thẻ trên bàn**: 5 là đang ở trên bàn, -(p_id) là đang úp, p_id là người chơi đã mua được
