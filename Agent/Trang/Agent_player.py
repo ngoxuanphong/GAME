@@ -8,6 +8,9 @@ from setup import player
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 from env import *
 
+path_data = f'Agent/{player}/Data'
+if not os.path.exists(path_data):
+    os.mkdir(path_data)
 path_save_player = f'Agent/{player}/Data/{game_name}/'
 if not os.path.exists(path_save_player):
     os.mkdir(path_save_player)

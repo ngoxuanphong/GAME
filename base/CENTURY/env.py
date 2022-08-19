@@ -23,6 +23,9 @@ def all_card_point_in4():
                     [3, 0, 0, 2, 11], [1, 1, 1, 3, 20], [0, 2, 2, 2, 19], [1, 1, 3, 1, 18], [2, 0, 2, 2, 17], [1, 3, 1, 1, 16], [2, 2, 0, 2, 15], [3, 1, 1, 1, 14],
                     [2, 2, 2, 0, 13], [0, 2, 1, 1, 12], [1, 0, 2, 1, 12], [1, 1, 1, 1, 12], [2, 1, 0, 1, 9]])
 
+@njit(fastmath=True, cache=True)
+def amount_player():
+    return 5
 # khởi tạo bàn chơi
 @njit(fastmath=True, cache=True)
 def reset(card_in4, card_point_in4):

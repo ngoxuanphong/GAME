@@ -1,7 +1,7 @@
 import os
 import sys
 # lists_game = ['Splendor_OnlyPlayerView','CENTURY', 'MACHIKORO', 'SHERIFF', 'splendor', 'TLMN', 'TLMN_v2', 'SushiGo-main']
-game_name = 'SushiGo-main'
+game_name = 'CENTURY'
 player = 'Trang'
 def setup_game():
     sys.path.append(os.path.abspath(f"base/{game_name}"))
