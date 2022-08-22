@@ -4,7 +4,19 @@ import tensorflow as tf
 import numpy as np
 import time
 
-PATH_DATA="Agent/Vang/Data/"
+import os
+import sys
+from main import game
+from main import player
+sys.path.append(os.path.abspath(f"base/{game}"))
+from env import *
+
+path_data = f'Agent/{player}/Data'
+if not os.path.exists(path_data):
+    os.mkdir(path_data)
+path_save_player = f'Agent/{player}/Data/{game}/'
+if not os.path.exists(path_save_player):
+    os.mkdir(path_save_player)
 
 def NW(state,matrix):
     return np.dot(state,matrix)
