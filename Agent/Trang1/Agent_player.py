@@ -12,7 +12,6 @@ path_data = f'Agent/{player}/Data'
 if not os.path.exists(path_data):
     os.mkdir(path_data)
 path_save_player = f'Agent/{player}/Data/{game_name}/'
-# print(path_save_player)
 if not os.path.exists(path_save_player):
     os.mkdir(path_save_player)
 

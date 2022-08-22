@@ -1,4 +1,3 @@
-# lists_game = ['Splendor_OnlyPlayerView','CENTURY', 'MACHIKORO', 'SHERIFF', 'splendor', 'TLMN', 'TLMN_v2', 'SushiGo-main']
 import os
 import sys
 import importlib.util
