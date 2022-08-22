@@ -2,8 +2,7 @@ import numpy as np
 
 import os
 import sys
-from setup import game_name
-from setup import player
+from main import game_name
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 from env import *
 

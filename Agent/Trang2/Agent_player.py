@@ -4,15 +4,15 @@ import numpy as np
 import os
 import sys
 from setup import game_name
-from setup import player
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 from env import *
 
+player = 'Trang2'
 path_data = f'Agent/{player}/Data'
 if not os.path.exists(path_data):
     os.mkdir(path_data)
 path_save_player = f'Agent/{player}/Data/{game_name}/'
-print(path_save_player)
+# print(path_save_player)
 if not os.path.exists(path_save_player):
     os.mkdir(path_save_player)
 
