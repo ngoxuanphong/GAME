@@ -787,7 +787,7 @@ def step(env_state, action, card_in4, card_point_in4):
 def one_game(list_player, file_temp, file_per, card_in4, card_point_in4):
     env_state = reset(card_in4, card_point_in4)
     count_turn = 0
-    while system_check_end(env_state) and count_turn < 1000:
+    while system_check_end(env_state) and count_turn < 2000:
         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)     
         env_state = step(env_state, action, card_in4, card_point_in4)
         count_turn += 1
