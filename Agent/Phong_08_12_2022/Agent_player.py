@@ -29,6 +29,5 @@ def train_(state, temp_file, per_file):
 def train(n):
     list_player = [test_]*(amount_player() - 1) + [train_]
     c, p = normal_main(list_player, n*1000, [0])
-    print(c, p)
     np.save(f'{path_save_player}per.npy', p)
     np.save(f'{path_save_player}count.npy', np.array(c))

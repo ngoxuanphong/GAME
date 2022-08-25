@@ -34,7 +34,7 @@ def load_module_player(player):
     return p1
 def train_1_player(player):
     p1 = load_module_player(player)
-    p1.train(1)
+    p1.train(1000)
 
 def fight():
     list_player = []
@@ -46,7 +46,6 @@ def fight():
         player_random_need = game.amount_player() - len(list_player)
         for i in range(player_random_need):
             p1 = load_module_player('player_random')
-            print(p1)
             list_player.append(p1.test)
     count, file_per = game.normal_main(list_player, 1000, [0])
     return count, file_per
@@ -64,5 +63,5 @@ if __name__ == '__main__':
     if type_run_code == 'Train':
         train()
     if type_run_code == 'Test':    
-        count = fight()
-        print(count)
+        count, per = fight()
+        print(count, per)
