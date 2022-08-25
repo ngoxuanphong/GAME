@@ -2,7 +2,7 @@ import numpy as np
 
 import os
 import sys
-from setup import game_name
+from setup import game_name, time_run_game
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 from env import *
 
@@ -10,7 +10,7 @@ player = 'Phong_08_12_2022'
 path_data = f'Agent/{player}/Data'
 if not os.path.exists(path_data):
     os.mkdir(path_data)
-path_save_player = f'Agent/{player}/Data/{game_name}/'
+path_save_player = f'Agent/{player}/Data/{game_name}_{time_run_game}/'
 if not os.path.exists(path_save_player):
     os.mkdir(path_save_player)
 

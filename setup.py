@@ -9,4 +9,4 @@
 type_run_code = 'Train' #Train or Test
 players = ['Trang1', 'Trang2']
 game_name = 'TLMN_v2'
-time_run_game = 1000
+time_run_game = 30
