@@ -43,19 +43,22 @@
       - Có 2 hàm ***bắt buộc***:
         - **train(n)** n là tham số đầu vào(1 là 10000 ván, ...)
         - **test()** là hàm đọc file để test với random và người chơi khác
-      - ***Chú ý:*** Thêm đoạn code này vào trong file thuật toán để import game và khởi tạo path lưu và đọc data
+      - ***Chú ý:*** 
+        - Trong thuật toán list_player **phải dựa vào amount_player()** tại vì các game thì số lượng người chơi khác nhau
+        - player phải là tên **folder của người chơi**
+        - Thêm đoạn code này vào trong file thuật toán để import game và khởi tạo path lưu và đọc data
         ```
         import os
         import sys
-        from setup import game_name
+        from setup import game_name,time_run_game
         sys.path.append(os.path.abspath(f"base/{game_name}"))
         from env import *
 
-        player = 'Trang' #Tên folder người chơi
+        player = 'Trang'  #Tên folder của người chơi
         path_data = f'Agent/{player}/Data'
         if not os.path.exists(path_data):
             os.mkdir(path_data)
-        path_save_player = f'Agent/{player}/Data/{game_name}/'
+        path_save_player = f'Agent/{player}/Data/{game_name}_{time_run_game}/'
         if not os.path.exists(path_save_player):
             os.mkdir(path_save_player)
         ```
