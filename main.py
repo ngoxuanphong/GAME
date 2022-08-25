@@ -34,20 +34,23 @@ def load_module_player(player):
     return p1
 def train_1_player(player):
     p1 = load_module_player(player)
-    p1.train(1000)
+    p1.train(100000)
 
 def fight():
     list_player = []
+    list_player_name = []
     for i in range(len(players)):
         player = players[i]
         p1 = load_module_player(player)
+        list_player_name.append(player)
         list_player.append(p1.test)
     if len(list_player) < game.amount_player():
         player_random_need = game.amount_player() - len(list_player)
         for i in range(player_random_need):
             p1 = load_module_player('player_random')
-            print(p1)
+            list_player_name.append('player_random')
             list_player.append(p1.test)
+        print(list_player)
     count, file_per = game.normal_main(list_player, 1000, [0])
     return count, file_per
 
