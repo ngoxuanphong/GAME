@@ -46,6 +46,11 @@
       - ***Chú ý:*** 
         - Trong thuật toán list_player **phải dựa vào amount_player()** tại vì các game thì số lượng người chơi khác nhau
         - player phải là tên **folder của người chơi**
+        - **Thêm đoạn code này trong hàm Test**
+          ```git
+            player = 'NhatAnh_0822'
+            path_save_player = f'Agent/{player}/Data/{game_name}_{time_run_game}/'
+          ```
         - Thêm đoạn code này vào trong file thuật toán để import game và khởi tạo path lưu và đọc data
         ```
         import os
