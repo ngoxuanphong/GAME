@@ -46,7 +46,6 @@ def fight():
         player_random_need = game.amount_player() - len(list_player)
         for i in range(player_random_need):
             p1 = load_module_player('player_random')
-            print(p1)
             list_player.append(p1.test)
     count, file_per = game.normal_main(list_player, 1000, [0])
     return count, file_per
