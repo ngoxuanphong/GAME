@@ -15,7 +15,7 @@ path_save_player = f'Agent/{player}/Data/{game_name}_{time_run_game}/'
 if not os.path.exists(path_save_player):
     os.mkdir(path_save_player)
 
-# 
+
 def player_random(p_state, temp_file, per_file):
     arr_action = get_list_action(p_state)
     act_idx = np.random.randint(0, len(arr_action))
@@ -75,6 +75,8 @@ def player_Matran_Score(play_state,file_temp,file_per):
 
 # Buoc 3:
 def test(play_state,file_temp,file_per):
+    player = 'Trang'
+    path_save_player = f'Agent/{player}/Data/{game_name}_{time_run_game}/'
     a = get_list_action(play_state)
     
     if len(file_temp) < 2:

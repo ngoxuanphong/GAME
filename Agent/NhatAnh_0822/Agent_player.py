@@ -1,4 +1,5 @@
 import random as rd
+from threading import local
 import numpy as np
 
 import os
@@ -35,10 +36,9 @@ def reset(per):
 
 def test(state,temp,per):
     if len(temp) < 2:
-        print(player)
-        print(path_save_player)
+        player = 'NhatAnh_0822'
+        path_save_player = f'Agent/{player}/Data/{game_name}_{time_run_game}/'
         temp = np.load(f'{path_save_player}best.npy',allow_pickle=True)
-        print(temp)
     list_action = get_list_action(state)
     action = np.random.choice(list_action)
     for act in temp:
