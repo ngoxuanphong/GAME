@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 import random as rd
-from colorama import Fore, Style
+# from colorama import Fore, Style
 
 # -------------------- NOPYTHON FUNCTIONS --------------------
 @njit
@@ -288,29 +288,29 @@ def convert_1(k):
     str2 = ['Bích', 'Tép', 'Rô', 'Cơ']
     return str1[k//4] + ' ' + str2[k%4]
 
-def print_list_card(list_card):
-    for card in list_card:
-        temp = card.split(' ')
-        if temp[1] in ['Rô', 'Cơ']:
-            print(Fore.LIGHTWHITE_EX + temp[0] + Fore.LIGHTRED_EX, temp[1], end=' ')
-        else:
-            print(Fore.LIGHTWHITE_EX + temp[0] + Fore.LIGHTBLACK_EX, temp[1], end=' ')
+# def print_list_card(list_card):
+#     for card in list_card:
+#         temp = card.split(' ')
+#         if temp[1] in ['Rô', 'Cơ']:
+#             print(Fore.LIGHTWHITE_EX + temp[0] + Fore.LIGHTRED_EX, temp[1], end=' ')
+#         else:
+#             print(Fore.LIGHTWHITE_EX + temp[0] + Fore.LIGHTBLACK_EX, temp[1], end=' ')
     
-    print(Style.RESET_ALL)
+#     print(Style.RESET_ALL)
 
-def print_player_cards(e_state):
-    for i in range(4):
-        temp = np.where(e_state[0:52] == i)[0]
-        temp = convert(temp)
-        print(Fore.LIGHTGREEN_EX + 'Player', i+1, ':', end=' ')
-        print_list_card(temp)
+# def print_player_cards(e_state):
+#     for i in range(4):
+#         temp = np.where(e_state[0:52] == i)[0]
+#         temp = convert(temp)
+#         print(Fore.LIGHTGREEN_EX + 'Player', i+1, ':', end=' ')
+#         print_list_card(temp)
 
-def print_ingame(act, arr_card_in_hand, e_state):
-    print(Fore.LIGHTCYAN_EX + 'Chọn action' + Style.RESET_ALL, act, act-16, convert_1(act-16))
-    print(Fore.LIGHTCYAN_EX + 'Các lá bài trong action:' + Style.RESET_ALL, end=' ')
-    print_list_card(convert(arr_card_in_hand))
-    print('----------------------------------------------------------------------------------------------------')
-    print_player_cards(e_state)
+# def print_ingame(act, arr_card_in_hand, e_state):
+#     print(Fore.LIGHTCYAN_EX + 'Chọn action' + Style.RESET_ALL, act, act-16, convert_1(act-16))
+#     print(Fore.LIGHTCYAN_EX + 'Các lá bài trong action:' + Style.RESET_ALL, end=' ')
+#     print_list_card(convert(arr_card_in_hand))
+#     print('----------------------------------------------------------------------------------------------------')
+#     print_player_cards(e_state)
 
 def random_player(p_state, temp_file, per_file):
     arr_action = get_list_action(p_state)
@@ -337,38 +337,38 @@ def one_game(list_player, env, per_file):
     
     return winner, per_file
 
-def one_game_print(list_player, env, print_mode, per_file):
-    reset(env)
-    while not check_env(env):
-        reset(env)
+# def one_game_print(list_player, env, print_mode, per_file):
+#     reset(env)
+#     while not check_env(env):
+#         reset(env)
     
-    if print_mode:
-        print_player_cards(env)
+#     if print_mode:
+#         print_player_cards(env)
     
-    temp_file = [[0], [0], [0], [0]]
-    while True:
-        act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
-        if print_mode and env[60] == 0:
-            print(Fore.LIGHTCYAN_EX + 'Lượt của player' + Style.RESET_ALL, env[52]+1, Fore.LIGHTCYAN_EX + '. Round state:' + Style.RESET_ALL, env[53:57])
-            print(get_list_action(get_player_state(env)), '. Hand type:', act)
-            if act == 0:
-                flag = False
-            else:
-                flag = True
+#     temp_file = [[0], [0], [0], [0]]
+#     while True:
+#         act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
+#         if print_mode and env[60] == 0:
+#             print(Fore.LIGHTCYAN_EX + 'Lượt của player' + Style.RESET_ALL, env[52]+1, Fore.LIGHTCYAN_EX + '. Round state:' + Style.RESET_ALL, env[53:57])
+#             print(get_list_action(get_player_state(env)), '. Hand type:', act)
+#             if act == 0:
+#                 flag = False
+#             else:
+#                 flag = True
         
-        arr_card_in_hand = step(act, env)
-        if print_mode and env[60] == 0 and flag:
-            print_ingame(act, arr_card_in_hand, env)
+#         arr_card_in_hand = step(act, env)
+#         if print_mode and env[60] == 0 and flag:
+#             print_ingame(act, arr_card_in_hand, env)
         
-        if close_game(env) != -1:
-            break
+#         if close_game(env) != -1:
+#             break
     
-    winner = close_game(env)
-    for i in range(4):
-        env[52] = i
-        act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
+#     winner = close_game(env)
+#     for i in range(4):
+#         env[52] = i
+#         act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
     
-    return winner, per_file
+#     return winner, per_file
 
 def normal_main(list_player, num_game, per_file):
     if len(list_player) != 4:
