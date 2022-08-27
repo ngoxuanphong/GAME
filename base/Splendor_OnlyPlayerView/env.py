@@ -430,11 +430,13 @@ def normal_main_test(list_player, num_game,per_file):
 
         # Shuffle người chơi
         rd.shuffle(p_lst_idx)
-        winner, per_file = one_game(
+        winner, per_file_temp = one_game(
             [list_player[p_lst_idx[0]], list_player[p_lst_idx[1]], list_player[p_lst_idx[2]], list_player[p_lst_idx[3]]], 
             [per_file[p_lst_idx[0]], per_file[p_lst_idx[1]], per_file[p_lst_idx[2]], per_file[p_lst_idx[3]]],
         )
-
+        for ii in range(4):
+            per_file[ii] = per_file_temp[p_lst_idx[ii]]
+            
         if winner != 0:
             num_won[p_lst_idx[winner-1]] += 1
         else:
