@@ -54,7 +54,7 @@ def fight():
             list_player.append(p1.test)
         
     print(list_player_name)
-    count, file_per = game.normal_main_test(list_player, 1000, [0])
+    count, file_per = game.normal_main(list_player, 1000, [0])
     return count, file_per
 
 @timeout(time_run_game)

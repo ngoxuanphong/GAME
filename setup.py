@@ -8,6 +8,6 @@
  - [Train, Test] """
 
 type_run_code = 'Test' #Train or Test
-players = ['NhatAnh_0822', 'Trang']
-game_name = 'TLMN_v2'
-time_run_game = 1000
+players = ['LinhChi_0822']
+game_name = 'Splendor_OnlyPlayerView'
+time_run_game = 7200
