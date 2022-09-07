@@ -451,6 +451,8 @@ def action_player(env_state,list_player,file_temp,file_per):
     current_player = int(env_state[-3])
     player_state = state_to_player(env_state)
     played_move,file_temp[current_player],file_per = list_player[current_player](player_state,file_temp[current_player],file_per)
+    if played_move not in get_list_action(player_state):
+        raise Exception('bot dua ra action khong hop le')
     return played_move,file_temp,file_per
 
 @njit(fastmath=True, cache=True)  
