@@ -169,10 +169,37 @@ def check_victory(state_player):
         return -1
     amount_player = int(state_player[2])
     list_score = state_player[15-amount_player::14-amount_player]
-    if list_score[0] == max(list_score):
-        return 1
+    Max_Score = max(list_score)
+    list_winner = np.where(list_score=Max_Score)[0]
+    if 0 in list_winner:
+        if len(list_winner) == 1:
+            return 1
+        else:
+            amount_player = int(state_player[2])
+            list_pudding = state_player[15-amount_player+1::14-amount_player]
+            pudding_victoryer = list_pudding[list_winner]
+            max_puding = max(pudding_victoryer)
+            if list_pudding[0] == max_puding:
+                return 1
+            else:
+                return 0
     else:
         return 0
+
+def winner_victory(state_sys):
+    amount_player = int(state_sys[2])
+    list_score = state_sys[3+3*amount_player*(12-amount_player)::14-amount_player]
+    max_score = max(list_score)
+    winner = np.where(list_score == max_score)[0]
+    if len(winner) == 1:
+        return winner
+    else:
+        list_pudding = state_sys[3+3*amount_player*(12-amount_player)+1::14-amount_player]
+        pudding_victoryer = list_pudding[winner]
+        max_puding = max(pudding_victoryer)
+        winner_puding = np.where(pudding_victoryer == max_puding)[0]
+        return winner[winner_puding]
+
 
 @njit
 def step(state_sys,list_action,amount_player,turn,round):
@@ -296,9 +323,7 @@ def one_game_print(list_player,per_file):
     # print(state_sys)
     for id_player in range(len(list_player)):
         list_action[id_player], temp_file[id_player], per_file = list_player[id_player](get_player_state(state_sys,id_player),temp_file[id_player],per_file)    
-    list_score = state_sys[3+3*amount_player*(12-amount_player)::14-amount_player]
-    max_score = max(list_score)
-    winner = np.where(list_score == max_score)[0]
+    winner = winner_victory(state_sys)
     return winner,per_file
 
 def one_game(list_player,per_file):
@@ -340,9 +365,7 @@ def one_game(list_player,per_file):
     # print(state_sys)
     for id_player in range(len(list_player)):
         list_action[id_player], temp_file[id_player], per_file = list_player[id_player](get_player_state(state_sys,id_player),temp_file[id_player],per_file)    
-    list_score = state_sys[3+3*amount_player*(12-amount_player)::14-amount_player]
-    max_score = max(list_score)
-    winner = np.where(list_score == max_score)[0]
+    winner = winner_victory(state_sys)
     return winner,per_file
 
 def player_random(player_state,file_temp,file_per):
