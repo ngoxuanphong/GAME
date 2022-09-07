@@ -1,3 +1,0 @@
-thời gian train 10000 trận:
-tlmn, tlmnv2: 10ph
-còn lại: 30-50ph
