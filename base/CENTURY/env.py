@@ -89,7 +89,8 @@ def action_player(env_state,list_player,file_temp,file_per):
     return played_move,file_temp,file_per
 
 @njit(fastmath=True, cache=True)
-def get_list_action(player_state):
+def get_list_action(player_state_origin):
+    player_state = player_state_origin.copy()
     phase_env = int(player_state[-1])
     player_state_own = player_state[:51]
     '''

@@ -107,7 +107,8 @@ def hand_of_cards(arr_card):
     return np.array(arr_return)
 
 @njit
-def get_list_action(p_state):
+def get_list_action(player_state_origin):
+    p_state = player_state_origin.copy()
     arr_card = np.where(p_state[0:52] == 0)[0]
     arr_hand = hand_of_cards(arr_card)
 

@@ -6,12 +6,15 @@
 /base/TLMN/__pycache__/*
 /base/TLMN_v2/__pycache__/*
 /base/SushiGo-main/__pycache__/*
+/base/CatanVIS/__pycache__/*
 
 /test/*
 /Agent/player_random/__pycache__/*
 /Agent/player_random/Data/*
 /Agent/Trang/__pycache__/*
 /Agent/Trang/Data/*
+/Agent/CatKhanh_0822_2/__pycache__/*
+/Agent/CatKhanh_0822_2/Data/*
 
 
 /__pycache__/*
