@@ -1,4 +1,4 @@
-from index import*
+from base.CatanVIS.index import*
 from numba import jit, njit
 import random
 import numpy as np

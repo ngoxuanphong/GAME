@@ -8,6 +8,7 @@
 /base/SushiGo-main/__pycache__/*
 /base/CatanVIS/__pycache__/*
 
+/test.ipynb
 /test/*
 /Agent/player_random/__pycache__/*
 /Agent/player_random/Data/*
