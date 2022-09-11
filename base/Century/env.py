@@ -821,7 +821,7 @@ def normal_main(list_player, times, file_per):
             count[shuffle[winner]] += 1
     return count, file_per
 
-all_action_mean = list(pd.read_excel('base/CENTURY/CENTURY.xlsx')['Mean'])
+# all_action_mean = list(pd.read_excel('base/Century/CENTURY.xlsx')['Mean'])
 
 
 # list_player = [player_random]*5

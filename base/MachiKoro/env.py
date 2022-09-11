@@ -636,7 +636,7 @@ def random_policy(state,file_temp,file_per):
         file_per.append(file_temp)
     return action,file_temp,file_per
 
-all_action_mean = list(pd.read_excel('base/MACHIKORO/MACHIKORO.xlsx')['Mean'])
+# all_action_mean = list(pd.read_excel('base/MachiKoro/MACHIKORO.xlsx')['Mean'])
 
 # list_player = [player_random]*4
 # count_all, file_per_all = normal_main(list_player, 1, [0])
