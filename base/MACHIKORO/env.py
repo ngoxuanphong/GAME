@@ -86,7 +86,8 @@ def check_winner(env_state):
     return winner
     
 @njit(fastmath=True, cache=True)
-def get_list_action(player_state):
+def get_list_action(player_state_origin):
+    player_state = player_state_origin.copy()
     # player_action = int(player_state[-2])
     phase_env = player_state[-1]
     player_state_own = player_state[:20]

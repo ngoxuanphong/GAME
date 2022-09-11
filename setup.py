@@ -7,7 +7,7 @@
  - time_run_game = Thời gian chạy game ở chế độ train, xong thời gian tự động dừng 
  - [Train, Test] """
 
-type_run_code = 'Test' #Train or Test
-players = []
-game_name = 'SushiGo-main'
-time_run_game = 300
+type_run_code = 'Train' #Train or Test
+players = ['CatKhanh_0822_2']
+game_name = 'CatanVIS'
+time_run_game = 50

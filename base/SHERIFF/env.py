@@ -75,7 +75,8 @@ def player_random(player_state, file_temp, file_per):
     return action, file_temp, file_per
 
 @njit(fastmath=True, cache=True)
-def get_list_action(player_state):
+def get_list_action(player_state_origin):
+    player_state = player_state_origin.copy()
     # player_action = int(player_state[-3])
     phase_env = player_state[-1]
     player_state_own = player_state[:96]

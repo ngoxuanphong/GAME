@@ -107,7 +107,8 @@ def check_buy_card(p_state, card_id):
     return False
 
 @njit
-def get_list_action(p_state):
+def get_list_action(player_state_origin):
+    p_state = player_state_origin.copy()
     phase = p_state[160] # Pha
     list_action = []
     normal_cards = p_state[:90] # Trạng thái các thẻ thường
@@ -173,7 +174,7 @@ def get_list_action(p_state):
     else: # Pha trả nguyên liệu
         list_action += [i_+192 for i_ in range(6) if self_st[i_] != 0]
     
-    return list_action
+    return np.array(list_action)
 
 @njit
 def step(action, e_state, lv1, lv2, lv3):
