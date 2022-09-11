@@ -5,8 +5,8 @@ import numba
 from numba import njit
 import os
 import time
-from index import *
-from basic_action import *
+from base.CatanVIS.index import *
+from base.CatanVIS.basic_action import *
 import random
 
 @njit()
