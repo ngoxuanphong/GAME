@@ -5,10 +5,13 @@
  - games_name = ['Splendor_v2','Century', 'MachiKoro', 'Sheriff', 'Splendor', 'TLMN', 'TLMN_v2', 'SushiGo', 'Catan']
  - game_name: Tên game, có thể lấy ở games_name
  - time_run_game = Thời gian chạy game ở chế độ train, xong thời gian tự động dừng 
- - [Train, Test] """
+ - [Train, Test]
+ - 'Train_1_player' để chạy mỗi người chơi, Không chạy đa luồng, dùng để test khi để code vào hệ thống 
+"""
 
 
-type_run_code = 'Test' #Train or Test
-players = []
+
+type_run_code = 'Test' #Train or Test or Train_1_player
+players = ['Phong_13092022']
 game_name = 'Splendor_v2'
-time_run_game = 50
+time_run_game = 600

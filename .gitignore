@@ -11,13 +11,16 @@
 *.nbc
 *.nbi
 /test.ipynb
+/test.py
 /test/*
+/test/
+/test.py
 /Agent/player_random/__pycache__/*
 /Agent/player_random/Data/*
 /Agent/Trang/__pycache__/*
 /Agent/Trang/Data/*
 /Agent/CatKhanh_0822_2/__pycache__/*
 /Agent/CatKhanh_0822_2/Data/*
-
+/Agent/Phong_13092022/*
 
 */__pycache__/*
