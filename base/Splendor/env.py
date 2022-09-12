@@ -62,7 +62,7 @@ def get_player_state(e_state, lv1, lv2, lv3):
     if lv3[-1] == 20:
         p_state[163] = 0
     
-    return p_state
+    return p_state.astype(np.int64)
 
 @njit
 def close_game(e_state):

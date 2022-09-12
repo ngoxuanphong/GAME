@@ -37,7 +37,7 @@ def get_player_state(e_state):
     else:
         p_state[58:60] = e_state[58:60]
     
-    return p_state
+    return p_state.astype(np.float64)
 
 @njit
 def straight_subsequences(arr):

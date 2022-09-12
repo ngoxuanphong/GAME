@@ -819,7 +819,7 @@ def normal_main(list_player, times, file_per):
             count[winner] += 1
         else:
             count[shuffle[winner]] += 1
-    return count, file_per
+    return list(count.astype(np.int64)), file_per
 
 # all_action_mean = list(pd.read_excel('base/Century/CENTURY.xlsx')['Mean'])
 
