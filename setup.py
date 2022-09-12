@@ -9,6 +9,6 @@
 
 
 type_run_code = 'Train' #Train or Test
-players = ['CatKhanh_0822_2']
-game_name = 'CatanVIS'
+players = ['']
+game_name = 'SushiGo'
 time_run_game = 50
