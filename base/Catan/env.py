@@ -31,8 +31,12 @@ def get_list_action(player_state_origin):
                 list_action = np.append(list_action, action_dev_card+94)
                 if 96 in list_action and np.sum(player_state[P_SOURCE_IN_BANK_INDEX : P_SOURCE_IN_BANK_INDEX+P_SOURCE_IN_BANK_LEN]) == 0:
                     list_action = np.delete(list_action, np.where(list_action == 96)[0])
-                if 95 in list_action and len(np.where(roads_data == 0)[0]) >= 15:
-                    list_action = np.delete(list_action, np.where(list_action == 95)[0])
+                if 95 in list_action:
+                    road_not_yet_have = np.where(roads_data == -1)[0]
+                    p_roads = np.where(roads_data == 0)[0]
+                    road_build, point_can_build = RoadCanBuild(p_roads, road_not_yet_have, 0, points_data)
+                    if len(np.where(roads_data == 0)[0]) >= 15 or len(point_can_build) == 0:
+                        list_action = np.delete(list_action, np.where(list_action == 95)[0])
         return list_action.astype(np.int64)
     elif phase_env == 2:
         '''
@@ -410,7 +414,7 @@ def step(env_state, action):
             if env_state[TURN] >= 8:
                 env_state[PHASE] = 1
             env_state[TURN] += 1
-            env_state[NUMBER_TRADE_OF_PLAYER] = 3
+            env_state[NUMBER_TRADE_OF_PLAYER] = 1
             # for i in range(4):
             #     print(env_state[int(i*ALL_INFOR_PLAYER+5): int(i*ALL_INFOR_PLAYER+10)])
             # print('all_deal', env_state[OFFER_MAIN_INDEX:OFFER_MAIN_INDEX + OFFER_LEN*4])
@@ -508,11 +512,19 @@ def step(env_state, action):
             if action in ROAD_BY_POINT[road]:
                 env_state[ROAD_INDEX + road] = id_action
 
-        if env_state[USE_BUILD_ROAD] != 0:
-            env_state[USE_BUILD_ROAD] -= 1
+
+        p_road = np.where(env_state[ROAD_INDEX:ROAD_INDEX+ROAD_LEN] == id_action)[0] #đường của người choi sỏ hữu
+        road_not_yet_have = np.where(env_state[ROAD_INDEX:ROAD_INDEX+ROAD_LEN] == -1)[0] #Đường chua có nguoif nào sở hữu
+        points_data = env_state[POINT_INDEX: POINT_INDEX+POINT_LEN] #thông tin các điểm ở trên bàn
+        
+        road_build, list_action = RoadCanBuild(p_road, road_not_yet_have, id_action, points_data)
+
+        if env_state[USE_BUILD_ROAD] != 0: #khi dùng thẻ road building
+            env_state[USE_BUILD_ROAD] -= 1 
             env_state[PHASE] = 5
-            if env_state[USE_BUILD_ROAD] == 0:
+            if env_state[USE_BUILD_ROAD] == 0 or len(p_road) == 15 or len(list_action) == 0: #hết lượt dùng thẻ road, hoạc đủ 15 đường, hoặc không còn dduofng để xây
                 env_state[PHASE] = 2
+                env_state[USE_BUILD_ROAD] = 0
         else:
             if turn > 7:
                 env_state[PHASE] = 2 #to phase 2
@@ -779,29 +791,33 @@ def step(env_state, action):
         return env_state
 
 
-def one_game(list_player, per_file):
+
+def one_game(list_player_, per_file):
     env_state = reset()
     temp_file = [[0] for i in range(amount_player())]
     count_turn = 0
 
-    while system_check_end(env_state) and count_turn < 15000:
-        action, temp_file, per_file = action_player(env_state,list_player,temp_file,per_file)     
+    while count_turn < 15000:
+        action, temp_file, per_file = action_player(env_state,list_player_,temp_file,per_file)     
         # print_mode_action(action, env_state)
         env_state = step(env_state, action)
-        for i in range(4):
-            if env_state[int(i*ALL_INFOR_PLAYER+1)] != np.sum(env_state[int(i*ALL_INFOR_PLAYER+5): int(i*ALL_INFOR_PLAYER+10)]):
-                # print(env_state[PHASE], env_state[ID_ACTION], 'jsdhfgjsghfkjsfhguweh \n\n\n sadasdsadas')
-                raise Exception('toang tong tai nbguyen')
         # print_mode_board(action, env_state)
         count_turn += 1
+        if check_winner(env_state) != -1:
+            score = env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+2:ALL_INFOR_PLAYER].copy()
+            vitory_card = env_state[CARD_EFFECT_1_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN-1:CARD_EFFECT_4_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN+1:ALL_INFOR_PLAYER].copy()
+            env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+2:ALL_INFOR_PLAYER] = score+vitory_card
+            break
     
     winner = check_winner(env_state)
+    # print('winner', winner)
     if winner == -1:
         pass
     else:
         for id_player in range(amount_player()):
             env_state[PHASE] = 1
-            action, temp_file, per_file = action_player(env_state,list_player,temp_file,per_file)
+            action, temp_file, per_file = action_player(env_state,list_player_,temp_file,per_file)
+            # print(per_file)
             env_state[ID_ACTION] = (env_state[ID_ACTION] + 1)%4
     # score = env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+2:ALL_INFOR_PLAYER]
     # vitory_card = env_state[CARD_EFFECT_1_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN-1:CARD_EFFECT_4_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN+1:ALL_INFOR_PLAYER]
@@ -817,16 +833,17 @@ def normal_main(list_player, times, per_file):
     for van in range(times):
         shuffle = np.random.choice(all_id_player, amount_player(), replace=False)
         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
-        winner, file_per = one_game(shuffle_player, per_file)
+        winner, per_file = one_game(shuffle_player, per_file)
         if winner == -1:
             count[winner] += 1
         else:
             count[shuffle[winner]] += 1
-    return list(count.astype(np.int64)), file_per
+    return list(count.astype(np.int64)), per_file
 
 @njit()
 def check_victory(player_state):
     all_score = np.array([player_state[P_SCORE], player_state[P_P1_ATTRIBUTE_PLAYER], player_state[P_P2_ATTRIBUTE_PLAYER], player_state[P_P3_ATTRIBUTE_PLAYER]])
+    # print(all_score)
     if np.max(all_score) < 10:
         return -1 
     else:
