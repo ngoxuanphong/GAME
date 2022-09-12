@@ -170,8 +170,9 @@ def check_victory(state_player):
     amount_player = int(state_player[2])
     list_score = state_player[15-amount_player::14-amount_player]
     Max_Score = max(list_score)
-    list_winner = np.where(list_score=Max_Score)[0]
-    if 0 in list_winner:
+    list_winner = np.where(list_score==Max_Score)[0]
+    check_winer_self = np.where(list_winner==0)[0]
+    if len(check_winer_self) == 1:
         if len(list_winner) == 1:
             return 1
         else:

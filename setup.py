@@ -8,7 +8,7 @@
  - [Train, Test] """
 
 
-type_run_code = 'Test' #Train or Test
-players = []
-game_name = 'CatanVIS'
+type_run_code = 'Train' #Train or Test
+players = ['']
+game_name = 'SushiGo'
 time_run_game = 50
