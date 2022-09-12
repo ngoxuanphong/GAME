@@ -122,7 +122,7 @@ def get_list_action(player_state_origin):
         road_have = np.where(roads_data == 0)[0]
         # RoadCanBuild(road_have, road_not_yet_have, 0, points_data)
         road_build, list_action = RoadCanBuild(road_have, road_not_yet_have, 0, points_data)
-        if len(list_action) == 0:
+        if len(list_action) == 0 or len(road_have):
             list_action = np.array([103])
         return list_action
 
@@ -507,6 +507,7 @@ def step(env_state, action):
         for road in np.where(ROAD_BY_POINT == temp_point)[0]: #update road_index in env_state
             if action in ROAD_BY_POINT[road]:
                 env_state[ROAD_INDEX + road] = id_action
+
         if env_state[USE_BUILD_ROAD] != 0:
             env_state[USE_BUILD_ROAD] -= 1
             env_state[PHASE] = 5
