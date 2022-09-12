@@ -784,18 +784,20 @@ def one_game(list_player, per_file):
     temp_file = [[0] for i in range(amount_player())]
     count_turn = 0
 
-    while system_check_end(env_state) and count_turn < 15000:
+    while count_turn < 15000:
         action, temp_file, per_file = action_player(env_state,list_player,temp_file,per_file)     
         # print_mode_action(action, env_state)
         env_state = step(env_state, action)
-        for i in range(4):
-            if env_state[int(i*ALL_INFOR_PLAYER+1)] != np.sum(env_state[int(i*ALL_INFOR_PLAYER+5): int(i*ALL_INFOR_PLAYER+10)]):
-                # print(env_state[PHASE], env_state[ID_ACTION], 'jsdhfgjsghfkjsfhguweh \n\n\n sadasdsadas')
-                raise Exception('toang tong tai nbguyen')
         # print_mode_board(action, env_state)
         count_turn += 1
+        if check_winner(env_state) != -1:
+            score = env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+2:ALL_INFOR_PLAYER].copy()
+            vitory_card = env_state[CARD_EFFECT_1_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN-1:CARD_EFFECT_4_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN+1:ALL_INFOR_PLAYER].copy()
+            env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+2:ALL_INFOR_PLAYER] = score+vitory_card
+            break
     
     winner = check_winner(env_state)
+    # print('winner', winner)
     if winner == -1:
         pass
     else:
@@ -807,7 +809,7 @@ def one_game(list_player, per_file):
     # vitory_card = env_state[CARD_EFFECT_1_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN-1:CARD_EFFECT_4_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN+1:ALL_INFOR_PLAYER]
     # score_real = score+vitory_card
     # print('điểm các người chơi: ', score_real)
-    # print('Số lần truyền vào player:', count_turn)
+    print('Số lần truyền vào player:', count_turn)
     return winner, per_file
 
 
@@ -827,6 +829,7 @@ def normal_main(list_player, times, per_file):
 @njit()
 def check_victory(player_state):
     all_score = np.array([player_state[P_SCORE], player_state[P_P1_ATTRIBUTE_PLAYER], player_state[P_P2_ATTRIBUTE_PLAYER], player_state[P_P3_ATTRIBUTE_PLAYER]])
+    # print(all_score)
     if np.max(all_score) < 10:
         return -1 
     else:
