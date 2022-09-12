@@ -122,7 +122,7 @@ def get_list_action(player_state_origin):
         road_have = np.where(roads_data == 0)[0]
         # RoadCanBuild(road_have, road_not_yet_have, 0, points_data)
         road_build, list_action = RoadCanBuild(road_have, road_not_yet_have, 0, points_data)
-        if len(list_action) == 0 or len(road_have):
+        if len(list_action) == 0 or len(road_have) == 15:
             list_action = np.array([103])
         return list_action
 
