@@ -47,7 +47,7 @@ def get_player_state(e_state):
     # 61: Kiểu bộ bài đã chọn ở phase 0
     p_state[60:62] = e_state[60:62]
 
-    return p_state
+    return p_state.astype(np.float64)
 
 @njit
 def straight_subsequences(arr):

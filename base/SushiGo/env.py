@@ -59,7 +59,7 @@ def get_player_state(state_sys,index_player):
             state_player = np.concatenate((state_sys[:3],state_sys[index_start_card_board:index_end_card_board],state_sys[index_start_player_s:index_end_player_s]))
         else:
             state_player = np.concatenate((state_player,state_sys[index_start_player_s:index_end_player_s]))
-    return np.append(state_player,np.array([0,len_action]))
+    return np.append(state_player,np.array([0,len_action])).astype(np.float64)
 
 @njit
 def caculater_for_one(card):
