@@ -12,6 +12,8 @@
 *.nbi
 /test.ipynb
 /test/*
+/test/
+/test.py
 /Agent/player_random/__pycache__/*
 /Agent/player_random/Data/*
 /Agent/Trang/__pycache__/*
