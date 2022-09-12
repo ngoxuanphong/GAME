@@ -333,6 +333,10 @@ def amount_player():
     return 4
 
 @njit()
+def amount_action():
+    return 108
+
+@njit()
 def reset():
     env_state = np.zeros(INDEX)
     env_state[POINT_INDEX:ROBBER_BLOCK_INDEX] = np.full(POINT_LEN + ROAD_LEN, -1)
