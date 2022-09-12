@@ -11,6 +11,7 @@
 *.nbc
 *.nbi
 /test.ipynb
+/test.py
 /test/*
 /Agent/player_random/__pycache__/*
 /Agent/player_random/Data/*
