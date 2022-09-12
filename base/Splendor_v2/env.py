@@ -100,8 +100,9 @@ def check_victory(p_state):
         return -1
 
 @njit()
-def get_list_action(player_state_origin):
+def get_list_action(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
     b_stocks = p_state[:6] #Các nguyên liệu trên bàn chơi
     p_st = p_state[6:11] #Các nguyên liệu của bản thân đang có
     yellow_count = p_state[11] #Số thẻ vàng đang có

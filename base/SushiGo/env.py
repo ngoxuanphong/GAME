@@ -224,8 +224,9 @@ def step(state_sys,list_action,amount_player,turn,round):
     return state_sys
 
 @njit
-def get_list_action(player_state_origin):
+def get_list_action(player_state_origin:np.int64):
     player_state = player_state_origin.copy()
+    player_state = player_state.astype(np.int64)
     amount = player_state[2]
     index_between = int((12 - amount) + 3)
     card = player_state[3:index_between]
