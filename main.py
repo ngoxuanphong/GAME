@@ -73,3 +73,5 @@ if __name__ == '__main__':
     if type_run_code == 'Test':
         count, per = fight()
         print(count)
+    if type_run_code == 'Train_1_player':
+        train_1_player(players[0])
