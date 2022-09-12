@@ -107,8 +107,9 @@ def check_buy_card(p_state, card_id):
     return False
 
 @njit
-def get_list_action(player_state_origin):
+def get_list_action(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
     phase = p_state[160] # Pha
     list_action = []
     normal_cards = p_state[:90] # Trạng thái các thẻ thường
