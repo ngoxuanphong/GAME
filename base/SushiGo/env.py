@@ -192,6 +192,7 @@ def winner_victory(state_sys):
     list_score = state_sys[3+3*amount_player*(12-amount_player)::14-amount_player]
     max_score = max(list_score)
     winner = np.where(list_score == max_score)[0]
+    # print("Diem:",list_score)
     if len(winner) == 1:
         return winner
     else:
@@ -329,8 +330,8 @@ def one_game_print(list_player,per_file):
     winner = winner_victory(state_sys)
     return winner,per_file
 
-def one_game(list_player,per_file):
-    amount_player = len(list_player)
+def one_game(list_player_,per_file):
+    amount_player = len(list_player_)
     state_sys = reset(amount_player)
     temp_file = [[0] for i in range(amount_player)]
     amount_player = state_sys[2]
@@ -341,12 +342,12 @@ def one_game(list_player,per_file):
         turn = state_sys[1]
         # print("Luot: ",turn,state_sys)
         list_action = [[-1,-1,-1] for i in range(amount_player)]
-        for id_player in range(len(list_player)):
+        for id_player in range(len(list_player_)):
             player_state = get_player_state(state_sys,id_player)
             count = 0
             while player_state[-1] > 0:
                 # print(list_action[id_player])
-                action, temp_file[id_player], per_file = list_player[id_player](player_state,temp_file[id_player],per_file)
+                action, temp_file[id_player], per_file = list_player_[id_player](player_state,temp_file[id_player],per_file)
                 list_action[id_player][count] = action
                 count += 1
                 player_state = test_action(player_state,action)
@@ -366,8 +367,8 @@ def one_game(list_player,per_file):
             state_sys[1] += 1
         # print(state_sys)
     # print(state_sys)
-    for id_player in range(len(list_player)):
-        list_action[id_player], temp_file[id_player], per_file = list_player[id_player](get_player_state(state_sys,id_player),temp_file[id_player],per_file)    
+    for id_player in range(len(list_player_)):
+        list_action[id_player], temp_file[id_player], per_file = list_player_[id_player](get_player_state(state_sys,id_player),temp_file[id_player],per_file)    
     winner = winner_victory(state_sys)
     return winner,per_file
 
@@ -382,8 +383,9 @@ def normal_main(list_player,amount_game,file_per):
     num_won = [0 for i in range(amount_player)]
     for game in range(amount_game):
         random.shuffle(player_list_index)
-        list_player_shuffle = [list_player[player_list_index[i]] for i in player_list_index]
+        list_player_shuffle = [list_player[i] for i in player_list_index]
         winner, file_per = one_game(list_player_shuffle,file_per)
+        # print(list_player_shuffle, winner, player_list_index)
         for win in winner:
             num_won[player_list_index[win]] += 1
     return num_won,file_per
@@ -393,7 +395,7 @@ def normal_main_print(list_player,amount_game,file_per):
     num_won = [0 for i in range(amount_player)]
     for game in range(amount_game):
         random.shuffle(player_list_index)
-        list_player_shuffle = [list_player[player_list_index[i]] for i in player_list_index]
+        list_player_shuffle = [list_player[i] for i in player_list_index]
         winner, file_per = one_game_print(list_player_shuffle,file_per)
         for win in winner:
             num_won[player_list_index[win]] += 1
