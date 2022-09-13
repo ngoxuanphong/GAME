@@ -11,7 +11,7 @@
 
 
 
-type_run_code = 'Test' #Train or Test or Train_1_player
-players = ['Phong_13092022']
-game_name = 'Splendor_v2'
-time_run_game = 600
+type_run_code = 'Train_1_player' #Train or Test or Train_1_player
+players = ['Hieu_130922', 'Phong_130922']
+game_name = 'MachiKoro'
+time_run_game = 15000
