@@ -215,7 +215,7 @@ def step(state_sys,list_action,amount_player,turn,round):
         # print(index_player_s,index_player_e,index_board_s,index_board_e)
         l_a = list_action[player]
         for i in l_a:
-            if i == 13:
+            if i == -1:
                 break
             if i == 12:
                 state_sys = move_card(state_sys,11,amount_player,index_player_s,index_player_e,index_board_s,index_board_e)
@@ -234,7 +234,7 @@ def get_list_action(player_state_origin:np.int64):
     list_action = card[np.where(card>= 0)[0]]
     list_card_player= np.where(player_state[index_between+2:index_between+int((12 - amount) + 2)] == 11)[0]
     if (12-amount)*3 < player_state[1]:
-        list_action = np.array([13])
+        list_action = np.array([-1])
 
     if len(list_card_player) != 0 and player_state[-2] != 1 and len(list_action) > 1:
         list_action = np.append(list_action,np.array([12]))
@@ -257,7 +257,7 @@ def reset_card_player(state_sys):
 
 @njit
 def amount_action():
-    return 14
+    return 13
 
 @njit
 def amount_player():
