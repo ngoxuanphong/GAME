@@ -23,5 +23,7 @@
 /Agent/CatKhanh_0822_2/Data/*
 /Agent/Phong_130922/*
 /Agent/Hieu_130922/*
+# /Agent/
+/Agent/*
 /__pycache__/*
-/__pycache__/
+/__pycache__/ 
