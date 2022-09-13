@@ -880,7 +880,7 @@ def normal_main_print_mode(list_player, times, file_per):
         # try:
         winner, file_per = one_game_print_mode(shuffle_player, file_temp, file_per, all_penalty)
         count[shuffle[winner]] += 1
-    return count, file_per
+    return list(count.astype(np.int64)), file_per
 
 def one_game(list_player, file_temp, file_per, all_penalty):
     env_state = reset()
@@ -909,7 +909,7 @@ def normal_main(list_player, times, file_per):
         # try:
         winner, file_per = one_game(shuffle_player, file_temp, file_per, all_penalty)
         count[shuffle[winner]] += 1
-    return count, file_per
+    return list(count.astype(np.int64)), file_per
 
 
 # all_action_mean = list(pd.read_excel('base/Sheriff/SHERIFF.xlsx')['Mean'])

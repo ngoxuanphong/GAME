@@ -37,7 +37,7 @@ def get_player_state(e_state):
     else:
         p_state[58:60] = e_state[58:60]
     
-    return p_state
+    return p_state.astype(np.float64)
 
 @njit
 def straight_subsequences(arr):
@@ -97,8 +97,9 @@ def hand_of_cards(arr_card):
     return np.array(arr_return)
 
 @njit
-def get_list_action(player_state_origin):
+def get_list_action(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
     arr_card = np.where(p_state[0:52] == 0)[0]
     arr_hand = hand_of_cards(arr_card)
 

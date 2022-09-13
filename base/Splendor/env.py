@@ -62,7 +62,7 @@ def get_player_state(e_state, lv1, lv2, lv3):
     if lv3[-1] == 20:
         p_state[163] = 0
     
-    return p_state
+    return p_state.astype(np.int64)
 
 @njit
 def close_game(e_state):
@@ -107,8 +107,9 @@ def check_buy_card(p_state, card_id):
     return False
 
 @njit
-def get_list_action(player_state_origin):
+def get_list_action(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
     phase = p_state[160] # Pha
     list_action = []
     normal_cards = p_state[:90] # Trạng thái các thẻ thường

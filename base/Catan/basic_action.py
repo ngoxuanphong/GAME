@@ -1,4 +1,4 @@
-from base.CatanVIS.index import*
+from base.Catan.index import*
 from numba import jit, njit
 import random
 import numpy as np
@@ -325,12 +325,16 @@ def system_check_end(env_state):
 def action_player(env_state,list_player,temp_file,per_file):
     current_player = int(env_state[ID_ACTION])
     player_state = state_to_player(env_state)
-    played_move,temp_file[current_player],file_per = list_player[current_player](player_state,temp_file[current_player],per_file)
-    return played_move,temp_file,file_per
+    played_move,temp_file[current_player],per_file = list_player[current_player](player_state,temp_file[current_player],per_file)
+    return played_move,temp_file,per_file
 
 @njit()
 def amount_player():
     return 4
+
+@njit()
+def amount_action():
+    return 108
 
 @njit()
 def reset():

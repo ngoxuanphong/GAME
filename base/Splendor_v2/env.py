@@ -85,7 +85,7 @@ def get_player_state(env_state, lv1, lv2, lv3):
     p_state = np.append(p_state, other_scores) #Lấy điểm của người chơi khác
     p_state = np.append(p_state, (env_state[161:164] != 100)*1) #Lấy thông tin của các thẻ ẩn có thẻ úp, nếu có thể úp thì là 1
     p_state = np.append(p_state, len(np.where(env_state[:90] == 5)[0])) #Số lượng thẻ có thể úp trong bàn
-    return p_state
+    return p_state.astype(np.float64)
 
 @njit()
 def check_victory(p_state):
@@ -100,8 +100,9 @@ def check_victory(p_state):
         return -1
 
 @njit()
-def get_list_action(player_state_origin):
+def get_list_action(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
     b_stocks = p_state[:6] #Các nguyên liệu trên bàn chơi
     p_st = p_state[6:11] #Các nguyên liệu của bản thân đang có
     yellow_count = p_state[11] #Số thẻ vàng đang có

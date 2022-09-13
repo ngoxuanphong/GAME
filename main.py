@@ -67,8 +67,11 @@ def train():
 
 if __name__ == '__main__':
     game = setup_game(game_name)
+    print('GAME:',  game_name)
     if type_run_code == 'Train':
         train()
-    if type_run_code == 'Test':    
+    if type_run_code == 'Test':
         count, per = fight()
         print(count)
+    if type_run_code == 'Train_1_player':
+        train_1_player(players[0])
