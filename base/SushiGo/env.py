@@ -214,6 +214,7 @@ def step(state_sys,list_action,amount_player,turn,round):
         index_player_e = index_player_s+ (12 - amount_player)
         # print(index_player_s,index_player_e,index_board_s,index_board_e)
         l_a = list_action[player]
+        l_a = l_a[np.where(l_a >= 0)[0]]
         for i in l_a:
             if i == -1:
                 break
