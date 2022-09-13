@@ -9,6 +9,6 @@
 
 
 type_run_code = 'Train' #Train or Test
-players = ['']
+players = ['player_random']
 game_name = 'SushiGo'
 time_run_game = 50
