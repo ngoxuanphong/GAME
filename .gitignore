@@ -27,3 +27,5 @@
 /Agent/*
 /__pycache__/*
 /__pycache__/ 
+!/Agent/player_random/
+!/Agent/Trang/
