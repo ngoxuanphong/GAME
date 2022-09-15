@@ -16,7 +16,7 @@
 
 
 type_run_code = 'Test' #Train or Test or Train_1_player
-players = ['NhatAnh_New', 'NhatAnh_New1', 'NhatAnh_New2', 'NhatAnh_New3', 'NhatAnh_New4',]
+players = ['NhatAnh_New']
 game_name = 'TLMN'
 time_run_game = 79200
 

@@ -31,9 +31,9 @@ def setup_game(game_name):
     return env
 
 def load_module_player(player):
-    p = importlib.util.spec_from_file_location('Agent_player', f"Agent/{player}/Agent_player.py")
-    p1 = p.loader.load_module()
-    return p1
+    return  importlib.util.spec_from_file_location('Agent_player', f"Agent/{player}/Agent_player.py").loader.load_module()
+    # p1 = p
+    # return p1
 def train_1_player(player):
     p1 = load_module_player(player)
     p1.train(100000)
@@ -42,28 +42,36 @@ def create_dict(dict_save_win__, count__, lst_player):
     for id in range(len(lst_player)):
         player_name = lst_player[id]
         if player_name not in dict_save_win__[game_name]:
-            dict_save_win__[game_name][player_name] = count__[id]
+            dict_save_win__[game_name][player_name] = int(count__[id])
         else:
-            dict_save_win__[game_name][player_name] += count__[id]
+            dict_save_win__[game_name][player_name] += int(count__[id])
     return dict_save_win__
 
+def load_module_fight(player):
+    spec = importlib.util.spec_from_file_location('Agent_player', f"Agent/{player}/Agent_player.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module 
+    spec.loader.exec_module(module)
+    return module
+    
 def fight(game, players):
     list_player = []
     list_player_name = []
 
     for i in range(len(players)):
         player = players[i]
-        p1 = load_module_player(player)
         list_player_name.append(player)
-        list_player.append(p1.test)
+        list_player.append(load_module_fight(player))
 
     if len(list_player) < game.amount_player():
         player_random_need = game.amount_player() - len(list_player)
         for i in range(player_random_need):
-            p1 = load_module_player('player_random')
             list_player_name.append('player_random')
-            list_player.append(p1.test)
-    count,_ = game.normal_main(list_player, 1000, [0])
+            list_player.append(load_module_fight('player_random'))
+
+    lst_players = [i.test for i in list_player]
+    print(list_player)
+    count,_ = game.normal_main(lst_players, 1000, [0])
     print(list_player_name, ' | ', count)
     return count, list_player_name
 
