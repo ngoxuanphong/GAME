@@ -34,7 +34,13 @@ def load_module_player(player):
     return  importlib.util.spec_from_file_location('Agent_player', f"Agent/{player}/Agent_player.py").loader.load_module()
     # p1 = p
     # return p1
+
 def train_1_player(player):
+    p1 = load_module_player(player)
+    p1.train(100000)
+
+@timeout(time_run_game)
+def train_1_player_with_timeout(player):
     p1 = load_module_player(player)
     p1.train(100000)
 
@@ -114,4 +120,4 @@ if __name__ == '__main__':
         with open(f'{path_save_json_test_player}/data_test.json', 'w') as f:
             json.dump(dict_save_win, f)
     if type_run_code == 'Train_1_player':
-        train_1_player(players[0])
+        train_1_player_with_timeout(players[0])
