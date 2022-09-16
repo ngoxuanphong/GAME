@@ -76,7 +76,7 @@ def fight(game, players):
             list_player.append(load_module_fight('player_random'))
 
     lst_players = [i.test for i in list_player]
-    print(list_player)
+    # print(list_player)
     count,_ = game.normal_main(lst_players, 1000, [0])
     print(list_player_name, ' | ', count)
     return count, list_player_name
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     if type_run_code == 'Test':
         dict_save_win = fight_multi_player(game, players, dict_save_win)
         print(dict_save_win[game_name])
-        with open(f'{path_save_json_test_player}/data_test.json', 'w') as f:
+        with open(f'{path_save_json_test_player}/data_test_{game_name}.json', 'w') as f:
             json.dump(dict_save_win, f)
     if type_run_code == 'Train_1_player':
         train_1_player_with_timeout(players[0])
