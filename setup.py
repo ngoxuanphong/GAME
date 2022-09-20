@@ -15,9 +15,9 @@
 
 
 
-type_run_code = 'Test' #Train or Test or Train_1_player
-players = ['NhatAnh_New']
-game_name = 'TLMN'
-time_run_game = 79200
+type_run_code = 'Train' #Train or Test or Train_1_player
+players = ['Phong_200922', 'Trang', 'NhatAnh_New']
+game_name = 'MachiKoro'
+time_run_game = 55555
 
 path_save_json_test_player = '' #Nơi lưu file json data test các người chơi
