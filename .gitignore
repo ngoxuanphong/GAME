@@ -29,3 +29,7 @@
 /__pycache__/ 
 !/Agent/player_random/
 !/Agent/Trang/
+!/Agent/NhatAnh_New/
+/Agent/NhatAnh_New/Data
+/Agent/Trang/Data/
+/Agent/NhatAnh_New/__pycache__/
