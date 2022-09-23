@@ -17,10 +17,10 @@
 
 
 
-type_run_code = 'Test' #Train or Test or Train_1_player or Test_1_player
-players = ['Phong_130922']
-game_name = 'TLMN_v2'
+type_run_code = 'Test_1_player' #Train or Test or Train_1_player or Test_1_player
+players = ['Phong_270922']
+game_name = 'Sheriff'
 time_run_game = 79200
 
-number_of_matches = 100 #Số trận test khi dùng chế độ Test_1_player
+number_of_matches = 100 #Số trận test khi dùng khi test và test_1_player
 path_save_json_test_player = '' #Nơi lưu file json data test các người chơi

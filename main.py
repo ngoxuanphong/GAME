@@ -44,7 +44,7 @@ def train_1_player(player):
 @timeout(time_run_game)
 def train_1_player_with_timeout(players):
     if len(players) == 1:
-        p1 = load_module_player(player[0])
+        p1 = load_module_player(players[0])
         p1.train(100000)
     else:
         print_raise('Train_1_player')
@@ -60,7 +60,12 @@ def create_dict(dict_save_win__, count__, lst_player):
 
 def load_module_fight(player, mode_test):
     if mode_test == 'Test':
-        spec = importlib.util.spec_from_file_location('Agent_player', f"Agent/{player}/Agent_player.py")
+        if os.path.exists(f"Agent/{player}/Agent_player.py"):
+            spec = importlib.util.spec_from_file_location('Agent_player', f"Agent/{player}/Agent_player.py")
+        elif os.path.exists(f"system/Agent/{player}/Agent_player.py"):
+            spec = importlib.util.spec_from_file_location('Agent_player', f"system/Agent/{player}/Agent_player.py")
+        else:
+            raise f'Không có player:{player}'
     else:
         spec = importlib.util.spec_from_file_location('Agent_player', f"system/Agent/{player}/Agent_player.py")
     module = importlib.util.module_from_spec(spec)
@@ -98,6 +103,7 @@ def fight_multi_player(game, players):
                     'Splendor_v2':{},
                     'SushiGo':{}, }
     if len(players) != 0:
+        start = time.time()
         if len(players) >= game.amount_player():
             list_combination = list(itertools.combinations(players, game.amount_player()))
             for lst_player_play in list_combination:
@@ -109,7 +115,9 @@ def fight_multi_player(game, players):
         print(dict_save_win[game_name])
         with open(f'{path_save_json_test_player}/data_test_{game_name}.json', 'w') as f:
             json.dump(dict_save_win, f)
-        return dict_save_win
+        end = time.time()
+        print(f'Thời gian test:{end - start: .2f}s', )
+
     else:
         print_raise('Test')
     
@@ -135,19 +143,21 @@ def fight_test_1_player(game, players):
 
 def test_1_player(game, players):
     if len(players) == 1:
+        start = time.time()
         win, lose = 0,0
         print('Agent:', players[0])
         list_all_players = os.listdir('system/Agent/')
-        # print(list_all_players)
 
-        progress_bar(0, number_of_matches)
         for match in range(number_of_matches):
             lst_player_fight = players + list(np.random.choice(list_all_players, size = (game.amount_player() -1), replace = False))
             count = fight_test_1_player(game, lst_player_fight)
             progress_bar(match+1, number_of_matches)
             if count[0] == 0: lose += 1   
             else: win += 1
+        
         print(f'\nThắng: {win}, Thua: {lose}')
+        end = time.time()
+        print(f'Thời gian test:{end - start: .2f}s', )
     else:
         print_raise('Test_1_player')
 
@@ -155,6 +165,7 @@ def test_1_player(game, players):
 if __name__ == '__main__':
     game = setup_game(game_name)
     print('GAME:',  game_name)
+    
     if type_run_code == 'Train':
         train()
     if type_run_code == 'Test':
