@@ -15,8 +15,8 @@
 
 
 
-type_run_code = 'Train' #Train or Test or Train_1_player
-players = ['Phong_200922', 'Trang', 'NhatAnh_New']
+type_run_code = 'Train_1_player' #Train or Test or Train_1_player
+players = ['NhatAnh_200922']
 game_name = 'MachiKoro'
 time_run_game = 55555
 
