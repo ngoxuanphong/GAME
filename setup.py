@@ -15,8 +15,8 @@
 
 
 
-type_run_code = 'Test' #Train or Test or Train_1_player
-players = ['NhatAnh_New']
+type_run_code = 'Train_1_player' #Train or Test or Train_1_player
+players = ['Trang']
 game_name = 'TLMN'
 time_run_game = 79200
 

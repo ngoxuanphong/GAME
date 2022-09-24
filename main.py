@@ -7,6 +7,7 @@ import functools
 import itertools
 import multiprocessing.pool
 import warnings 
+import time
 warnings.filterwarnings('ignore')
 
 from setup import *
@@ -36,7 +37,12 @@ def load_module_player(player):
     # return p1
 def train_1_player(player):
     p1 = load_module_player(player)
-    p1.train(100000)
+    a = time.time()
+    print(a)
+    p1.train(10)
+    b = time.time()
+    print(b)
+    print(a-b)
 
 def create_dict(dict_save_win__, count__, lst_player):
     for id in range(len(lst_player)):
