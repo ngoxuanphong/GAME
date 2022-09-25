@@ -4,9 +4,10 @@ import random
 import json
 import os
 import sys
-from setup import game_name,time_run_game
+from setup import game_name
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 
+time_run_game = 79200
 player = 'Dat_200922'  #Tên folder của người chơi
 path_data = f'system/Agent/{player}/Data'
 if not os.path.exists(path_data):

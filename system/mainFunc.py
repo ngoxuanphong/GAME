@@ -1,6 +1,6 @@
 import time
 def progress_bar(progress, total):
-    bar_long = 50
+    bar_long = 100
     percent = int(bar_long * (progress/float(total)))
     bar = '█'*percent + '-'*(bar_long - percent)
     print(f"\r|{bar}| {percent: .2f}% | {progress}/{total}", end = "\r")
@@ -26,5 +26,4 @@ def print_raise(mode):
         print('VÀO SETUP SỬA SỐ LƯỢNG NGƯỜI CHƠI ĐÊ')
         time.sleep(1)
         print('Ở CHẾ ĐỘ NÀY CHỈ HỖ TRỢ 1 NGƯỜI THÔI')
-
 

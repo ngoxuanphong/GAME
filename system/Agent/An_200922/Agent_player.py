@@ -1,10 +1,11 @@
 import numpy as np
 import os
 import sys
-from setup import game_name,time_run_game
+from setup import game_name
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 from env import *
 
+time_run_game = 79200
 player = 'An_200922'
 path_data = f'system/Agent/{player}/Data'
 if not os.path.exists(path_data):

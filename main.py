@@ -133,31 +133,38 @@ def train():
         print_raise('Train')
 
 def fight_test_1_player(game, players):
-    list_player = [load_module_fight(players[0], 'Test')]
+    if type(players[0]) == str:
+        module_player = load_module_fight(players[0], 'Test')
+        lst_players = [module_player.test]
+    else:
+        lst_players = [players[0]]
     for i in range(1, len(players)):
         player = players[i]
-        list_player.append(load_module_fight(player, 'Test_1_player'))
-    lst_players = [i.test for i in list_player]
+        module_player = load_module_fight(player, 'Test_1_player')
+        lst_players.append(module_player.test)
     count,_ = game.normal_main(lst_players, 1 , [0])
     return count
 
-def test_1_player(game, players):
+def test_1_player(game, players, number_of_matches):
+    if type(players) != list:
+        players = [players]
     if len(players) == 1:
         start = time.time()
         win, lose = 0,0
-        print('Agent:', players[0])
+        if type(players[0]) == str: print('Agent:', players[0])
         list_all_players = os.listdir('system/Agent/')
 
         for match in range(number_of_matches):
             lst_player_fight = players + list(np.random.choice(list_all_players, size = (game.amount_player() -1), replace = False))
             count = fight_test_1_player(game, lst_player_fight)
-            progress_bar(match+1, number_of_matches)
+            if type(players[0]) == str: progress_bar(match+1, number_of_matches)
             if count[0] == 0: lose += 1   
             else: win += 1
         
-        print(f'\nThắng: {win}, Thua: {lose}')
+        if type(players[0]) == str: print(f'\nThắng: {win}, Thua: {lose}')
         end = time.time()
-        print(f'Thời gian test:{end - start: .2f}s', )
+        if type(players[0]) == str: print(f'Thời gian test:{end - start: .2f}s', )
+        return win, lose
     else:
         print_raise('Test_1_player')
 
@@ -173,4 +180,4 @@ if __name__ == '__main__':
     if type_run_code == 'Train_1_player':
         train_1_player_with_timeout(players)
     if type_run_code == 'Test_1_player':
-        test_1_player(game, players)
+        test_1_player(game, players, number_of_matches)
