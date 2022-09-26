@@ -42,7 +42,7 @@ def train_1_player(player):
     p1.train(100000)
 
 @timeout(time_run_game)
-def train_1_player_with_timeout(players):
+def train_1_player_with_timeout(game, players):
     if len(players) == 1:
         p1 = load_module_player(players[0])
         p1.train(100000)
@@ -145,7 +145,8 @@ def fight_test_1_player(game, players):
     count,_ = game.normal_main(lst_players, 1 , [0])
     return count
 
-def test_1_player(game, players, number_of_matches):
+def test_1_player(game_name, players, number_of_matches):
+    game = setup_game(game_name)
     if type(players) != list:
         players = [players]
     if len(players) == 1:
@@ -178,6 +179,6 @@ if __name__ == '__main__':
     if type_run_code == 'Test':
         fight_multi_player(game, players)
     if type_run_code == 'Train_1_player':
-        train_1_player_with_timeout(players)
+        train_1_player_with_timeout(game, players)
     if type_run_code == 'Test_1_player':
-        test_1_player(game, players, number_of_matches)
+        test_1_player(game_name, players, number_of_matches)

@@ -19,8 +19,8 @@
 
 type_run_code = 'Test_1_player' #Train or Test or Train_1_player or Test_1_player
 players = ['Phong_270922']
-game_name = 'Sheriff'
+game_name = 'Splendor_v2'
 time_run_game = 79200
 
-number_of_matches = 50 #Số trận test khi dùng khi test và test_1_player
+number_of_matches = 1000 #Số trận test khi dùng khi test và test_1_player
 path_save_json_test_player = '' #Nơi lưu file json data test các người chơi
