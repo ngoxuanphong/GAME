@@ -17,9 +17,10 @@
 
 
 
-type_run_code = 'Test_1_player' #Train or Test or Train_1_player or Test_1_player
-players = ['Phong_270922']
-game_name = 'Splendor_v2'
+type_run_code = 'Test' #Train or Test or Train_1_player or Test_1_player
+players = ['Khanh_130922']
+game_name = 'Century'
+
 time_run_game = 79200
 
 number_of_matches = 1000 #Số trận test khi dùng khi test và test_1_player
