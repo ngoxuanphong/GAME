@@ -30,9 +30,14 @@ def timeout(max_timeout):
 
 
 def setup_game(game_name):
-    sys.path.append(os.path.abspath(f"base/{game_name}"))
-    import env
-    return env
+    # sys.path.append(os.path.abspath(f"base/{game_name}"))
+    # import env
+    # return env
+    spec = importlib.util.spec_from_file_location('env', f"base/{game_name}/env.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module 
+    spec.loader.exec_module(module)
+    return module
 
 def load_module_player(player):
     return  importlib.util.spec_from_file_location('Agent_player', f"Agent/{player}/Agent_player.py").loader.load_module()
@@ -145,8 +150,17 @@ def fight_test_1_player(game, players):
     count,_ = game.normal_main(lst_players, 1 , [0])
     return count
 
-def test_1_player(game_name, players, number_of_matches):
-    game = setup_game(game_name)
+def return_game_name():
+    return game_name
+
+def test_1_player(game_name_, players, number_of_matches):
+    game = setup_game(game_name_)
+    if len(sys.argv) >= 2:
+        sys.argv = [sys.argv[0]]
+    sys.argv.append(game_name_)
+    # print(game_name_)
+    # print(game)
+    # print('sys.argv', sys.argv)
     if type(players) != list:
         players = [players]
     if len(players) == 1:
@@ -162,9 +176,10 @@ def test_1_player(game_name, players, number_of_matches):
             if count[0] == 0: lose += 1   
             else: win += 1
         
-        if type(players[0]) == str: print(f'\nThắng: {win}, Thua: {lose}')
-        end = time.time()
-        if type(players[0]) == str: print(f'Thời gian test:{end - start: .2f}s', )
+        if type(players[0]) == str: 
+            print(f'\nThắng: {win}, Thua: {lose}')
+            end = time.time()
+            print(f'Thời gian test:{end - start: .2f}s', )
         return win, lose
     else:
         print_raise('Test_1_player')
