@@ -15,6 +15,9 @@ from system.Data2 import *
 from system.Data3 import *
 from system.Data4 import *
 
+if len(sys.argv) == 2:
+    game_name = sys.argv[1]
+    
 
 def file_temp_to_action(state, file_temp, layer):
     a = get_list_action(state)

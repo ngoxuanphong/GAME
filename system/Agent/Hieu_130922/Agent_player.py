@@ -16,6 +16,9 @@ from system.Data2 import *
 from system.Data3 import *
 from system.Data4 import *
 
+if len(sys.argv) == 2:
+    game_name = sys.argv[1]
+    
 def silu(x, theda = 1.0):
     return x * sigmoid(theda *x)
 def sigmoid(x):

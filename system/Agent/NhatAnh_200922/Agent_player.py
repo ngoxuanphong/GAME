@@ -14,6 +14,9 @@ from system.Data2 import *
 from system.Data3 import *
 from system.Data4 import *
 
+if len(sys.argv) == 2:
+    game_name = sys.argv[1]
+    
 @njit()
 def basic_act(state,base):
     actions = get_list_action(state)

@@ -12,6 +12,9 @@ from system.Data2 import *
 from system.Data3 import *
 from system.Data4 import *
 
+if len(sys.argv) == 2:
+    game_name = sys.argv[1]
+    
 def sigmoid(x):
     sig = 1 / (1 + np.exp(-x))
     return sig

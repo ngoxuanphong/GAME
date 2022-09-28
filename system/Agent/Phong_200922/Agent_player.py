@@ -15,7 +15,9 @@ from env import *
 from system.Data import *
 from system.Data2 import *
 
-
+if len(sys.argv) == 2:
+    game_name = sys.argv[1]
+    
 class Phong_att():
     def __init__(self):
         self.layer = 1

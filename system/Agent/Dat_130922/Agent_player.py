@@ -3,13 +3,14 @@ from env import *
 import random
 import os
 import sys
-from setup import game_name
+from main import game_name
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 from system.Data import *
 from system.Data2 import *
 from system.Data3 import *
 from system.Data4 import *
-
+if len(sys.argv) == 2:
+    game_name = sys.argv[1]
 
 def test(state,temp,per):
     if len(temp)<2:

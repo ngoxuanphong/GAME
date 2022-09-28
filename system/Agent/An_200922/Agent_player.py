@@ -9,6 +9,9 @@ from system.Data2 import *
 from system.Data3 import *
 from system.Data4 import *
 
+if len(sys.argv) == 2:
+    game_name = sys.argv[1]
+    
 INF_AS_FLOAT = np.nan_to_num(np.inf)
 LOG_INF = np.log(INF_AS_FLOAT)
 HALF_LOG_INF = LOG_INF/2
