@@ -75,7 +75,7 @@ def player_random(player_state, file_temp, file_per):
     return action, file_temp, file_per
 
 @njit(fastmath=True, cache=True)
-def get_list_action(player_state_origin):
+def get_list_action_old(player_state_origin):
     player_state = player_state_origin.copy()
     # player_action = int(player_state[-3])
     phase_env = player_state[-1]
@@ -171,6 +171,94 @@ def get_list_action(player_state_origin):
         return np.array([81, 82])
 
 @njit(fastmath=True, cache=True)
+def get_list_action(player_state_origin):
+    player_state = player_state_origin.copy()
+    list_action_return = np.zeros(83)
+    phase_env = player_state[-1]
+    player_state_own = player_state[:96]
+    if phase_env == 1:
+        # list_action = np.array([15])
+        list_action_return[15] = 1
+        player_card = player_state_own[-15:]
+        for id in range(15):
+            if player_card[id] == 0:
+                continue
+            else:
+                list_action_return[id] = 1
+
+    elif phase_env == 2:
+        #lấy thẻ từ các chồng bài: 16-bài rút, 17-lật trái, 18-lật phải
+        list_action_return[16] = 1
+        all_left_right_up = player_state[171:201]
+        if np.sum(all_left_right_up[:15]) > 0:
+            list_action_return[17] = 1
+        if np.sum(all_left_right_up[15:]) > 0:
+            list_action_return[18] = 1
+
+    elif phase_env == 3:
+        #trả thẻ bỏ vào  chồng bài lật: 19: lật trái, 20: lật phải
+        list_action_return[np.array([19, 20])] = 1
+
+    elif phase_env == 4:
+        #lựa chọn bỏ qua thẻ
+        list_action_return[36] = 1
+        player_card = player_state_own[-15:]
+        for id in range(15):
+            if player_card[id] == 0:
+                continue
+            else:
+                list_action_return[id+21] = 1
+        if np.sum(player_state_own[-45:-30]) == 0:
+            list_action_return[36] = 0
+
+    elif phase_env == 5:
+        #chọn 1 trong 4 loại hàng chính ngạch
+        list_action_return[np.array([37, 38, 39, 40])] = 1
+
+    elif phase_env == 6:
+        #41, 42, 43 lần lượt là check người ở vị trí 1,2,3 sau mình, 44 là ko check nữa
+        for id in range(3):
+            #kiểm tra xem đã check hay chưa bằng cách xem mặt hàng khai báo
+            type_bag_other_player = player_state[95+25*id+3]
+            if type_bag_other_player != 0:
+                list_action_return[41+id] = 1
+
+    elif phase_env == 7:
+        #45 là ko hối lộ nữa, 46 là thêm coin
+        if player_state_own[0] > 0:
+            list_action_return[np.array([45, 46])] = 1
+        else:
+            list_action_return[45] = 1
+
+    elif phase_env == 8:
+        list_action_return[62] = 1
+        player_card_done = player_state_own[-75:-60]
+        for id in range(15):
+            if player_card_done[id] == 0:
+                continue
+            else:
+                list_action_return[id+47] = 1
+
+    elif phase_env == 9:
+        list_action_return[78] = 1
+        player_card_bag = player_state_own[-45:-30]
+        for id in range(15):
+            if player_card_bag[id] == 0:
+                continue
+            else:
+                list_action_return[id+63] = 1
+
+    elif phase_env == 10:
+        #79 là có check hàng, 80 là cho thoát
+        list_action_return[np.array([79, 80])] = 1
+
+    elif phase_env == 11:
+        list_action_return[np.array([81, 82])] = 1
+    
+    return list_action_return
+
+
+@njit(fastmath=True, cache=True)
 def step(env_state, action, all_penalty):
     phase_env = env_state[-1]
     id_action = int(env_state[-3])
@@ -240,8 +328,8 @@ def step(env_state, action, all_penalty):
         player_card = player_in4[-15:]
         if action == 36:
             if np.sum(card_bag) == 0:
-                print('T TOANG NÀY')
-                return env_state
+                print(env_state)
+                raise Exception('chưa bỏ thẻ vào túi')
             else:
                 env_state[-3] = (env_state[-3] + 1)%4
                 if env_state[-3] == (env_state[-2] - 1)%4:
@@ -452,7 +540,7 @@ def action_player(env_state,list_player,file_temp,file_per):
     current_player = int(env_state[-3])
     player_state = state_to_player(env_state)
     played_move,file_temp[current_player],file_per = list_player[current_player](player_state,file_temp[current_player],file_per)
-    if played_move not in get_list_action(player_state):
+    if get_list_action(player_state)[played_move] != 1:
         raise Exception('bot dua ra action khong hop le')
     return played_move,file_temp,file_per
 
@@ -911,7 +999,41 @@ def normal_main(list_player, times, file_per):
         count[shuffle[winner]] += 1
     return list(count.astype(np.int64)), file_per
 
+def action_player_2(env_state,list_player,file_temp,file_per, file_per_2):
+    current_player = int(env_state[-3])
+    player_state = state_to_player(env_state)
+    played_move,file_temp[current_player],file_per, file_per_2[current_player] = list_player[current_player](player_state,file_temp[current_player],file_per, file_per_2[current_player])
+    if get_list_action(player_state)[played_move] != 1:
+        raise Exception('bot dua ra action khong hop le')
+    return played_move,file_temp,file_per, file_per_2
 
-# all_action_mean = list(pd.read_excel('base/Sheriff/SHERIFF.xlsx')['Mean'])
-# list_player = [player_random]*4
-# count_all, file_per_all = normal_main(list_player, 1, [0])
+def one_game_2(list_player, file_temp, file_per, all_penalty, file_per_2):
+    env_state = reset()
+    while not system_check_end(env_state):
+        # player_state = state_to_player(env_state)
+        action, file_temp, file_per, file_per_2 = action_player_2(env_state,list_player,file_temp,file_per, file_per_2)
+        env_state = step(env_state, action, all_penalty)
+    
+    winner = check_winner(env_state)
+    for id_player in range(4):
+        env_state[-1] = 1
+        id_action = env_state[-3]
+        action, file_temp, file_per, file_per_2 = action_player_2(env_state,list_player,file_temp,file_per, file_per_2)
+        env_state[-3] = (env_state[-3] + 1)%4
+
+    return winner, file_per, file_per_2
+
+def normal_main_2(list_player, times, file_per,per_file_2):
+    count = np.zeros(len(list_player))
+    all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
+    all_id_player = np.arange(len(list_player))
+    for van in range(times):
+        shuffle = np.random.choice(all_id_player, 4, replace=False)
+        file_per_2_new = [per_file_2[shuffle[i]] for i in range(amount_player())]
+        shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
+        file_temp = [[0],[0],[0],[0]]
+        winner, file_per, file_per_2_new = one_game_2(shuffle_player, file_temp, file_per, all_penalty, file_per_2_new)
+        list_p_id_new = [list(shuffle).index(i) for i in range(amount_player())]
+        per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
+        count[shuffle[winner]] += 1
+    return list(count.astype(np.int64)), file_per, per_file_2

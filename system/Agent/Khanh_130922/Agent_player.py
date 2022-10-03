@@ -7,22 +7,36 @@ import sys
 from setup import game_name,time_run_game
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 from env import *
-from system.Data import *
-from system.Data2 import *
-from system.Data3 import *
-from system.Data4 import *
+
+from numba import jit, njit, prange
 if len(sys.argv) == 2:
     game_name = sys.argv[1]
-    
-def sigmoid(x):
+
+@jit()
+def matmul(A, B):
+    if A.shape == (len(A),):
+        A = np.array([A])
+    m = A.shape[0]
+    n = A.shape[1]
+    p = B.shape[1]
+    C = np.zeros((m,p))
+    for i in range(m):
+        for j in range(p):
+            for k in range(n):
+                C[i,j] = C[i,j] + A[i,k]*B[k,j]
+    return C
+
+@njit()
+def _sigmoid_khanh_130922_(x):
     sig = 1 / (1 + np.exp(-x))
     return sig
 
-def silu(x, theda = 1.0):
-    return x * sigmoid(theda *x)
+@njit()
+def _silu_khanh_130922_(x, theda = 1.0):
+    return x * _sigmoid_khanh_130922_(theda *x)
 
-
-def neural_network(play_state, file_temp):
+# @jit()
+def neural_network_khanh_130922(play_state, file_temp):
     if 55 < len(play_state) < 70 or len(play_state) > 250 : # TLMN , TLMN_v2 , CENTURY
         matran1 = np.matmul(play_state,file_temp[0])
         matran1 = 1 / (1 + np.exp(-matran1))
@@ -39,7 +53,7 @@ def neural_network(play_state, file_temp):
         return all_action_val  
     elif 170 < len(play_state) < 250  : #SHERIFF 
         matran1 = np.matmul(play_state, file_temp[0])
-        matran1 = silu(matran1, theda = 1.0)
+        matran1 = _silu_khanh_130922_(matran1, theda = 1.0)
         matran2 = np.matmul(matran1, file_temp[1])
         return matran2
     else :#SUSHIGO-main, MACHIKOR0
@@ -48,13 +62,15 @@ def neural_network(play_state, file_temp):
         matran2 = np.matmul(matran1, file_temp[1])
         return matran2
 
+
 def test(play_state,file_temp,file_per):
     a = get_list_action(play_state)
-    
+    a = np.where(a == 1)[0]
     if len(file_temp) < 2:
-        file_temp = data_Khanh_130922[game_name]
-
-    matran2 = neural_network(play_state, file_temp)
+        player = 'Khanh_130922'  #Tên folder của người chơi
+        path_save_player = f'system/Agent/{player}/Data/{game_name}_{time_run_game}/'
+        file_temp = np.load(f'{path_save_player}CK_Win.npy',allow_pickle=True)
+    matran2 = neural_network_khanh_130922(play_state, file_temp)
     max_ = 0
     action_max = a[random.randrange(len(a))]
     
@@ -63,3 +79,16 @@ def test(play_state,file_temp,file_per):
             max_ = matran2[act]
             action_max = act
     return action_max,file_temp,file_per
+
+def test2(play_state,file_temp,file_per, file_per_2):
+    a = get_list_action(play_state)
+    a = np.where(a == 1)[0]
+    matran2 = neural_network_khanh_130922(play_state, file_per_2)
+    max_ = 0
+    action_max = a[random.randrange(len(a))]
+    
+    for act in a:
+        if matran2[act] > max_:
+            max_ = matran2[act]
+            action_max = act
+    return action_max,file_temp,file_per, file_per_2

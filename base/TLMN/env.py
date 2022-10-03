@@ -97,7 +97,7 @@ def hand_of_cards(arr_card):
     return np.array(arr_return)
 
 @njit
-def get_list_action(player_state_origin:np.int64):
+def get_list_action_old(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
     p_state = p_state.astype(np.int64)
     arr_card = np.where(p_state[0:52] == 0)[0]
@@ -152,6 +152,63 @@ def get_list_action(player_state_origin:np.int64):
     return np.array(arr_action)
 
 @njit
+def get_list_action(player_state_origin:np.int64):
+    list_action_return = np.zeros(403)
+    p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
+    arr_card = np.where(p_state[0:52] == 0)[0]
+    arr_hand = hand_of_cards(arr_card)
+
+    if len(arr_card) == 0:
+        mask = (arr_hand[:,0] == 0)
+    else:
+        if p_state[58] == 0:
+            mask = (arr_hand[:,0] != 0)
+        else:
+            if (p_state[58] >= 1 and p_state[58] <= 3) or (p_state[58] >= 5 and p_state[58] <= 13):
+                if p_state[59] <= 47:
+                    mask = ((arr_hand[:,0] == p_state[58]) & (arr_hand[:,1] > p_state[59])) | \
+                            (arr_hand[:,0] == 0)
+                else:
+                    if p_state[58] == 1:
+                        mask = ((arr_hand[:,0] == 1) & (arr_hand[:,1] > p_state[59])) | \
+                                (arr_hand[:,0] == 4) | (arr_hand[:,0] == 14) | (arr_hand[:,0] == 15) | \
+                                (arr_hand[:,0] == 0)
+                    elif p_state[58] == 2:
+                        mask = ((arr_hand[:,0] == 2) & (arr_hand[:,1] > p_state[59])) | \
+                                (arr_hand[:,0] == 4) | (arr_hand[:,0] == 15) | \
+                                (arr_hand[:,0] == 0)
+                    else:
+                        mask = (arr_hand[:,0] == 0)
+            elif p_state[58] == 14:
+                mask = ((arr_hand[:,0] == 14) & (arr_hand[:,1] > p_state[59])) | \
+                        (arr_hand[:,0] == 4) | (arr_hand[:,0] == 15) | \
+                        (arr_hand[:,0] == 0)
+            elif p_state[58] == 4:
+                mask = ((arr_hand[:,0] == 4) & (arr_hand[:,1] > p_state[59])) | \
+                        (arr_hand[:,0] == 15) | \
+                        (arr_hand[:,0] == 0)
+            else:
+                mask = ((arr_hand[:,0] == 15) & (arr_hand[:,1] > p_state[59])) | \
+                        (arr_hand[:,0] == 0)
+    
+    possible_hands = arr_hand[mask,:]
+
+    # arr_action = []
+    for hand in possible_hands:
+        if hand[0] == 0:
+            list_action_return[0] = 1
+        elif hand[0] >= 1 and hand[0] <= 4:
+            list_action_return[13*np.sum(np.arange(4,5-hand[0],-1)) + hand[1] - (hand[0]-1)*(hand[1]//4) - hand[0] + 2] = 1
+        elif hand[0] >= 5 and hand[0] <= 13:
+            list_action_return[4*np.sum(np.arange(10,15-hand[0],-1)) + hand[1] - 4*hand[0] + 142] = 1
+        else:
+            list_action_return[27*hand[0] + hand[1] - (hand[1]//4) - 39] = 1
+
+    return list_action_return
+
+
+@njit
 def close_game(e_state):
     for i in range(4):
         if np.count_nonzero(e_state[0:52] == i) == 0:
@@ -184,7 +241,7 @@ def step(action, e_state):
     p_state = get_player_state(e_state)
     arr_action = get_list_action(p_state)
 
-    if action not in arr_action:
+    if arr_action[action] != 1:
         '''
         Action không hợp lệ
         '''
@@ -324,33 +381,6 @@ def one_game(list_player, env, per_file):
     
     return winner, per_file
 
-# def one_game_print(list_player, env, print_mode, per_file):
-#     reset(env)
-#     while not check_env(env):
-#         reset(env)
-
-#     if print_mode:
-#         print_player_cards(env)
-    
-#     temp_file = [[], [], [], []]
-#     while 1:
-#         act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
-#         if print_mode:
-#             print(Fore.LIGHTCYAN_EX + 'Lượt của player' + Style.RESET_ALL, env[52]+1, Fore.LIGHTCYAN_EX + '. Round state:' + Style.RESET_ALL, env[53:57])
-        
-#         arr_card_in_hand = step(act, env)
-#         if print_mode:
-#             print_ingame(act, arr_card_in_hand, env)
-        
-#         if close_game(env) != -1:
-#             break
-
-#     winner = close_game(env)
-#     for i in range(4):
-#         env[52] = i
-#         act, temp_file[env[52]], per_file = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file)
-    
-#     return winner, per_file
 
 def normal_main(list_player, num_game, per_file):
     if len(list_player) != 4:
@@ -391,3 +421,46 @@ def n_games(list_player, num_game, print_mode):
         count_win[p_lst_idx[winner]] += 1
     
     return count_win, per_file
+
+
+def one_game_2(list_player, env, per_file, _file_per_2_):
+    reset(env)
+    while not check_env(env):
+        reset(env)
+    
+    temp_file = [[0], [0], [0], [0]]
+    while True:
+        act, temp_file[env[52]], per_file, _file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file, _file_per_2_[env[52]])
+        arr_card_in_hand = step(act, env)
+        if close_game(env) != -1:
+            break
+    
+    winner = close_game(env)
+    for i in range(4):
+        env[52] = i
+        act, temp_file[env[52]], per_file,_file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file, _file_per_2_[env[52]])
+    
+    return winner, per_file, _file_per_2_
+
+
+def normal_main_2(list_player, num_game, per_file, per_file_2):
+    if len(list_player) != 4:
+        print('Game chỉ cho phép có đúng 4 người chơi')
+        return [-1,-1,-1,-1], per_file
+    
+    env = np.full(60,0)
+    count_win = [0,0,0,0]
+    p_lst_idx = [0,1,2,3]
+    for _n in range(num_game):
+        rd.shuffle(p_lst_idx)
+        file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
+        list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
+        winner, per_file, _file_per_2_ = one_game_2(
+            list_player_new, env, per_file, file_per_2_new)
+
+        list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
+        per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
+        
+        count_win[p_lst_idx[winner]] += 1
+    
+    return count_win, per_file, per_file_2
