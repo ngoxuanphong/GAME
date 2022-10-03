@@ -226,7 +226,7 @@ def step(state_sys,list_action,amount_player,turn,round):
     return state_sys
 
 @njit
-def get_list_action(player_state_origin:np.int64):
+def get_list_action_old(player_state_origin:np.int64):
     player_state = player_state_origin.copy()
     player_state = player_state.astype(np.int64)
     amount = player_state[2]
@@ -245,6 +245,29 @@ def get_list_action(player_state_origin:np.int64):
         # print("INDEXXXXXXXXXXX:",index)
         list_action = np.delete(list_action, index)
     return np.unique(list_action)
+
+@njit
+def get_list_action(player_state_origin:np.int64):
+    list_action_return = np.zeros(14)
+    player_state = player_state_origin.copy()
+    player_state = player_state.astype(np.int64)
+    amount = player_state[2]
+    index_between = int((12 - amount) + 3)
+    card = player_state[3:index_between]
+    list_action = card[np.where(card>= 0)[0]]
+    list_card_player= np.where(player_state[index_between+2:index_between+int((12 - amount) + 2)] == 11)[0]
+    if (12-amount)*3 < player_state[1]:
+        list_action = np.array([13])
+
+    if len(list_card_player) != 0 and player_state[-2] != 1 and len(list_action) > 1:
+        list_action = np.append(list_action,np.array([12]))
+
+    if player_state[-2] == 1:
+        index = np.where(list_action == 11)[0][0]
+        # print("INDEXXXXXXXXXXX:",index)
+        list_action = np.delete(list_action, index)
+    list_action_return[np.unique(list_action)] = 1
+    return list_action_return
 
 @njit
 def reset_card_player(state_sys):
@@ -390,6 +413,7 @@ def normal_main(list_player,amount_game,file_per):
         for win in winner:
             num_won[player_list_index[win]] += 1
     return num_won,file_per
+
 def normal_main_print(list_player,amount_game,file_per):
     amount_player = len(list_player)
     player_list_index = [ i for i in range(amount_player)]
@@ -409,3 +433,83 @@ def normal_main_print(list_player,amount_game,file_per):
 #     end = time.time()
 #     print(a,b,end-start)
 # reset(2)
+
+
+def one_game_2(list_player_,per_file, file_per_2):
+    amount_player = len(list_player_)
+    state_sys = reset(amount_player)
+    temp_file = [[0] for i in range(amount_player)]
+    amount_player = state_sys[2]
+    turn = state_sys[1]
+
+    while turn<(12-amount_player)*3:
+        round = state_sys[0]-1
+        turn = state_sys[1]
+        # print("Luot: ",turn,state_sys)
+        list_action = [[-1,-1,-1] for i in range(amount_player)]
+        for id_player in range(len(list_player_)):
+            player_state = get_player_state(state_sys,id_player)
+            count = 0
+            while player_state[-1] > 0:
+                # print(list_action[id_player])
+                action, temp_file[id_player], per_file, file_per_2[id_player] = list_player_[id_player](player_state,temp_file[id_player],per_file, file_per_2[id_player])
+                list_action[id_player][count] = action
+                count += 1
+                player_state = test_action(player_state,action)
+            player_state = get_player_state(state_sys,id_player)
+            # print(id_player,player_state)
+        list_action = np.array(list_action)
+        # print(list_action)
+        state_sys = step(state_sys,list_action,amount_player,turn,round)
+        if turn % (12-amount_player) == 0:
+            state_sys = caculater_score(state_sys,amount_player)
+            if state_sys[0] < 3:
+                state_sys[0] += 1
+                state_sys = reset_card_player(state_sys)
+        if turn == (12-amount_player)*3:
+            state_sys = caculator_pudding(state_sys,amount_player)
+        if turn <= (12-amount_player)*3:
+            state_sys[1] += 1
+        # print(state_sys)
+    # print(state_sys)
+    for id_player in range(len(list_player_)):
+        list_action[id_player], temp_file[id_player], per_file, file_per_2[id_player] = list_player_[id_player](get_player_state(state_sys,id_player),temp_file[id_player],per_file, file_per_2[id_player])    
+    winner = winner_victory(state_sys)
+    return winner,per_file, file_per_2
+
+
+def normal_main_2(list_player,amount_game,file_per, per_file_2):
+    amount_player = len(list_player)
+    player_list_index = [i for i in range(amount_player)]
+    num_won = [0 for i in range(amount_player)]
+    for game in range(amount_game):
+        random.shuffle(player_list_index)
+        list_player_shuffle = [list_player[i] for i in player_list_index]
+        file_per_2_new = [per_file_2[i] for i in player_list_index]
+        winner, file_per, file_per_2_new = one_game_2(list_player_shuffle,file_per, file_per_2_new)
+
+        list_p_id_new = [player_list_index.index(i) for i in range(amount_player)]
+        per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player)]
+
+        for win in winner:
+            num_won[player_list_index[win]] += 1
+    return num_won,file_per, per_file_2
+
+# def normal_main_2(list_player, times, file_per, per_file_2):
+#     count = np.zeros(len(list_player)+1)
+#     all_card_fee = np.array([1, 1, 1, 2, 2, 3, 5, 3, 6, 3, 3, 2, 6, 7, 8, 22, 16, 10, 4])
+#     all_id_player = np.arange(len(list_player))
+#     for van in range(times):
+#         shuffle = np.random.choice(all_id_player, 4, replace=False)
+#         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
+#         file_temp = [[0],[0],[0],[0]]
+#         winner, file_per, file_per_2_new = one_game_2(shuffle_player, file_temp, file_per, all_card_fee, file_per_2_new)
+
+#         list_p_id_new = [list(shuffle).index(i) for i in range(amount_player())]
+#         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
+
+#         if winner == -1:
+#             count[winner] += 1
+#         else:
+#             count[shuffle[winner]] += 1
+#     return list(count.astype(np.int64)), file_per, per_file_2

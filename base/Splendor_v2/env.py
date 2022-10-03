@@ -100,7 +100,7 @@ def check_victory(p_state):
         return -1
 
 @njit()
-def get_list_action(player_state_origin:np.int64):
+def get_list_action_old(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
     p_state = p_state.astype(np.int64)
     b_stocks = p_state[:6] #Các nguyên liệu trên bàn chơi
@@ -178,6 +178,87 @@ def get_list_action(player_state_origin:np.int64):
     if len(list_action) > 1 and list_action[0] == 0:
         list_action = np.delete(list_action, 0)
     return list_action
+
+@njit()
+def get_list_action(player_state_origin:np.int64):
+    list_action_return = np.zeros(42)
+    p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
+    b_stocks = p_state[:6] #Các nguyên liệu trên bàn chơi
+    p_st = p_state[6:11] #Các nguyên liệu của bản thân đang có
+    yellow_count = p_state[11] #Số thẻ vàng đang có
+    normal_cards = p_state[18:102] #Thông tin 12 thẻ đang mở
+    p_upside_down_card =  p_state[127:148] #thông tin 3 thẻ đang úp
+    taken = p_state[148: 153] #các nguyên liệu đã lấy trong turn
+    p_count_st = p_state[12:17] #Nguyên liệu mặc định của người chơi
+    list_action_return[0] = 1
+    check_action_0 = False
+    #Trả nguyên liệu
+    p_st_have_auto = p_state[6:12]
+    sum_p_st_have_auto = sum(p_st_have_auto)
+    if sum_p_st_have_auto > 10:
+        list_action_return_stock = [i_+36 for i_ in range(6) if p_st_have_auto[i_] != 0]
+        # list_action = np.array(list_action_return_stock)
+        list_action_return[0] = 0
+        list_action_return[np.array(list_action_return_stock)] = 1
+        return list_action_return
+
+    #Lấy nguyên liệu
+    s_taken = np.sum(taken)
+    temp_ = [i_ + 31 for i_ in range(5) if b_stocks[i_] != 0]
+    if s_taken == 1:
+        s_ = np.where(taken==1)[0][0]
+        if b_stocks[s_] < 3: # Có thể lấy double
+            if (s_+ 31) in temp_:
+                temp_.remove(s_ + 31) #Xóa action đã lấy ở file temp nếu nguyên liệu không trên 4
+        list_action_return[np.array(temp_)] = 1
+        check_action_0 = True
+    elif s_taken == 2:
+        lst_s_ = np.where(taken==1)[0]
+        for s_ in lst_s_:
+            if (s_+31) in temp_:
+                temp_.remove(s_+31)
+        list_action_return[np.array(temp_)] = 1
+        check_action_0 = True
+    elif s_taken == 0:
+        if len(temp_) > 0:
+            # list_action_return[0] = 0
+            list_action_return[np.array(temp_)] = 1   
+    if s_taken > 0:
+        return list_action_return
+
+    # Kiểm tra 15 thẻ có thể mở, action từ [1:16]
+    for id_card in range(12):
+        card = normal_cards[7*id_card: 7+7*id_card]
+        if sum(card) > 0:
+            card_need = p_st + p_count_st - card[-5:]
+            if -sum(card_need[np.where(card_need < 0)]) <= yellow_count or min(card_need) >= 0: #(x*x>0)
+                list_action_return[id_card+1] = 1
+    for id_card in range(3):
+        card = p_upside_down_card[7*id_card: 7+7*id_card]
+        if sum(card) > 0:
+            card_need = p_st + p_count_st -card[-5:]
+            if sum(card_need) != 0:
+                if -sum(card_need[np.where(card_need < 0)]) <= yellow_count or min(card_need) >= 0:
+                    list_action_return[id_card+13] = 1
+    count_upside_down = 0
+    for id_card in range(3):
+        card_upside_down = p_upside_down_card[7*id_card:7+7*id_card]
+        if sum(card_upside_down) > 0:
+            count_upside_down += 1
+        else:
+            break
+    if count_upside_down < 3: # Nếu chưa có đủ 3 thẻ úp thì có thể úp thêm một thẻ
+        list_action_upside_down = np.array([i+16 for i in range(0, p_state[159])])
+        list_action_return[list_action_upside_down] = 1
+        list_card_hide = np.where(p_state[156:159] == 1)[0] + 28
+        list_action_return[list_card_hide] = 1
+        
+    if check_action_0 == False and np.sum(list_action_return) > 1:
+        list_action_return[0] = 0
+
+    return list_action_return
+
 
 @njit
 def get_remove_card_on_lv_and_add_new_card(env_state, lv,p_id, id_card_hide, type_action, card_id):
@@ -396,6 +477,53 @@ def normal_main(list_player, num_game,per_file):
             num_won[4] += 1
 
     return num_won, per_file
+
+def one_game_2(list_player, per_file, per_file_2):
+    env, lv1, lv2, lv3 = Reset()
+    temp_file = [[0],[0],[0],[0]]
+    _cc = 0
+    while env[100] <= 400 and _cc <= 10000:
+        p_idx = env[100]%4
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        act, temp_file[p_idx], per_file, per_file_2[p_idx] = list_player[p_idx](p_state, temp_file[p_idx], per_file, per_file_2[p_idx])
+        env, lv1, lv2, lv3 = step(act, env, lv1, lv2, lv3)
+
+        if close_game(env) != 0:
+            break
+
+        _cc += 1
+    
+    turn = env[100]
+    for i in range(4):
+        env[100] = i
+        act, temp_file[i], per_file, per_file_2[i] = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file, per_file_2[i])
+    
+    env[100] = turn
+    return close_game(env), per_file, per_file_2
+
+def normal_main_2(list_player, num_game, per_file, per_file_2):
+    if len(list_player) != 4:
+        print('Game chỉ cho phép có đúng 4 người chơi')
+        return [-1,-1,-1,-1,-1], per_file
+        
+    num_won = [0,0,0,0,0]
+    p_lst_idx = [0,1,2,3]
+    for _n in range(num_game):
+        rd.shuffle(p_lst_idx)
+        # print(p_lst_idx)
+        file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
+        list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
+        winner, per_file, per_file_2 = one_game_2(
+            list_player_new, per_file ,file_per_2_new)
+
+        list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
+        per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
+        if winner != 0:
+            num_won[p_lst_idx[winner-1]] += 1
+        else:
+            num_won[4] += 1
+
+    return num_won, per_file, per_file_2
 
 def one_game_test(list_player, per_file_temp):
     env, lv1, lv2, lv3 = Reset()

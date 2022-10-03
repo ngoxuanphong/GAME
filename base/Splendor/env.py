@@ -62,7 +62,7 @@ def get_player_state(e_state, lv1, lv2, lv3):
     if lv3[-1] == 20:
         p_state[163] = 0
     
-    return p_state.astype(np.int64)
+    return p_state.astype(np.float64)
 
 @njit
 def close_game(e_state):
@@ -107,7 +107,7 @@ def check_buy_card(p_state, card_id):
     return False
 
 @njit
-def get_list_action(player_state_origin:np.int64):
+def get_list_action_old(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
     p_state = p_state.astype(np.int64)
     phase = p_state[160] # Pha
@@ -178,9 +178,96 @@ def get_list_action(player_state_origin:np.int64):
     return np.array(list_action)
 
 @njit
+def get_list_action(player_state_origin:np.int64):
+    list_action_return = np.zeros(198)
+    p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
+    phase = p_state[160] # Pha
+    normal_cards = p_state[:90] # Trạng thái các thẻ thường
+    b_stocks = p_state[100:106] # Nguyên liệu trên bàn chơi
+    self_st = p_state[106:112] # Nguyên liệu của người chơi
+    cards_check_buy = [i_ for i_ in range(90) if normal_cards[i_]==-1 or normal_cards[i_] == 5]
+
+    if phase == 0: # Lựa chọn kiểu hành động
+        if np.sum(b_stocks[:5]) != 0:
+            # list_action.append(1) # Lấy nguyên liệu
+            list_action_return[1] = 1
+        else: 
+            list_action_return[0] = 1
+            # list_action.append(0) # Bỏ lượt
+
+        if np.count_nonzero(normal_cards==-1) < 3:
+            # list_action.append(2) # Úp thẻ
+            list_action_return[2] = 1
+
+        for card_id in cards_check_buy:
+            if check_buy_card(p_state, card_id):
+                # list_action.append(3) # Mua thẻ
+                list_action_return[3] = 1
+                break
+    
+    elif phase == 1: # Lấy nguyên liệu
+        taken = p_state[155:160]
+        s_taken = np.sum(taken)
+        temp_ = [i_+4 for i_ in range(5) if b_stocks[i_] != 0]
+        if s_taken == 0:
+            # list_action += temp_
+            list_action_return[np.array(temp_)] = 1
+        elif s_taken == 1:
+            s_ = np.where(taken==1)[0][0]
+            if b_stocks[s_] >= 3: # Có thể lấy double
+                # list_action += temp_
+                list_action_return[np.array(temp_)] = 1
+            else:
+                if (s_+4) in temp_:
+                    temp_.remove(s_+4)
+
+                # list_action += temp_
+                list_action_return[np.array(temp_)] = 1
+        else:
+            lst_s_ = np.where(taken==1)[0]
+            for s_ in lst_s_:
+                if (s_+4) in temp_:
+                    temp_.remove(s_+4)
+            
+            # list_action += temp_
+            list_action_return[np.array(temp_)] = 1
+
+        if np.sum(self_st) >= 10:
+            # list_action.append(0)
+            list_action_return[0] = 1
+    
+    elif phase == 2: # Úp thẻ
+        temp_ = [i_+9 for i_ in range(90) if normal_cards[i_]==5]
+        # list_action += temp_
+        list_action_return[np.array(temp_)] = 1
+        if p_state[161] == 1:
+            # list_action.append(99)
+            list_action_return[99] = 1
+        if p_state[162] == 1:
+            # list_action.append(100)
+            list_action_return[100] = 1
+        if p_state[163] == 1:
+            # list_action.append(101)
+            list_action_return[101] = 1
+
+    elif phase == 3: # Mua thẻ
+        for card_id in cards_check_buy:
+            if check_buy_card(p_state, card_id):
+                # list_action.append(card_id+102)
+                list_action_return[card_id+102] = 1
+    
+    else: # Pha trả nguyên liệu
+        # list_action += [i_+192 for i_ in range(6) if self_st[i_] != 0]
+        list_action_return[np.array([i_+192 for i_ in range(6) if self_st[i_] != 0])] = 1
+
+    return list_action_return
+
+
+@njit
 def step(action, e_state, lv1, lv2, lv3):
     list_action = get_list_action(get_player_state(e_state, lv1, lv2, lv3))
-    if action not in list_action:
+    if list_action[action] != 1:
         '''
         Action không hợp lệ
         '''
@@ -413,6 +500,49 @@ def normal_main(list_player, num_game, per_file):
 
     return num_won, per_file
         
+def one_game_2(list_player, env, lv1, lv2, lv3, per_file, per_file_2):
+    # print(list_player, per_file_2)
+    reset(env, lv1, lv2, lv3)
+    temp_file = [[0],[0],[0],[0]]
+    while env[154] <= 400:
+        p_idx = env[154]%4
+        act, temp_file[p_idx], per_file, per_file_2[p_idx] = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file, per_file_2[p_idx])
+        step(act, env, lv1, lv2, lv3)
+        if close_game(env) != 0:
+            break
+    
+    turn = env[154]
+    for i in range(4):
+        env[154] = i
+        act, temp_file[i], per_file, per_file_2[i] = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file, per_file_2[i])
+    
+    env[154] = turn
+    return close_game(env), per_file, per_file_2
+
+def normal_main_2(list_player, num_game, per_file, per_file_2):
+    if len(list_player) != 4:
+        print('Game chỉ cho phép có đúng 4 người chơi')
+        return [-1,-1,-1,-1,-1], per_file
+        
+    env, lv1, lv2, lv3 = generate()
+    num_won = [0,0,0,0,0]
+    p_lst_idx = [0,1,2,3]
+    for _n in range(num_game):
+        rd.shuffle(p_lst_idx)
+        # print(p_lst_idx)
+        file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
+        list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
+        winner, per_file, per_file_2 = one_game_2(
+            list_player_new, env, lv1, lv2, lv3, per_file ,file_per_2_new)
+
+        list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
+        per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
+        if winner != 0:
+            num_won[p_lst_idx[winner-1]] += 1
+        else:
+            num_won[4] += 1
+
+    return num_won, per_file, per_file_2
 
 def one_game_print(list_player, env, lv1, lv2, lv3, print_mode, per_file):
     reset(env, lv1, lv2, lv3)
