@@ -14,7 +14,7 @@ warnings.simplefilter('ignore', category=NumbaWarning)
 
 if len(sys.argv) == 2:
     game_name = sys.argv[1]
-print('trong agent', sys.argv, 'name', game_name, )
+# print('trong agent', sys.argv, 'name', game_name, )
 
 sys.path.append(os.path.abspath(f"base/{game_name}"))
 from env import *
@@ -705,22 +705,22 @@ def test2_Hieu_270922(state, file_temp,  file_per_2):
 
 @njit()
 def file_temp_to_action_Phong_130922(state, file_temp):
-    print(state, file_temp)
+    # print(state, file_temp)
     a = get_list_action(state)
     a = np.where(a == 1)[0]
-    print('action', a)
+    # print('action', a)
     RELU = np.ones(len(state))
-    print('hi')
+    # print('hi')
     matrix_new = np.dot(RELU,file_temp)
     list_val_action = matrix_new[a]
     action = a[np.argmax(list_val_action)]
-    print('hhhhhhhh', action)
+    # print('hhhhhhhh', action)
     return action
 
 @njit() 
 def test2_Phong_130922(state,file_temp, file_per_2):
     action = file_temp_to_action_Phong_130922(state, file_per_2)
-    print(action)
+    # print(action)
     return action,file_temp, file_per_2
 
 #######################################################################

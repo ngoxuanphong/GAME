@@ -740,7 +740,7 @@ def normal_main(list_player, times, file_per):
 def action_player_2(env_state,list_player,file_temp, file_per_2):
     current_player = int(env_state[-2])
     player_state = state_to_player(env_state)
-    print(list_player[current_player])
+    # print(list_player[current_player])
     played_move,file_temp[current_player], file_per_2[current_player] = list_player[current_player](player_state,file_temp[current_player], file_per_2[current_player])
     if get_list_action(player_state)[played_move] != 1:
         raise Exception('bot dua ra action khong hop le')

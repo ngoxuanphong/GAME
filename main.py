@@ -330,7 +330,7 @@ def test_1_player(game_name_, players, number_of_matches):
     if len(sys.argv) >= 2:
         sys.argv = [sys.argv[0]]
     sys.argv.append(game_name_)
-    print(sys.argv, 'tên thật', game_name_)
+    # print(sys.argv, 'tên thật', game_name_)
     importlib.reload(Agent_full)
     if type(players) != list:
         players = [players]
