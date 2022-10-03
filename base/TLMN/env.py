@@ -423,14 +423,14 @@ def n_games(list_player, num_game, print_mode):
     return count_win, per_file
 
 
-def one_game_2(list_player, env, per_file, _file_per_2_):
+def one_game_2(list_player, env,  _file_per_2_):
     reset(env)
     while not check_env(env):
         reset(env)
     
     temp_file = [[0], [0], [0], [0]]
     while True:
-        act, temp_file[env[52]], per_file, _file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file, _file_per_2_[env[52]])
+        act, temp_file[env[52]],  _file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]],  _file_per_2_[env[52]])
         arr_card_in_hand = step(act, env)
         if close_game(env) != -1:
             break
@@ -438,12 +438,12 @@ def one_game_2(list_player, env, per_file, _file_per_2_):
     winner = close_game(env)
     for i in range(4):
         env[52] = i
-        act, temp_file[env[52]], per_file,_file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]], per_file, _file_per_2_[env[52]])
+        act, temp_file[env[52]], _file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]],  _file_per_2_[env[52]])
     
-    return winner, per_file, _file_per_2_
+    return winner,  _file_per_2_
 
 
-def normal_main_2(list_player, num_game, per_file, per_file_2):
+def normal_main_2(list_player, num_game,  per_file_2):
     if len(list_player) != 4:
         print('Game chỉ cho phép có đúng 4 người chơi')
         return [-1,-1,-1,-1], per_file
@@ -455,12 +455,12 @@ def normal_main_2(list_player, num_game, per_file, per_file_2):
         rd.shuffle(p_lst_idx)
         file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
         list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
-        winner, per_file, _file_per_2_ = one_game_2(
-            list_player_new, env, per_file, file_per_2_new)
+        winner,  _file_per_2_ = one_game_2(
+            list_player_new, env,  file_per_2_new)
 
         list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
         
         count_win[p_lst_idx[winner]] += 1
     
-    return count_win, per_file, per_file_2
+    return count_win,  per_file_2

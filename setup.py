@@ -19,7 +19,7 @@
 
 type_run_code = 'Test_1_player' #Train or Test or Train_1_player or Test_1_player
 players = ['player_random']
-game_name = 'Splendor'
+game_name = 'TLMN_v2'
 
 time_run_game = 79200
 
