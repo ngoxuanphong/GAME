@@ -620,19 +620,19 @@ def normal_main(list_player, times, file_per):
             count[shuffle[winner]] += 1
     return list(count.astype(np.int64)), file_per
 
-def action_player_2(env_state,list_player,file_temp,file_per, file_per_2):
+def action_player_2(env_state,list_player,file_temp, file_per_2):
     current_player = int(env_state[-1])
     player_state = state_to_player(env_state)
-    played_move,file_temp[current_player],file_per, file_per_2[current_player] = list_player[current_player](player_state,file_temp[current_player],file_per, file_per_2[current_player])
+    played_move,file_temp[current_player], file_per_2[current_player] = list_player[current_player](player_state,file_temp[current_player], file_per_2[current_player])
     if get_list_action(player_state)[played_move] != 1:
         raise Exception('bot dua ra action khong hop le')
-    return played_move,file_temp,file_per, file_per_2
+    return played_move,file_temp, file_per_2
 
-def one_game_2(list_player, file_temp, file_per, card_in4, card_point_in4, file_per_2):
+def one_game_2(list_player, file_temp,  card_in4, card_point_in4, file_per_2):
     env_state = reset(card_in4, card_point_in4)
     count_turn = 0
     while system_check_end(env_state) and count_turn < 2000:
-        action, file_temp, file_per, file_per_2 = action_player_2(env_state,list_player,file_temp,file_per, file_per_2)     
+        action, file_temp,  file_per_2 = action_player_2(env_state,list_player,file_temp, file_per_2)     
         env_state = step(env_state, action, card_in4, card_point_in4)
         count_turn += 1
 
@@ -640,12 +640,12 @@ def one_game_2(list_player, file_temp, file_per, card_in4, card_point_in4, file_
     for id_player in range(5):
         env_state[-2] = 1
         id_action = env_state[-1]
-        action, file_temp, file_per, file_per_2 = action_player_2(env_state,list_player,file_temp,file_per, file_per_2)
+        action, file_temp,  file_per_2 = action_player_2(env_state,list_player,file_temp, file_per_2)
         env_state[-1] = (env_state[-1] + 1)%5
     
-    return winner, file_per,file_per_2
+    return winner, file_per_2
 
-def normal_main_2(list_player, times, file_per, per_file_2):
+def normal_main_2(list_player, times,  per_file_2):
     count = np.zeros(len(list_player)+1)
     card_in4 = all_card_in4()
     card_point_in4 = all_card_point_in4()
@@ -657,7 +657,7 @@ def normal_main_2(list_player, times, file_per, per_file_2):
         file_temp = [[0],[0],[0],[0], [0]]
         file_per_2_new = [per_file_2[shuffle[i]] for i in range(amount_player())]
 
-        winner, file_per, file_per_2_new = one_game_2(shuffle_player, file_temp, file_per, card_in4, card_point_in4, file_per_2_new)
+        winner,  file_per_2_new = one_game_2(shuffle_player, file_temp,  card_in4, card_point_in4, file_per_2_new)
 
         list_p_id_new = [list(shuffle).index(i) for i in range(amount_player())]
         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
@@ -666,6 +666,8 @@ def normal_main_2(list_player, times, file_per, per_file_2):
             count[winner] += 1
         else:
             count[shuffle[winner]] += 1
-    return list(count.astype(np.int64)), file_per, per_file_2
+        
+        # print(per_file_2)
+    return list(count.astype(np.int64)),  per_file_2
 
 

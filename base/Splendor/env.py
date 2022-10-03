@@ -500,13 +500,13 @@ def normal_main(list_player, num_game, per_file):
 
     return num_won, per_file
         
-def one_game_2(list_player, env, lv1, lv2, lv3, per_file, per_file_2):
+def one_game_2(list_player, env, lv1, lv2, lv3, per_file_2):
     # print(list_player, per_file_2)
     reset(env, lv1, lv2, lv3)
     temp_file = [[0],[0],[0],[0]]
     while env[154] <= 400:
         p_idx = env[154]%4
-        act, temp_file[p_idx], per_file, per_file_2[p_idx] = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file, per_file_2[p_idx])
+        act, temp_file[p_idx], per_file_2[p_idx] = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file_2[p_idx])
         step(act, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
@@ -514,12 +514,12 @@ def one_game_2(list_player, env, lv1, lv2, lv3, per_file, per_file_2):
     turn = env[154]
     for i in range(4):
         env[154] = i
-        act, temp_file[i], per_file, per_file_2[i] = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file, per_file_2[i])
+        act, temp_file[i], per_file_2[i] = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file_2[i])
     
     env[154] = turn
-    return close_game(env), per_file, per_file_2
+    return close_game(env), per_file_2
 
-def normal_main_2(list_player, num_game, per_file, per_file_2):
+def normal_main_2(list_player, num_game, per_file_2):
     if len(list_player) != 4:
         print('Game chỉ cho phép có đúng 4 người chơi')
         return [-1,-1,-1,-1,-1], per_file
@@ -532,8 +532,8 @@ def normal_main_2(list_player, num_game, per_file, per_file_2):
         # print(p_lst_idx)
         file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
         list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
-        winner, per_file, per_file_2 = one_game_2(
-            list_player_new, env, lv1, lv2, lv3, per_file ,file_per_2_new)
+        winner, per_file_2 = one_game_2(
+            list_player_new, env, lv1, lv2, lv3, file_per_2_new)
 
         list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
@@ -542,7 +542,7 @@ def normal_main_2(list_player, num_game, per_file, per_file_2):
         else:
             num_won[4] += 1
 
-    return num_won, per_file, per_file_2
+    return num_won, per_file_2
 
 def one_game_print(list_player, env, lv1, lv2, lv3, print_mode, per_file):
     reset(env, lv1, lv2, lv3)
