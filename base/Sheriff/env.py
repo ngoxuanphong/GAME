@@ -1796,13 +1796,14 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
 def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
     env = reset()
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
-    temp = [0]
+    _temp_ = List()
+    _temp_.append(np.array([[0]]))
 
     while not system_check_end(env):
         idx = int(env[-3])
         player_state = state_to_player(env)
         if list_other[idx] == -1:
-            action, temp, per_player = p0(player_state,temp,per_player)
+            action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
 
@@ -1814,7 +1815,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     for p_idx in range(4):
         env[-1] = 1
         if list_other[int(env[-3])] == -1:
-            act, temp, per_player = p0(state_to_player(env), temp, per_player)
+            act, _temp_, per_player = p0(state_to_player(env), _temp_, per_player)
         env[-3] = (env[-3] + 1)%4
 
     winner = False

@@ -1277,13 +1277,14 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     reset(env)
     while not check_env(env):
         reset(env)
-    temp = [0]
+    _temp_ = List()
+    _temp_.append(np.array([[0]]))
     for i in range(1000):
         idx = env[52]
         player_state = get_player_state(env)
         if list_other[idx] == -1:
             
-            action, temp, per_player = p0(player_state,temp,per_player)
+            action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
         arr_card_in_hand = step(action, env)
@@ -1292,7 +1293,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     
     for i in range(4):
         if list_other[idx] == -1:
-            act, temp, per_player = p0(get_player_state(env), temp, per_player)
+            act, _temp_, per_player = p0(get_player_state(env), _temp_, per_player)
     winner = False
     if np.where(list_other == -1)[0] ==  close_game(env): winner = True
     else: winner = False
