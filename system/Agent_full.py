@@ -12,12 +12,26 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
 warnings.simplefilter('ignore', category=NumbaWarning)
 
-if len(sys.argv) == 2:
-    game_name = sys.argv[1]
+# if len(sys.argv) == 2:
+#     game_name = sys.argv[1]
 # print('trong agent', sys.argv, 'name', game_name, )
 
-sys.path.append(os.path.abspath(f"base/{game_name}"))
-from env import *
+# sys.path.append(os.path.abspath(f"base/{game_name}"))
+# from env import *
+
+@njit()
+def player_random1(p_state, per_file):
+    arr_action = get_list_action(p_state)
+    arr_action = np.where(arr_action == 1)[0]
+    act_idx = np.random.randint(0, len(arr_action))
+    return arr_action[act_idx]
+    
+@njit()
+def player_random(p_state, temp_file, per_file):
+    arr_action = get_list_action(p_state)
+    arr_action = np.where(arr_action == 1)[0]
+    act_idx = np.random.randint(0, len(arr_action))
+    return arr_action[act_idx], temp_file, per_file
 
 @njit()
 def matmul(A:np.ndarray, B):
@@ -655,7 +669,7 @@ def agent_hieu_270922(state,file_temp,file_per):
     file_per = (len(state),amount_action())
     return action,file_temp,file_per
 
-LEN_STATE_hieu_270922,AMOUNT_ACTION_hieu_270922 = normal_main([agent_hieu_270922]*amount_player(), 1, [0])[1]
+# LEN_STATE_hieu_270922,AMOUNT_ACTION_hieu_270922 = normal_main([agent_hieu_270922]*amount_player(), 1, [0])[1]
 
 @njit()
 def softmax_hieu_270922(X):
@@ -675,9 +689,9 @@ def neural_network_hieu_270922(norm_state, file_temp0, file_temp1, file_temp2, l
     # norm_state = state.copy()
     norm_state = norm_state/np.linalg.norm(norm_state, 1)
     norm_state = softmax_hieu_270922(norm_state)
-    norm_action = np.zeros(AMOUNT_ACTION_hieu_270922)
+    norm_action = np.zeros(amount_action())
     norm_action[list_action] = 1
-    norm_action = norm_action.reshape(1, AMOUNT_ACTION_hieu_270922)
+    norm_action = norm_action.reshape(1, amount_action())
 
     matrixRL1 = np.dot(norm_state, file_temp0)
     matrixRL1 = sigmoid_hieu_270922(matrixRL1)          

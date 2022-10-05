@@ -350,6 +350,7 @@ def reset():
     env_state[LONGEST_ROAD_PLAYER] = -1 #bắt đầu thì chưa cso ai có con đường dài nhất
     env_state[PLAYER_CAN_USE_DEV_CARD] = 0 #bắt đầu thì ko có khả năng dùng dev_card
     env_state[NUMBER_TRADE_OF_PLAYER] = 3 #bắt đầu thì cho trade tối đa 3 lần mỗi lượt
+    env_state[CHECK_ROLL_INDEX] = 1
     env_state[PHASE] = 3
     return env_state
 
