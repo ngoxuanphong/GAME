@@ -1188,7 +1188,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
         player_state = get_player_state(env)
         if list_other[idx] == -1:
             
-            action, file_temp, file_per = p0(player_state,temp,per_player)
+            action, temp, per_player = p0(player_state,temp,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8)
         arr_card_in_hand = step(action, env)
@@ -1208,7 +1208,8 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
 def n_game_numba(p0, num_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8):
     win = 0
     for _n in range(num_game):
-        list_other = np.append(np.random.choice(np.arange(11), 3), -1)
+        list_other = np.append(np.random.choice(np.arange(9), 3), -1)
+        np.random.shuffle(list_other)
         winner,per_player  = one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8)
         win += winner
     return [win, num_game - win], per_player
