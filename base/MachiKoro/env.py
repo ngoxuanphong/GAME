@@ -1531,26 +1531,28 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
 def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11):
     env = reset()
     all_card_fee = np.array([1, 1, 1, 2, 2, 3, 5, 3, 6, 3, 3, 2, 6, 7, 8, 22, 16, 10, 4])
-    temp = [0]
+    _temp_ = List()
+    _temp_.append(np.array([[0]]))
     count_turn = 0
-    while not system_check_end(env) and count_turn < 500:
-        idx = int(env[-3])
+    while system_check_end(env) and count_turn < 500:
+        idx = int(env[-2])
         player_state = state_to_player(env)
         if list_other[idx] == -1:
-            action, temp, per_player = p0(player_state,temp,per_player)
+            action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
 
         if get_list_action(player_state)[action] != 1:
             raise Exception('bot dua ra action khong hop le')
 
-        env = step(env, action, all_penalty)
+        env = step(env, action, all_card_fee)
+        count_turn += 1
 
     for p_idx in range(4):
         env[-1] = 1
-        if list_other[int(env[-3])] == -1:
-            act, temp, per_player = p0(state_to_player(env), temp, per_player)
-        env[-3] = (env[-3] + 1)%4
+        if list_other[int(env[-2])] == -1:
+            act, _temp_, per_player = p0(state_to_player(env), _temp_, per_player)
+        env[-2] = (env[-2] + 1)%4
 
     winner = False
     if np.where(list_other == -1)[0] ==  check_winner(env): winner = True

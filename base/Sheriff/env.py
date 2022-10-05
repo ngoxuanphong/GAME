@@ -941,34 +941,34 @@ def step_print_mode(env_state, action, all_penalty):
     # print(env_state[-4:])
     return env_state
 
-def one_game_print_mode(list_player, file_temp, file_per, all_penalty):
-    env_state = reset()
-    count_turn = 0
-    while not system_check_end(env_state):
-        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
-        print(f'Turn: {count_turn} player {env_state[-3]} {all_action_mean[action]} {env_state[96*int(env_state[-3]):96*int(env_state[-3]+1)]} và {[env_state[0], env_state[96], env_state[192],env_state[288]]}')
-        env_state = step_print_mode(env_state, action, all_penalty)
-        count_turn += 1
-    winner = check_winner(env_state)
-    for id_player in range(4):
-        id_action = env_state[-3]
-        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
-        print(f'Turn: {count_turn} player {env_state[-3]} {all_action_mean[action]} {env_state[96*int(env_state[-3]):96*int(env_state[-3]+1)]} và {[env_state[0], env_state[96], env_state[192],env_state[288]]}')
-        env_state[-3] = (env_state[-3] + 1)%4
-    return winner, file_per
+# def one_game_print_mode(list_player, file_temp, file_per, all_penalty):
+#     env_state = reset()
+#     count_turn = 0
+#     while not system_check_end(env_state):
+#         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+#         print(f'Turn: {count_turn} player {env_state[-3]} {all_action_mean[action]} {env_state[96*int(env_state[-3]):96*int(env_state[-3]+1)]} và {[env_state[0], env_state[96], env_state[192],env_state[288]]}')
+#         env_state = step_print_mode(env_state, action, all_penalty)
+#         count_turn += 1
+#     winner = check_winner(env_state)
+#     for id_player in range(4):
+#         id_action = env_state[-3]
+#         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+#         print(f'Turn: {count_turn} player {env_state[-3]} {all_action_mean[action]} {env_state[96*int(env_state[-3]):96*int(env_state[-3]+1)]} và {[env_state[0], env_state[96], env_state[192],env_state[288]]}')
+#         env_state[-3] = (env_state[-3] + 1)%4
+#     return winner, file_per
 
-def normal_main_print_mode(list_player, times, file_per):
-    count = np.zeros(len(list_player))
-    all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
-    all_id_player = np.arange(len(list_player))
-    for van in range(times):
-        shuffle = np.random.choice(all_id_player, 4, replace=False)
-        shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
-        file_temp = [[0],[0],[0],[0]]
-        # try:
-        winner, file_per = one_game_print_mode(shuffle_player, file_temp, file_per, all_penalty)
-        count[shuffle[winner]] += 1
-    return list(count.astype(np.int64)), file_per
+# def normal_main_print_mode(list_player, times, file_per):
+#     count = np.zeros(len(list_player))
+#     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
+#     all_id_player = np.arange(len(list_player))
+#     for van in range(times):
+#         shuffle = np.random.choice(all_id_player, 4, replace=False)
+#         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
+#         file_temp = [[0],[0],[0],[0]]
+#         # try:
+#         winner, file_per = one_game_print_mode(shuffle_player, file_temp, file_per, all_penalty)
+#         count[shuffle[winner]] += 1
+#     return list(count.astype(np.int64)), file_per
 
 def one_game(list_player, file_temp, file_per, all_penalty):
     env_state = reset()
@@ -1796,13 +1796,14 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
 def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
     env = reset()
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
-    temp = [0]
+    _temp_ = List()
+    _temp_.append(np.array([[0]]))
 
     while not system_check_end(env):
         idx = int(env[-3])
         player_state = state_to_player(env)
         if list_other[idx] == -1:
-            action, temp, per_player = p0(player_state,temp,per_player)
+            action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
 
@@ -1814,7 +1815,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     for p_idx in range(4):
         env[-1] = 1
         if list_other[int(env[-3])] == -1:
-            act, temp, per_player = p0(state_to_player(env), temp, per_player)
+            act, _temp_, per_player = p0(state_to_player(env), _temp_, per_player)
         env[-3] = (env[-3] + 1)%4
 
     winner = False
