@@ -119,8 +119,9 @@ LARGEST_ARMY_PLAYER = OTHER_IN4_INDEX + 10
 NUMBER_TRADE_OF_PLAYER = OTHER_IN4_INDEX + 11
 TURN = OTHER_IN4_INDEX + 12
 # USED_DEV = OTHER_IN4_INDEX + 13
+CHECK_ROLL_INDEX = OTHER_IN4_INDEX + 13
 
-OTHER_IN4_LEN = 13
+OTHER_IN4_LEN = 14
 '''[temp_point, main_player, last_roll, phase, id_action, use_build_road, 
     use_year_of_plenty, card_need_drop, longest_road_player, largest_army, number_trade, turn]
 '''

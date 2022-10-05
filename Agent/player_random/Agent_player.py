@@ -15,8 +15,8 @@ def test(p_state, temp_file, per_file):
     return arr_action[act_idx], temp_file, per_file
 
 # @njit()
-def test2(p_state, temp_file, per_file, per_file2):
+def test2(p_state, temp_file, per_file2):
     arr_action = get_list_action(p_state)
     arr_action = np.where(arr_action == 1)[0]
     act_idx = np.random.randint(0, len(arr_action))
-    return arr_action[act_idx], temp_file, per_file, per_file
+    return arr_action[act_idx], temp_file, per_file2

@@ -306,6 +306,7 @@ def step(env_state, action):
             # print('xúc sắc ra ', env_state[LAST_ROLL] )
             # print('all_last_in4_deal', env_state[OFFER_MAIN_INDEX:OFFER_MAIN_INDEX+40])
             # print('ĐỔ xúc sắc ra ', env_state[LAST_ROLL])
+            env_state[CHECK_ROLL_INDEX] = 0
             if env_state[LAST_ROLL] == 7:
                 #đi chia bài
                 # env_state[MAIN_PLAYER] = id_action
@@ -418,6 +419,7 @@ def step(env_state, action):
             # for i in range(4):
             #     print(env_state[int(i*ALL_INFOR_PLAYER+5): int(i*ALL_INFOR_PLAYER+10)])
             # print('all_deal', env_state[OFFER_MAIN_INDEX:OFFER_MAIN_INDEX + OFFER_LEN*4])
+            env_state[CHECK_ROLL_INDEX] = 1
         return env_state
     elif phase_env == 3:
         #cập nhật nhà, trừ tài nguyên, về phase2
@@ -525,6 +527,8 @@ def step(env_state, action):
             if env_state[USE_BUILD_ROAD] == 0 or len(p_road) == 15 or len(list_action) == 0: #hết lượt dùng thẻ road, hoạc đủ 15 đường, hoặc không còn dduofng để xây
                 env_state[PHASE] = 2
                 env_state[USE_BUILD_ROAD] = 0
+            if env_state[USE_BUILD_ROAD] == 0 and env_state[CHECK_ROLL_INDEX] == 1:
+                env_state[PHASE] = 1
         else:
             if turn > 7:
                 env_state[PHASE] = 2 #to phase 2
@@ -570,7 +574,10 @@ def step(env_state, action):
         all_player_map = env_state[POINT_INDEX:POINT_INDEX+POINT_LEN]
         point_in_block = all_player_map[POINT_IN_BLOCK[block_robber]]
         point_in_block = point_in_block[(point_in_block > -1) & (point_in_block != id_action) & (point_in_block != (id_action+4))]      #xét các điểm bị sở hữu k phải của người chơi hiện tại, xem cướp đc k
-        env_state[PHASE] = 2
+        if env_state[CHECK_ROLL_INDEX] == 1:
+            env_state[PHASE] = 1
+        else:
+            env_state[PHASE] = 2
         if len(point_in_block) > 0:
             point_in_block = point_in_block % 4
             for id in point_in_block:
@@ -620,7 +627,10 @@ def step(env_state, action):
         env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX + random_steal_source] += 1
         env_state[ALL_INFOR_PLAYER*id_action + 1] += 1
         #update tài nguyên xong về phase 2
-        env_state[PHASE] = 2
+        if env_state[CHECK_ROLL_INDEX] == 1:
+            env_state[PHASE] = 1
+        else:
+            env_state[PHASE] = 2
         return env_state
     elif phase_env == 10:
         #nhận action, tăng tài nguyên lên, trừ ở ngân hàng đi, nếu còn được lấy thì chuyển phase 10, ko thì về phase2
@@ -631,7 +641,10 @@ def step(env_state, action):
         if env_state[USE_YEAR_OF_PLENTY] != 0 and np.sum(env_state[CARD_BANK_INDEX : CARD_BANK_INDEX+CARD_BANK_LEN]) > 0:
             env_state[USE_YEAR_OF_PLENTY] = 0
         else:
-            env_state[PHASE] = 2
+            if env_state[CHECK_ROLL_INDEX] == 1:
+                env_state[PHASE] = 1
+            else:
+                env_state[PHASE] = 2
         return env_state
     elif phase_env == 11:
         #nhận action, trừ hết tài nguyên tương ứng của các ng chơi khác rồi cộng cho ng chơi hiện tại, sau đó về phase 2
@@ -646,7 +659,10 @@ def step(env_state, action):
         env_state[ATTRIBUTE_PLAYER_2_INDEX + 1] = np.sum(env_state[CARD_2_PLAYER_INDEX : CARD_2_PLAYER_INDEX + CARD_BANK_LEN])
         env_state[ATTRIBUTE_PLAYER_3_INDEX + 1] = np.sum(env_state[CARD_3_PLAYER_INDEX : CARD_3_PLAYER_INDEX + CARD_BANK_LEN])
         env_state[ATTRIBUTE_PLAYER_4_INDEX + 1] = np.sum(env_state[CARD_4_PLAYER_INDEX : CARD_4_PLAYER_INDEX + CARD_BANK_LEN])
-        env_state[PHASE] = 2
+        if env_state[CHECK_ROLL_INDEX] == 1:
+            env_state[PHASE] = 1
+        else:
+            env_state[PHASE] = 2        
         return env_state
     elif phase_env == 12:
         #nhận action, cập nhật offer
