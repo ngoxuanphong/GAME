@@ -446,7 +446,7 @@ def one_game_2(list_player, env,  _file_per_2_):
 def normal_main_2(list_player, num_game,  per_file_2):
     if len(list_player) != 4:
         print('Game chỉ cho phép có đúng 4 người chơi')
-        return [-1,-1,-1,-1], per_file
+        return [-1,-1,-1,-1]
     
     env = np.full(60,0)
     count_win = [0,0,0,0]

@@ -326,23 +326,23 @@ def system_check_end(env_state):
 
 '''
 
-def one_game_print_mode(list_player, file_temp, file_per, card_in4, card_point_in4):
-    env_state = reset(card_in4, card_point_in4)
-    count_turn = 0
-    while system_check_end(env_state) and count_turn < 1000:
-        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)    
-        print(f'Turn: {count_turn} player {int(env_state[-1])} action {action} {all_action_mean[action]}  có {np.sum(env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)][2:6])} nguyên liệu và {env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)][:2]} điểm')     #có {env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)]}
-        env_state = step(env_state, action, card_in4, card_point_in4)
-        count_turn += 1
+# def one_game_print_mode(list_player, file_temp, file_per, card_in4, card_point_in4):
+#     env_state = reset(card_in4, card_point_in4)
+#     count_turn = 0
+#     while system_check_end(env_state) and count_turn < 1000:
+#         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)    
+#         print(f'Turn: {count_turn} player {int(env_state[-1])} action {action} {all_action_mean[action]}  có {np.sum(env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)][2:6])} nguyên liệu và {env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)][:2]} điểm')     #có {env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)]}
+#         env_state = step(env_state, action, card_in4, card_point_in4)
+#         count_turn += 1
 
-    winner = check_winner(env_state)
-    for id_player in range(5):
-        env_state[-2] = 1
-        id_action = env_state[-1]
-        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
-        env_state[-1] = (env_state[-1] + 1)%5
+#     winner = check_winner(env_state)
+#     for id_player in range(5):
+#         env_state[-2] = 1
+#         id_action = env_state[-1]
+#         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+#         env_state[-1] = (env_state[-1] + 1)%5
     
-    return winner, file_per
+#     return winner, file_per
 
 @njit(fastmath=True, cache=True)
 def step(env_state, action, card_in4, card_point_in4):
