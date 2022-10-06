@@ -787,8 +787,9 @@ def normal_main_2(list_player, times,  per_file_2):
 
 
 
-from system.mainFunc import dict_game_for_player
-from main import load_data_per2
+
+
+from system.mainFunc import dict_game_for_player, load_data_per2
 game_name_ = 'MachiKoro'
 import random
 import numpy as np

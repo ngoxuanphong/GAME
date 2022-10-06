@@ -11,7 +11,7 @@ import itertools
 import multiprocessing.pool
 import warnings 
 from numba.typed import List
-from system.mainFunc import print_raise, progress_bar, dict_game_for_player
+from system.mainFunc import print_raise, progress_bar, dict_game_for_player, load_data_per2
 warnings.filterwarnings('ignore')
 import warnings
 import random
@@ -180,121 +180,7 @@ def fight_test_1_player_2(game, players, data_players, list_func):
     count,_ = game.normal_main(lst_players, 1 , [0])
     return count
 
-def load_data_per2(list_all_players, game_name_):
-    lst_data = []
-    for name in list_all_players:
-        path_data = f'system/Agent/{name}/Data/{game_name_}_79200/'
-        file_name = os.listdir(path_data)[0]
-        data_in_file = np.load(f'{path_data}/{file_name}', allow_pickle=True)
-        if 'Dat' in name:
-            lst_data.append([data_in_file['w1'],data_in_file['w2']])
-        elif 'Phong' in name:
-            data_in_file = data_in_file[0][0][-1]
-            lst_data.append(data_in_file)
-        elif 'NhatAnh_130922' in name:
-            mylist0 = List()
-            mylist1 = List()
-            [mylist0.append(data_in_file[ii][0][0].astype(np.float64)) for ii in range(len(data_in_file))]
-            for ii in range(len(data_in_file)):
-                data_in_file[ii][1] = data_in_file[ii][1].reshape(1, len(data_in_file[ii][1]))
-            [mylist1.append(data_in_file[ii][1]) for ii in range(len(data_in_file))]
-            mylist = []
-            mylist.append(mylist0)
-            mylist.append(mylist1)
-            lst_data.append(mylist)
-        elif 'Hieu' in name or 'Khanh' in name:
-            mylist = List()
-            for i in data_in_file:
-                mylist.append(i)
-            lst_data.append(mylist)
-        elif 'NhatAnh_270922' in name:
-            mylist0 = List()
-            mylist1 = List()
-            [mylist0.append(data_in_file[0][ii].astype(np.float64)) for ii in range(len(data_in_file[0]))]
-            for ii in range(len(data_in_file[1])):
-                data_in_file[1][ii] = data_in_file[1][ii].flatten().astype(np.float64)
-            [mylist1.append(data_in_file[1][ii]) for ii in range(len(data_in_file[1]))]
-            mylist = []
-            mylist.append(mylist0)
-            mylist.append(mylist1)
-            lst_data.append(mylist)
-        elif 'An_130922' in name:
-            mylist = List()
-            for i in range(len(data_in_file)):
-                if i%2 == 0:
-                    mylist.append(data_in_file[i])
-                else:
-                    mylist.append(np.array([[data_in_file[i]]]).astype(np.float64))
-            lst_data.append(mylist)
-        elif 'An_200922' in name:
-            if len(data_in_file) == 2:
-                mylist1 = List()
-                for i in range(len(data_in_file[0])):
-                    if (i-2)%3 == 0:
-                        mylist1.append(np.array([[data_in_file[0][i]]]).astype(np.float64))
-                    elif (i-1)%3 == 0:
-                        mylist1.append(np.array([data_in_file[0][i]]))
-                    else:
-                        mylist1.append(data_in_file[0][i].astype(np.float64))
 
-                mylist2 = List()
-                mylist2.append(np.array([[data_in_file[1]]]).astype(np.float64))
-
-                mylist = []
-                mylist.append(mylist1)
-                mylist.append(mylist2)
-
-                lst_data.append(mylist)
-            else:
-                mylist1 = List()
-                for i in range(len(data_in_file)):
-                    if i == 0:
-                        mylist1.append(data_in_file[i])
-                    elif i == 1:
-                        mylist1.append(np.array([[data_in_file[1]]]).astype(np.float64))
-                    else:
-                        mylist1.append(np.array([data_in_file[2]]))
-                mylist = List()
-                mylist.append(mylist1)
-
-                lst_data.append(mylist)
-        elif 'An_270922' in name:
-            if len(data_in_file) == 2:
-                # print('Them data')
-                mylist1 = List()
-                for i in range(len(data_in_file[0])):
-                    if (i-2)%3 == 0:
-                        mylist1.append(np.array([[data_in_file[0][i]]]).astype(np.float64))
-                    elif (i-1)%3 == 0:
-                        mylist1.append(np.array([data_in_file[0][i]]))
-                    else:
-                        mylist1.append(data_in_file[0][i].astype(np.float64))
-
-                mylist2 = List()
-                mylist2.append(np.array([[data_in_file[1]]]).astype(np.float64))
-
-                mylist = []
-                mylist.append(mylist1)
-                mylist.append(mylist2)
-
-                lst_data.append(mylist)
-            else:
-                mylist1 = List()
-                for i in range(len(data_in_file)):
-                    if i == 0:
-                        mylist1.append(np.array(data_in_file[i]))
-                    elif i == 1:
-                        mylist1.append(np.array([[data_in_file[1]]]).astype(np.float64))
-                    else:
-                        mylist1.append(np.array([data_in_file[2]]))
-
-                mylist = List()
-                mylist.append(mylist1)
-
-                lst_data.append(mylist)
-        else:
-            lst_data.append(data_in_file)
-    return lst_data
 
 def test_1_player_fight(game, game_name_, number_of_matches, players):
         start = time.time()

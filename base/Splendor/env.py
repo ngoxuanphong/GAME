@@ -662,8 +662,7 @@ def random_player(p_state, temp_file, per_file):
 
 
 
-from system.mainFunc import dict_game_for_player
-from main import load_data_per2
+from system.mainFunc import dict_game_for_player, load_data_per2
 game_name_ = 'Splendor'
 import random
 import numpy as np
