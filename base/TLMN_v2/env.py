@@ -1279,7 +1279,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
         reset(env)
     _temp_ = List()
     _temp_.append(np.array([[0]]))
-    for i in range(1000):
+    while True:
         idx = env[52]
         player_state = get_player_state(env)
         if list_other[idx] == -1:
@@ -1292,7 +1292,8 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
             break
     
     for i in range(4):
-        if list_other[idx] == -1:
+        env[52] = i
+        if list_other[i] == -1:
             act, _temp_, per_player = p0(get_player_state(env), _temp_, per_player)
     winner = False
     if np.where(list_other == -1)[0] ==  close_game(env): winner = True
