@@ -1459,7 +1459,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
             action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
-        step(action, env, lv1, lv2, lv3)
+        env, lv1, lv2, lv3 = step(action, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
     

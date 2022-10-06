@@ -18,8 +18,8 @@
 
 
 type_run_code = 'Test_1_player' #Train or Test or Train_1_player or Test_1_player
-players = ['Trang']
-game_name = 'SushiGo'
+players = ['Player_random']
+game_name = 'TLMN'
 
 time_run_game = 79200
 
