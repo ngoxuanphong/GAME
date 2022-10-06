@@ -482,7 +482,8 @@ def normal_main_2(list_player, num_game,  per_file_2):
 
 
 
-
+from system.mainFunc import dict_game_for_player, load_data_per2  
+game_name_ = 'TLMN'
 import random
 import numpy as np
 from setup import game_name,time_run_game
@@ -1161,9 +1162,8 @@ def test2_Phong_130922(state,file_per_2):
 
 
 
-from system.mainFunc import dict_game_for_player
-from main import load_data_per2
-game_name_ = 'TLMN'
+
+
 @njit()
 def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, per8):
     if id == 0: return test2_An_270922(player_state, per0)

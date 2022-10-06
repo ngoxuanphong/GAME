@@ -4,9 +4,8 @@ import numpy as np
 import random as rd
 import random
 
-from system.mainFunc import dict_game_for_player
-from main import load_data_per2
-game_name_ = 'TLMN_v2'
+
+
 # from colorama import Fore, Style
 
 # -------------------- NOPYTHON FUNCTIONS --------------------
@@ -527,7 +526,8 @@ def normal_main_2(list_player, num_game,  per_file_2):
 
 
 
-
+from system.mainFunc import dict_game_for_player, load_data_per2  
+game_name_ = 'TLMN_v2'
 import random
 import numpy as np
 from setup import game_name,time_run_game
