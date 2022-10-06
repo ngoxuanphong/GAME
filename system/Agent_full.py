@@ -12,12 +12,12 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
 warnings.simplefilter('ignore', category=NumbaWarning)
 
-# if len(sys.argv) == 2:
-#     game_name = sys.argv[1]
+if len(sys.argv) == 2:
+    game_name = sys.argv[1]
 # print('trong agent', sys.argv, 'name', game_name, )
 
-# sys.path.append(os.path.abspath(f"base/{game_name}"))
-# from env import *
+sys.path.append(os.path.abspath(f"base/{game_name}"))
+from env import *
 
 @njit()
 def player_random1(p_state, per_file):
