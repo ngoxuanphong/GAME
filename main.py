@@ -156,13 +156,7 @@ def train():
         print_raise('Train')
 
 def fight_test_1_player(game, players, data_players, list_func):
-    if type(players[0]) == str:
-        module_player = load_module_fight(players[0], 'Test')
-        lst_players = [module_player.test2]
-    else:
-        lst_players = [players[0]]
-    lst_players += list_func
-
+    lst_players = [players[0]] + list_func
     count,per_2 = game.normal_main_2(lst_players, 1 ,data_players)
     return count, per_2[0]
 
@@ -193,9 +187,16 @@ def test_1_player_fight(game, game_name_, number_of_matches, players):
 
         id_players_all = np.arange(len(list_all_players))
         per_2__ = 0
+
+        if type(players[0]) == str:
+            module_player = load_module_fight(players[0], 'Test')
+            players_main = [module_player.test2]
+        else:
+            players_main = [players[0]]
+
         for match in range(number_of_matches):
             np.random.shuffle(id_players_all)
-            lst_player_fight = players + [list_all_players[id_players_all[i]] for i in range(game.amount_player()-1)]
+            lst_player_fight = players_main + [list_all_players[id_players_all[i]] for i in range(game.amount_player()-1)]
             data_players = [per_2__] + [list_data[id_players_all[i]] for i in range(game.amount_player()-1)]
             list_func = [list_func_player[id_players_all[i]] for i in range(game.amount_player()-1)]
 
