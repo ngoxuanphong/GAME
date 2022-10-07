@@ -1,4 +1,4 @@
-#Hướng dẫn chạy code tháng 9: Hệ thống chơi game một người
+# Hướng dẫn chạy code tháng 9: Hệ thống chơi game một người
   - Trong các game đã có các hàm normal_main_2, numba_main_2
   - Các game đã có: Splendor_v2,Century, MachiKoro, Sheriff, Splendor, TLMN, TLMN_v2, SushiGo
     ```
