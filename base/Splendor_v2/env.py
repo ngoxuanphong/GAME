@@ -1452,7 +1452,9 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
 
     _temp_ = List()
     _temp_.append(np.array([[0]]))
-    while env[100] <= 400:
+
+    _cc = 0
+    while env[100] <= 400 and _cc <= 10000:
         idx = env[100]%4
         player_state = get_player_state(env, lv1, lv2, lv3)
         if list_other[idx] == -1:
@@ -1462,10 +1464,12 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
         env, lv1, lv2, lv3 = step(action, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
-    
+        
+        _cc += 1
+
     turn = env[100]
-    for p_idx in range(4):
-        env[100] = p_idx
+    for idx in range(4):
+        env[100] = idx
         if list_other[idx] == -1:
             act, _temp_, per_player = p0(get_player_state(env, lv1, lv2, lv3), _temp_, per_player)
     env[100] = turn

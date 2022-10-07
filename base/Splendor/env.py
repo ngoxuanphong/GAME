@@ -1427,8 +1427,8 @@ def one_game_numba(env, lv1, lv2, lv3, p0, list_other, per_player, per0, per1, p
             break
     
     turn = env[154]
-    for p_idx in range(4):
-        env[154] = p_idx
+    for idx in range(4):
+        env[154] = idx
         if list_other[idx] == -1:
             act, _temp_, per_player = p0(get_player_state(env, lv1, lv2, lv3), _temp_, per_player)
     env[154] = turn
