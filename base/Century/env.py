@@ -1446,7 +1446,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
 
     for p_idx in range(5):
         env[-2] = 1
-        if list_other[int(env[-3])] == -1:
+        if list_other[int(env[-1])] == -1:
             act, _temp_, per_player = p0(state_to_player(env), _temp_, per_player)
         env[-1] = (env[-1] + 1)%5
 
