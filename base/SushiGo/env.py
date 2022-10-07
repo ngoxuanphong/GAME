@@ -288,6 +288,10 @@ def amount_action():
 def amount_player():
     return 5
 
+@njit()
+def amount_state():
+    return 57
+
 @njit
 def test_action(player_state,action):
     amount = player_state[2]
@@ -436,60 +440,60 @@ def normal_main_print(list_player,amount_game,file_per):
 # reset(2)
 
 
-def one_game_2(list_player_, file_per_2):
-    amount_player = len(list_player_)
-    state_sys = reset(amount_player)
-    temp_file = [[0] for i in range(amount_player)]
-    amount_player = state_sys[2]
-    turn = state_sys[1]
+# def one_game_2(list_player_, file_per_2):
+#     amount_player = len(list_player_)
+#     state_sys = reset(amount_player)
+#     temp_file = [[0] for i in range(amount_player)]
+#     amount_player = state_sys[2]
+#     turn = state_sys[1]
 
-    while turn<(12-amount_player)*3:
-        round = state_sys[0]-1
-        turn = state_sys[1]
-        list_action = [[-1,-1,-1] for i in range(amount_player)]
-        for id_player in range(len(list_player_)):
-            player_state = get_player_state(state_sys,id_player)
-            count = 0
-            while player_state[-1] > 0:
-                action, temp_file[id_player],  file_per_2[id_player] = list_player_[id_player](player_state,temp_file[id_player], file_per_2[id_player])
-                list_action[id_player][count] = action
-                count += 1
-                player_state = test_action(player_state,action)
-            player_state = get_player_state(state_sys,id_player)
-        list_action = np.array(list_action)
-        state_sys = step(state_sys,list_action,amount_player,turn,round)
-        if turn % (12-amount_player) == 0:
-            state_sys = caculater_score(state_sys,amount_player)
-            if state_sys[0] < 3:
-                state_sys[0] += 1
-                state_sys = reset_card_player(state_sys)
-        if turn == (12-amount_player)*3:
-            state_sys = caculator_pudding(state_sys,amount_player)
-        if turn <= (12-amount_player)*3:
-            state_sys[1] += 1
+#     while turn<(12-amount_player)*3:
+#         round = state_sys[0]-1
+#         turn = state_sys[1]
+#         list_action = [[-1,-1,-1] for i in range(amount_player)]
+#         for id_player in range(len(list_player_)):
+#             player_state = get_player_state(state_sys,id_player)
+#             count = 0
+#             while player_state[-1] > 0:
+#                 action, temp_file[id_player],  file_per_2[id_player] = list_player_[id_player](player_state,temp_file[id_player], file_per_2[id_player])
+#                 list_action[id_player][count] = action
+#                 count += 1
+#                 player_state = test_action(player_state,action)
+#             player_state = get_player_state(state_sys,id_player)
+#         list_action = np.array(list_action)
+#         state_sys = step(state_sys,list_action,amount_player,turn,round)
+#         if turn % (12-amount_player) == 0:
+#             state_sys = caculater_score(state_sys,amount_player)
+#             if state_sys[0] < 3:
+#                 state_sys[0] += 1
+#                 state_sys = reset_card_player(state_sys)
+#         if turn == (12-amount_player)*3:
+#             state_sys = caculator_pudding(state_sys,amount_player)
+#         if turn <= (12-amount_player)*3:
+#             state_sys[1] += 1
 
-    for id_player in range(len(list_player_)):
-        list_action[id_player], temp_file[id_player],  file_per_2[id_player] = list_player_[id_player](get_player_state(state_sys,id_player),temp_file[id_player], file_per_2[id_player])    
-    winner = winner_victory(state_sys)
-    return winner, file_per_2
+#     for id_player in range(len(list_player_)):
+#         list_action[id_player], temp_file[id_player],  file_per_2[id_player] = list_player_[id_player](get_player_state(state_sys,id_player),temp_file[id_player], file_per_2[id_player])    
+#     winner = winner_victory(state_sys)
+#     return winner, file_per_2
 
 
-def normal_main_2(list_player,amount_game, per_file_2):
-    amount_player = len(list_player)
-    player_list_index = [i for i in range(amount_player)]
-    num_won = [0 for i in range(amount_player)]
-    for game in range(amount_game):
-        random.shuffle(player_list_index)
-        list_player_shuffle = [list_player[i] for i in player_list_index]
-        file_per_2_new = [per_file_2[i] for i in player_list_index]
-        winner,  file_per_2_new = one_game_2(list_player_shuffle, file_per_2_new)
+# def normal_main_2(list_player,amount_game, per_file_2):
+#     amount_player = len(list_player)
+#     player_list_index = [i for i in range(amount_player)]
+#     num_won = [0 for i in range(amount_player)]
+#     for game in range(amount_game):
+#         random.shuffle(player_list_index)
+#         list_player_shuffle = [list_player[i] for i in player_list_index]
+#         file_per_2_new = [per_file_2[i] for i in player_list_index]
+#         winner,  file_per_2_new = one_game_2(list_player_shuffle, file_per_2_new)
 
-        list_p_id_new = [player_list_index.index(i) for i in range(amount_player)]
-        per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player)]
+#         list_p_id_new = [player_list_index.index(i) for i in range(amount_player)]
+#         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player)]
 
-        for win in winner:
-            num_won[player_list_index[win]] += 1
-    return num_won, per_file_2
+#         for win in winner:
+#             num_won[player_list_index[win]] += 1
+#     return num_won, per_file_2
 
 
 
@@ -1316,11 +1320,11 @@ def n_game_numba(p0, num_game, per_player, per0, per1, per2, per3, per4, per5, p
         np.random.shuffle(list_other)
         winner,per_player  = one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
         win += winner
-    return [win, num_game - win], per_player
+    return win, per_player
 
 
 
-def numba_main(p0, per_player, n_game):
+def numba_main_2(p0, per_player, n_game):
     list_all_players = dict_game_for_player[game_name_]
     list_data = load_data_per2(list_all_players, game_name_)
     per0 = list_data[0]
@@ -1340,3 +1344,90 @@ def numba_main(p0, per_player, n_game):
     per14 = list_data[14]
     per15 = list_data[15]
     return n_game_numba(p0, n_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
+
+
+
+
+
+# @njit()
+def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15):
+    amount_player = 5
+    state_sys = reset(amount_player)
+    amount_player = state_sys[2]
+    turn = state_sys[1]
+
+    _temp_ = List()
+    _temp_.append(np.array([[0]]))
+
+
+    while turn<(12-amount_player)*3:
+        round = state_sys[0]-1
+        turn = state_sys[1]
+        list_action = [[-1,-1,-1] for i in range(amount_player)]
+        for id_player in range(5):
+            player_state = get_player_state(state_sys,id_player)
+            count = 0
+            while player_state[-1] > 0:
+                if list_other[id_player] == -1:
+                    action, _temp_, per_player = p0(player_state,_temp_,per_player)
+                else:
+                    action = get_func(player_state, list_other[id_player], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
+                list_action[id_player][count] = action
+                count += 1
+                player_state = test_action(player_state,action)
+            player_state = get_player_state(state_sys,id_player)
+        list_action = np.array(list_action)
+        state_sys = step(state_sys,list_action,amount_player,turn,round)
+        if turn % (12-amount_player) == 0:
+            state_sys = caculater_score(state_sys,amount_player)
+            if state_sys[0] < 3:
+                state_sys[0] += 1
+                state_sys = reset_card_player(state_sys)
+        if turn == (12-amount_player)*3:
+            state_sys = caculator_pudding(state_sys,amount_player)
+        if turn <= (12-amount_player)*3:
+            state_sys[1] += 1
+
+    for idx in range(5):
+        if list_other[idx] == -1:
+            act, _temp_, per_player = p0(get_player_state(state_sys,idx), _temp_, per_player)
+    winner = False
+    winner_player = winner_victory(state_sys)
+    if np.where(list_other == -1)[0] in  winner_player: winner = True
+    else: winner = False
+    return winner,  per_player
+
+
+# @njit()
+def n_game_numba_2(p0, num_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15):
+    win = 0
+    for _n in range(num_game):
+        list_other = np.append(np.random.choice(np.arange(16), (amount_player() - 1)), -1)
+        np.random.shuffle(list_other)
+        winner,per_player  = one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
+        win += winner
+    return win, per_player
+
+
+
+def normal_main_2(p0, n_game):
+    per_player = 0
+    list_all_players = dict_game_for_player[game_name_]
+    list_data = load_data_per2(list_all_players, game_name_)
+    per0 = list_data[0]
+    per1 = list_data[1]
+    per2 = list_data[2]
+    per3 = list_data[3]
+    per4 = list_data[4]
+    per5 = list_data[5]
+    per6 = list_data[6]
+    per7 = list_data[7]
+    per8 = list_data[8]
+    per9 = list_data[9]
+    per10 = list_data[10]
+    per11 = list_data[11]
+    per12 = list_data[12]
+    per13 = list_data[13]
+    per14 = list_data[14]
+    per15 = list_data[15]
+    return n_game_numba_2(p0, n_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
