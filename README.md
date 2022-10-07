@@ -1,3 +1,90 @@
+#Hướng dẫn chạy code tháng 9: Hệ thống chơi game một người
+  - Trong các game đã có các hàm normal_main_2, numba_main_2
+  - Các game đã có: Splendor_v2,Century, MachiKoro, Sheriff, Splendor, TLMN, TLMN_v2, SushiGo
+    ```
+    normal_main_2(function, number_of_matches)
+    '''
+      Hàm chạy thuật toán của người chơi ở chế độ 1 người nhưng có thể không dùng numba trong agent
+      file_per trong hệ thống đã quy định là 0, file_per = 0
+        Args:
+            function: thuật toán của người chơi
+            number_of_matches: Số trận chạy thuật toán
+        Returns: 
+            Win: Số trận thắng
+            file_per: file per của người chơi đó
+    '''
+    
+    numba_main_2(function, file_per, number_of_matches)
+    '''
+      Hàm chạy thuật toán của người chơi ở chế độ 1 người nhưng có thể không dùng numba trong agent
+        Args:
+            function: thuật toán của người chơi
+            file_per: file_per đầu vào, phải quy định định dạng từ đầu và không được thay đổi trong khi chạy
+            number_of_matches: Số trận chạy thuật toán
+        Returns: 
+            Win: Số trận thắng
+            file_per: file per của người chơi đó
+    '''
+    
+    ```
+    
+  - ***Ví dụ***
+  
+    ```
+    from base.MachiKoro.env import *
+    @njit()
+    def p0(state,temp,per):
+        if per[3][0][0] == 0:
+            a = per[2][0]
+            choice = np.where(a == np.min(a))[0][0]
+            if np.sum(per[2][0])> 1000:
+                choice = np.argmax(per[1][0]/per[2][0])
+            per[3][0][0] = choice
+        idmt = int(per[3][0][0])
+        mt = per[0][idmt]
+        actions = get_list_action(state)
+        actions *= mt
+        action = np.argmax(actions)
+        if check_victory(state) == 1:
+            per[1][0][idmt] += 1
+            per[3][0][0] = 0
+        if check_victory(state) == 0:
+            per[2][0][idmt] += 1
+            per[3][0][0] = 0
+        return action,temp,per
+
+
+    def test2(state,temp,per):
+        if type(per) == int:
+            per = perx
+        if per[3][0][0] == 0:
+            a = per[2][0]
+            choice = np.where(a == np.min(a))[0][0]
+            if np.sum(per[2][0])> 100:
+                choice = np.argmax(per[1][0]/per[2][0])
+            per[3][0][0] = choice
+        idmt = int(per[3][0][0])
+        mt = per[0][idmt]
+        actions = get_list_action(state)
+        actions *= mt
+        action = np.argmax(actions)
+        if check_victory(state) == 1:
+            per[1][0][idmt] += 1
+            per[3][0][0] = 0
+        if check_victory(state) == 0:
+            per[2][0][idmt] += 1
+            per[3][0][0] = 0
+        return action,temp,per
+
+        perx = [np.array([np.random.rand(amount_action()) for _ in range(100)]),np.zeros((1,100)),np.zeros((1,100)),np.zeros((1,100))]
+        win1, x = normal_main_2(test2,1000)
+        win, x = numba_main_2(p0, perx , 1000)
+        print(win, win1)
+     ```
+
+
+
+
 # Clone and run code
   - ***Google colab***
     - Kết nối với **drive**
@@ -20,7 +107,7 @@
    - players: list player muốn truyền vào
       - ở chế độ **Train** thì sẽ train đa luồng tương ứng số người chơi
       - chế độ **Test** nếu truyền vào không đủ người chơi thì sẽ tự động thêm random vào
-   - games_name = ['Splendor_OnlyPlayerView','CENTURY', 'MACHIKORO', 'SHERIFF', 'splendor', 'TLMN', 'TLMN_v2', 'SushiGo-main']
+   - games_name = ['Splendor_v2','Century', 'MachiKoro', 'Sheriff', 'Splendor', 'TLMN', 'TLMN_v2', 'SushiGo',]
    - game_name: Tên game, có thể lấy ở games_name
    - time_run_game = Thời gian chạy game ở chế độ train, xong thời gian tự động dừng 
    
