@@ -224,6 +224,10 @@ def amount_action():
 def amount_player():
     return 4
 
+@njit()
+def amount_state():
+    return 60
+
 @njit
 def check_victory(p_state):
     a = np.count_nonzero(p_state[0:52]==0)
@@ -423,47 +427,47 @@ def n_games(list_player, num_game, print_mode):
     return count_win, per_file
 
 
-def one_game_2(list_player, env,  _file_per_2_):
-    reset(env)
-    while not check_env(env):
-        reset(env)
+# def one_game_2(list_player, env,  _file_per_2_):
+#     reset(env)
+#     while not check_env(env):
+#         reset(env)
     
-    temp_file = [[0], [0], [0], [0]]
-    while True:
-        act, temp_file[env[52]],  _file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]],  _file_per_2_[env[52]])
-        arr_card_in_hand = step(act, env)
-        if close_game(env) != -1:
-            break
+#     temp_file = [[0], [0], [0], [0]]
+#     while True:
+#         act, temp_file[env[52]],  _file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]],  _file_per_2_[env[52]])
+#         arr_card_in_hand = step(act, env)
+#         if close_game(env) != -1:
+#             break
     
-    winner = close_game(env)
-    for i in range(4):
-        env[52] = i
-        act, temp_file[env[52]], _file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]],  _file_per_2_[env[52]])
+#     winner = close_game(env)
+#     for i in range(4):
+#         env[52] = i
+#         act, temp_file[env[52]], _file_per_2_[env[52]] = list_player[env[52]](get_player_state(env), temp_file[env[52]],  _file_per_2_[env[52]])
     
-    return winner,  _file_per_2_
+#     return winner,  _file_per_2_
 
 
-def normal_main_2(list_player, num_game,  per_file_2):
-    if len(list_player) != 4:
-        print('Game chỉ cho phép có đúng 4 người chơi')
-        return [-1,-1,-1,-1]
+# def normal_main_2(list_player, num_game,  per_file_2):
+#     if len(list_player) != 4:
+#         print('Game chỉ cho phép có đúng 4 người chơi')
+#         return [-1,-1,-1,-1]
     
-    env = np.full(60,0)
-    count_win = [0,0,0,0]
-    p_lst_idx = [0,1,2,3]
-    for _n in range(num_game):
-        rd.shuffle(p_lst_idx)
-        file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
-        list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
-        winner,  _file_per_2_ = one_game_2(
-            list_player_new, env,  file_per_2_new)
+#     env = np.full(60,0)
+#     count_win = [0,0,0,0]
+#     p_lst_idx = [0,1,2,3]
+#     for _n in range(num_game):
+#         rd.shuffle(p_lst_idx)
+#         file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
+#         list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
+#         winner,  _file_per_2_ = one_game_2(
+#             list_player_new, env,  file_per_2_new)
 
-        list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
-        per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
+#         list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
+#         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
         
-        count_win[p_lst_idx[winner]] += 1
+#         count_win[p_lst_idx[winner]] += 1
     
-    return count_win,  per_file_2
+#     return count_win,  per_file_2
 
 
 
@@ -1214,10 +1218,10 @@ def n_game_numba(p0, num_game, per_player, per0, per1, per2, per3, per4, per5, p
         np.random.shuffle(list_other)
         winner,per_player  = one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8)
         win += winner
-    return [win, num_game - win], per_player
+    return win, per_player
 
 
-def numba_main(p0, per_player, n_game):
+def numba_main_2(p0, per_player, n_game):
     list_all_players = dict_game_for_player[game_name_]
     list_data = load_data_per2(list_all_players, game_name_)
     per0 = list_data[0]
@@ -1230,3 +1234,60 @@ def numba_main(p0, per_player, n_game):
     per7 = list_data[7]
     per8 = list_data[8]
     return n_game_numba(p0, n_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8)
+
+# @njit()
+def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8):
+    env = np.full(60,0)
+    reset(env)
+    while not check_env(env):
+        reset(env)
+    _temp_ = List()
+    _temp_.append(np.array([[0]]))
+    while True:
+        idx = env[52]
+        player_state = get_player_state(env)
+        if list_other[idx] == -1:
+            
+            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+        else:
+            action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8)
+        arr_card_in_hand = step(action, env)
+        if close_game(env) != -1:
+            break
+    
+    for i in range(4):
+        env[52] = i
+        if list_other[i] == -1:
+            act, _temp_, per_player = p0(get_player_state(env), _temp_, per_player)
+    winner = False
+    if np.where(list_other == -1)[0] ==  close_game(env): winner = True
+    else: winner = False
+    return winner,  per_player
+
+
+# @njit()
+def n_game_numba_2(p0, num_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8):
+    win = 0
+    for _n in range(num_game):
+        list_other = np.append(np.random.choice(np.arange(9), 3), -1)
+        np.random.shuffle(list_other)
+        winner,per_player  = one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8)
+        win += winner
+    return win, per_player
+
+
+def normal_main_2(p0, n_game):
+    per_player = 0
+    list_all_players = dict_game_for_player[game_name_]
+    list_data = load_data_per2(list_all_players, game_name_)
+    per0 = list_data[0]
+    per1 = list_data[1]
+    per2 = list_data[2]
+    per3 = list_data[3]
+    per4 = list_data[4]
+    per5 = list_data[5]
+    per6 = list_data[6]
+    per7 = list_data[7]
+    per8 = list_data[8]
+    return n_game_numba_2(p0, n_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8)
+
