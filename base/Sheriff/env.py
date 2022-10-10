@@ -1831,6 +1831,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
 
         env = step(env, action, all_penalty)
 
+    win = check_winner(env)
     for p_idx in range(4):
         env[-1] = 1
         if list_other[int(env[-3])] == -1:
@@ -1838,7 +1839,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
         env[-3] = (env[-3] + 1)%4
 
     winner = False
-    if np.where(list_other == -1)[0] ==  check_winner(env): winner = True
+    if np.where(list_other == -1)[0] ==  win: winner = True
     else: winner = False
     return winner,  per_player
 
