@@ -25,6 +25,7 @@
 /__pycache__/ 
 !/Agent/player_random/
 !/Agent/Trang/
+!/Agent/Numba_KPI/
 /Agent/Trang/Data/
 /Agent/NhatAnh_New/*
 **/__pycache__/
