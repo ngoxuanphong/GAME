@@ -624,55 +624,69 @@ def normal_main(list_player, times, file_per):
             count[shuffle[winner]] += 1
     return list(count.astype(np.int64)), file_per
 
-def action_player_2(env_state,list_player,file_temp, file_per_2):
-    current_player = int(env_state[-1])
-    player_state = state_to_player(env_state)
-    played_move,file_temp[current_player], file_per_2[current_player] = list_player[current_player](player_state,file_temp[current_player], file_per_2[current_player])
-    if get_list_action(player_state)[played_move] != 1:
-        raise Exception('bot dua ra action khong hop le')
-    return played_move,file_temp, file_per_2
+@njit()
+def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, p4, card_in4, card_point_in4, per_file):
+    env_state = reset(card_in4, card_point_in4,)
 
-# def one_game_2(list_player, file_temp,  card_in4, card_point_in4, file_per_2):
-#     env_state = reset(card_in4, card_point_in4)
-#     count_turn = 0
-#     while system_check_end(env_state) and count_turn < 2000:
-#         action, file_temp,  file_per_2 = action_player_2(env_state,list_player,file_temp, file_per_2)     
-#         env_state = step(env_state, action, card_in4, card_point_in4)
-#         count_turn += 1
+    temp_1_player = List()
+    temp_1_player.append(np.array([[0.]]))
+    temp_file = [temp_1_player]*(amount_player())
 
-#     winner = check_winner(env_state)
-#     for id_player in range(5):
-#         env_state[-2] = 1
-#         id_action = env_state[-1]
-#         action, file_temp,  file_per_2 = action_player_2(env_state,list_player,file_temp, file_per_2)
-#         env_state[-1] = (env_state[-1] + 1)%5
+    count_turn = 0
+    while system_check_end(env_state) and count_turn < 2000:
+        p_idx = int(env_state[-1])
+        p_state = state_to_player(env_state)
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 3:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p4(p_state, temp_file[p_idx], per_file)
+        if get_list_action(p_state)[act] != 1:
+            raise Exception('bot dua ra action khong hop le')
+        env_state = step(env_state, act, card_in4, card_point_in4)
+        count_turn += 1
+
+    winner = check_winner(env_state)
+    for id_player in range(5):
+        env_state[-2] = 1
+        id_action = env_state[-1]
+        p_state = state_to_player(env_state)
+        p_idx = int(env_state[-1])
+
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 3:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p4(p_state, temp_file[p_idx], per_file)
     
-#     return winner, file_per_2
+        env_state[-1] = (env_state[-1] + 1)%5
+    return winner, per_file
 
-# def normal_main_2(list_player, times,  per_file_2):
-#     count = np.zeros(len(list_player)+1)
-#     card_in4 = all_card_in4()
-#     card_point_in4 = all_card_point_in4()
-#     all_id_player = np.arange(len(list_player))
-
-#     for van in range(times):
-#         shuffle = np.random.choice(all_id_player, 5, replace=False)
-#         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]], list_player[shuffle[4]]]
-#         file_temp = [[0],[0],[0],[0], [0]]
-#         file_per_2_new = [per_file_2[shuffle[i]] for i in range(amount_player())]
-
-#         winner,  file_per_2_new = one_game_2(shuffle_player, file_temp,  card_in4, card_point_in4, file_per_2_new)
-
-#         list_p_id_new = [list(shuffle).index(i) for i in range(amount_player())]
-#         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
-
-#         if winner == -1:
-#             count[winner] += 1
-#         else:
-#             count[shuffle[winner]] += 1
-        
-#         # print(per_file_2)
-#     return list(count.astype(np.int64)),  per_file_2
+@njit()
+def numba_main(p0, p1, p2, p3, p4, num_game,per_file):
+    count = np.zeros(amount_player()+1)
+    card_in4 = all_card_in4()
+    card_point_in4 = all_card_point_in4()
+    p_lst_idx = np.array([0,1,2,3, 4])
+    for _n in range(num_game):
+        np.random.shuffle(p_lst_idx)
+        winner, per_file = numba_one_game(p_lst_idx, p0, p1, p2, p3, p4, card_in4, card_point_in4, per_file )
+        count[p_lst_idx[winner]] += 1
+        if winner == -1:
+            count[winner] += 1
+        else:
+            count[p_lst_idx[winner]] += 1
+    return list(count.astype(np.int64)), per_file
 
 
 

@@ -482,61 +482,27 @@ def normal_main(list_player, num_game,per_file):
 
     return num_won, per_file
 
-# def one_game_2(list_player,  per_file_2):
-#     env, lv1, lv2, lv3 = Reset()
-#     temp_file = [[0],[0],[0],[0]]
-#     _cc = 0
-#     while env[100] <= 400 and _cc <= 10000:
-#         p_idx = env[100]%4
-#         p_state = get_player_state(env, lv1, lv2, lv3)
-#         act, temp_file[p_idx],  per_file_2[p_idx] = list_player[p_idx](p_state, temp_file[p_idx],  per_file_2[p_idx])
-#         env, lv1, lv2, lv3 = step(act, env, lv1, lv2, lv3)
-
-#         if close_game(env) != 0:
-#             break
-
-#         _cc += 1
-    
-#     turn = env[100]
-#     for i in range(4):
-#         env[100] = i
-#         act, temp_file[i],  per_file_2[i] = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i],  per_file_2[i])
-    
-#     env[100] = turn
-#     return close_game(env),  per_file_2
-
-# def normal_main_2(list_player, num_game,  per_file_2):
-#     if len(list_player) != 4:
-#         print('Game chỉ cho phép có đúng 4 người chơi')
-#         return [-1,-1,-1,-1,-1]
-        
-#     num_won = [0,0,0,0,0]
-#     p_lst_idx = [0,1,2,3]
-#     for _n in range(num_game):
-#         rd.shuffle(p_lst_idx)
-#         # print(p_lst_idx)
-#         file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
-#         list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
-#         winner,  per_file_2 = one_game_2(
-#             list_player_new ,file_per_2_new)
-
-#         list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
-#         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
-#         if winner != 0:
-#             num_won[p_lst_idx[winner-1]] += 1
-#         else:
-#             num_won[4] += 1
-
-#     return num_won,  per_file_2
-
-def one_game_test(list_player, per_file_temp):
+@njit()
+def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
     env, lv1, lv2, lv3 = Reset()
-    temp_file = [[0],[0],[0],[0]]
     _cc = 0
+
+    temp_1_player = List()
+    temp_1_player.append(np.array([[0.]]))
+    temp_file = [temp_1_player]*(amount_player())
+
     while env[100] <= 400 and _cc <= 10000:
         p_idx = env[100]%4
         p_state = get_player_state(env, lv1, lv2, lv3)
-        act, temp_file[p_idx], per_file_temp[p_idx] = list_player[p_idx](p_state, temp_file[p_idx], per_file_temp[p_idx])
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+
         env, lv1, lv2, lv3 = step(act, env, lv1, lv2, lv3)
 
         if close_game(env) != 0:
@@ -545,42 +511,31 @@ def one_game_test(list_player, per_file_temp):
         _cc += 1
     
     turn = env[100]
-    for i in range(4):
-        env[100] = i
-        act, temp_file[i], per_file_temp[i] = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file_temp[i])
+    for p_idx in range(4):
+        env[100] = p_idx
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
     
     env[100] = turn
-    return close_game(env), per_file_temp
+    return close_game(env), per_file
 
-def normal_main_test(list_player, num_game,per_file):
-    if len(list_player) != 4:
-        print('Game chỉ cho phép có đúng 4 người chơi')
-        return [-1,-1,-1,-1,-1], per_file
-    
+
+@njit()
+def numba_main(p0, p1, p2, p3, num_game,per_file):
     num_won = [0,0,0,0,0]
-    p_lst_idx = [0,1,2,3]
-    per_file = [[0],[0],[0],[0]]
+    p_lst_idx = np.array([0,1,2,3])
     for _n in range(num_game):
-
-        # Shuffle người chơi
-        rd.shuffle(p_lst_idx)
-        # print()
-        # print(p_lst_idx)
-        per_file_temp = [per_file[p_lst_idx[0]], per_file[p_lst_idx[1]], per_file[p_lst_idx[2]], per_file[p_lst_idx[3]]]
-        print(per_file_temp)
-        winner, per_file_temp = one_game_test(
-            [list_player[p_lst_idx[0]], list_player[p_lst_idx[1]], list_player[p_lst_idx[2]], list_player[p_lst_idx[3]]], 
-            per_file_temp,
-        )
-        # print(per_file_temp)
-        for ii in range(4):
-            per_file[ii] = per_file_temp[p_lst_idx[ii]]
-
-        # print(per_file)
-        if winner != 0:
-            num_won[p_lst_idx[winner-1]] += 1
-        else:
-            num_won[4] += 1
+        np.random.shuffle(p_lst_idx)
+        winner, per_file = numba_one_game(p_lst_idx, p0, p1, p2, p3, per_file )
+        if winner != 0: num_won[p_lst_idx[winner-1]] += 1
+        else:num_won[4] += 1
 
     return num_won, per_file
 
@@ -692,10 +647,6 @@ def normal_main_print(list_player, num_game=1, print_mode=False):
 
     return num_won, per_file
 
-def player_random(p_state, temp_file, per_file):
-    arr_action = get_list_action(p_state)
-    act_idx = np.random.randint(0, len(arr_action))
-    return arr_action[act_idx], temp_file, per_file
 
 
 
