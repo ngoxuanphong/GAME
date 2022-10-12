@@ -50,6 +50,28 @@ def load_data_per2(list_all_players, game_name_):
         data_in_file = np.load(f'{path_data}/{file_name}', allow_pickle=True)
         if 'Dat' in name:
             lst_data.append([data_in_file['w1'],data_in_file['w2']])
+        elif 'Phong_270922' in name:
+            if game_name_ == 'Splendor_v2': id_model = 0
+            if game_name_ == 'Century': id_model = 1
+            if game_name_ == 'MachiKoro': id_model = 0
+            if game_name_ == 'Splendor': id_model = 2
+            if game_name_ == 'TLMN': id_model = 0
+            if game_name_ == 'TLMN_v2': id_model = 2
+            if game_name_ == 'SushiGo': id_model = 1
+            if game_name_ == 'Sheriff': id_model = 2
+            data_in_file = data_in_file[id_model][0][-1]
+            lst_data.append(data_in_file)
+        elif 'Phong_200922' in name:
+            if game_name_ == 'SushiGo': id_model = 0
+            if game_name_ == 'TLMN': id_model = 0
+            if game_name_ == 'Splendor': id_model = 0
+            if game_name_ == 'Century': id_model = 0
+            if game_name_ == 'MachiKoro': id_model = 0
+            if game_name_ == 'Splendor_v2': id_model = 1
+            if game_name_ == 'TLMN_v2': id_model = 1
+            if game_name_ == 'Sheriff': id_model = 1
+            data_in_file = data_in_file[id_model][0][-1]
+            lst_data.append(data_in_file)
         elif 'Phong' in name:
             data_in_file = data_in_file[0][0][-1]
             lst_data.append(data_in_file)
