@@ -72,9 +72,16 @@ def load_data_per2(list_all_players, game_name_):
             if game_name_ == 'Sheriff': id_model = 1
             data_in_file = data_in_file[id_model][0][-1]
             lst_data.append(data_in_file)
-        elif 'Phong' in name:
-            data_in_file = data_in_file[0][0][-1]
-            lst_data.append(data_in_file)
+        elif 'Phong_130922' in name:
+            if game_name_ == 'Splendor':
+                data_in_file = data_in_file[0][0][-1]
+                lst_data.append(data_in_file)
+            if game_name_ == 'SushiGo':
+                data_Phong_130922 = List()
+                for i in range(3):
+                    data_Phong_130922.append(data_in_file[i][0][-1])
+                data_Phong_130922.append(np.array([[2.]]))
+                lst_data.append(data_Phong_130922)
         elif 'NhatAnh_130922' in name:
             mylist0 = List()
             mylist1 = List()
