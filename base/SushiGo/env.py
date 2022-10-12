@@ -1233,6 +1233,15 @@ def test2_Phong_130922(state,file_per_2):
     action = file_temp_to_action_Phong_130922(state, file_per_2)
     return action
 
+
+@njit() 
+def test2_Phong_130922_New(state,file_per_2):
+    id_model = int(file_per_2[-1][0][0])
+    action = file_temp_to_action_Phong_130922(state, file_per_2[id_model])
+    if check_victory(state) == 0:
+        file_per_2[-1][0][0] = np.random.choice(np.array([0., 1., 2.])) 
+    return action
+
 #######################################################################
 
 # @njit()
@@ -1272,7 +1281,7 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
     elif id == 8: return test2_Khanh_200922(player_state, per8)
     elif id == 9: return test2_NhatAnh_200922(player_state, per9)
     elif id == 10: return test2_Hieu_130922(player_state, per10)
-    elif id == 11: return test2_Phong_130922(player_state, per11)
+    elif id == 11: return test2_Phong_130922_New(player_state, per11)
     elif id == 12: return test2_Khanh_130922(player_state, per12)
     elif id == 13: return test2_Dat_130922(player_state, per13)
     elif id == 14: return test2_NhatAnh_130922(player_state, per14)
@@ -1320,6 +1329,8 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     for idx in range(5):
         if list_other[idx] == -1:
             act, _temp_, per_player = p0(get_player_state(state_sys,idx), _temp_, per_player)
+        else:
+            action = get_func(get_player_state(state_sys,idx), list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
     winner = False
     winner_player = winner_victory(state_sys)
     if np.where(list_other == -1)[0] in  winner_player: winner = True
@@ -1406,6 +1417,8 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     for idx in range(5):
         if list_other[idx] == -1:
             act, _temp_, per_player = p0(get_player_state(state_sys,idx), _temp_, per_player)
+        else:
+            action = get_func(get_player_state(state_sys,idx), list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
     winner = False
     winner_player = winner_victory(state_sys)
     if np.where(list_other == -1)[0] in  winner_player: winner = True
