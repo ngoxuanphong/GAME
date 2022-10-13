@@ -1511,8 +1511,7 @@ def n_game_numba_2(p0, num_game, per_player, per0, per1, per2, per3, per4, per5,
 
 
 
-def normal_main_2(p0, n_game):
-    per_player = 0
+def normal_main_2(p0, per_player, n_game):
     list_all_players = dict_game_for_player[game_name_]
     list_data = load_data_per2(list_all_players, game_name_)
     per0 = list_data[0]

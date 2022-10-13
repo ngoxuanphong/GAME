@@ -8,6 +8,7 @@
       file_per trong hệ thống đã quy định là 0, file_per = 0
         Args:
             function: thuật toán của người chơi
+            file_per: file_per đầu vào, phải quy định định dạng từ đầu và không được thay đổi trong khi chạy
             number_of_matches: Số trận chạy thuật toán
         Returns: 
             Win: Số trận thắng
@@ -55,8 +56,6 @@
 
 
     def test2(state,temp,per):
-        if type(per) == int:
-            per = perx
         if per[3][0][0] == 0:
             a = per[2][0]
             choice = np.where(a == np.min(a))[0][0]
@@ -77,7 +76,7 @@
         return action,temp,per
 
         perx = [np.array([np.random.rand(amount_action()) for _ in range(100)]),np.zeros((1,100)),np.zeros((1,100)),np.zeros((1,100))]
-        win1, x = normal_main_2(test2,1000)
+        win1, x = normal_main_2(test2, perx, 1000)
         win, x = numba_main_2(p0, perx , 1000)
         print(win, win1)
      ```
