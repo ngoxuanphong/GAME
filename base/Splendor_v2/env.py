@@ -626,7 +626,9 @@ def one_game_print(list_player, per_file, *print_mode):
     turn = env[100]
     for i in range(4):
         env[100] = i
-        act, temp_file[i], per_file = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file)
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        p_state[161] = 1
+        act, temp_file[i], per_file = list_player[i](p_state, temp_file[i], per_file)
     
     env[100] = turn
     return close_game(env), per_file
