@@ -35,7 +35,7 @@ def amount_player():
 
 @njit()
 def amount_state():
-    return 160
+    return 161
 
 @njit()
 def get_list_id_card_on_lv(lv):
@@ -89,6 +89,12 @@ def get_player_state(env_state, lv1, lv2, lv3):
     p_state = np.append(p_state, other_scores) #Lấy điểm của người chơi khác
     p_state = np.append(p_state, (env_state[161:164] != 100)*1) #Lấy thông tin của các thẻ ẩn có thẻ úp, nếu có thể úp thì là 1
     p_state = np.append(p_state, len(np.where(env_state[:90] == 5)[0])) #Số lượng thẻ có thể úp trong bàn
+    
+    cls_game = int(close_game(env_state))
+    if cls_game == 0:
+        p_state = np.append(p_state, 0)
+    else:
+        p_state = np.append(p_state, 1)
     return p_state.astype(np.float64)
 
 @njit()
@@ -98,6 +104,8 @@ def check_victory(p_state):
 
     if owner_score >= 15 and max(scores) <= owner_score:
         return 1
+    if p_state[160] == 0:
+        return -1
     if max(scores) >= 15 and max(scores) > owner_score:
         return 0
     if owner_score < 15 and max(scores) < 15:
@@ -455,7 +463,9 @@ def one_game(list_player, per_file):
     turn = env[100]
     for i in range(4):
         env[100] = i
-        act, temp_file[i], per_file = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file)
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        p_state[160] = 1
+        act, temp_file[i], per_file = list_player[i](p_state, temp_file[i], per_file)
     
     env[100] = turn
     return close_game(env), per_file
@@ -514,6 +524,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
     for p_idx in range(4):
         env[100] = p_idx
         p_state = get_player_state(env, lv1, lv2, lv3)
+        p_state[160] = 1
         if p_lst_idx_shuffle[p_idx] == 0:
             act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
@@ -687,6 +698,7 @@ def data_to_layer_NhatAnh_130922(state,data0, data1):
 
 @njit()
 def test2_NhatAnh_130922(state,file_per_2):
+    state = state[:-1]
     layer = np.zeros(amount_action())
     for id in range(len(file_per_2[0])):
         layer += data_to_layer_NhatAnh_130922(state,file_per_2[0][id], file_per_2[1][id])
@@ -715,6 +727,7 @@ def basic_act_NhatAnh_200922(state,base):
 
 @njit()
 def test2_NhatAnh_200922(state,file_per_2):
+    state = state[:-1]
     action = basic_act_NhatAnh_200922(state,file_per_2)
     return action
 
@@ -735,6 +748,7 @@ def advance_act_NhatAnh_270922(state,data):
 
 @njit()
 def test2_NhatAnh_270922(state, file_per_2):
+    state = state[:-1]
     action = advance_act_NhatAnh_270922(state,file_per_2)
     return action
 
@@ -792,6 +806,7 @@ def neural_network_khanh_130922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_130922(play_state, file_per_2):
+    play_state = play_state[:-1]
     a = get_list_action(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
@@ -855,6 +870,7 @@ def neural_network_khanh_200922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_200922(play_state,file_per_2):
+    play_state = play_state[:-1]
     a = get_list_action(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
@@ -870,10 +886,6 @@ def test2_Khanh_200922(play_state,file_per_2):
     return action_max
 
 #############################################################
-
-# @njit()
-# def relu6_khanh_270922(x):
-#     return np.minimum(np.maximum(0, x),6)
 
 @njit()
 def neural_network_khanh_270922(play_state, file_temp0, file_temp1, file_temp2):
@@ -917,6 +929,7 @@ def neural_network_khanh_270922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_270922(play_state,file_per_2):
+    play_state = play_state[:-1]
     a = get_list_action(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
@@ -989,7 +1002,6 @@ def id_function_an_130922(id, res_mat, Identity_an_130922, BinaryStep_an_130922,
     elif id == 7: return PReLU_an_130922(res_mat)
     else: return Gaussian_an_130922(res_mat)
 
-# list_activation_function = [Identity_an_130922, BinaryStep_an_130922, Sigmoid_an_130922, NegativePositiveStep_an_130922, Tanh_an_130922, ReLU_an_130922, LeakyReLU_an_130922, PReLU_an_130922, Gaussian_an_130922]
 @njit()
 def neural_network_an_130922(res_mat, data, list_action):
     for i in range(len(data)):
@@ -1000,7 +1012,6 @@ def neural_network_an_130922(res_mat, data, list_action):
             res_mat = res_mat / max_x_1
         else:
             id = int(data[i][0][0])
-            # res_mat = list_activation_function[id](res_mat)
             res_mat = id_function_an_130922(id, res_mat, Identity_an_130922, BinaryStep_an_130922, Sigmoid_an_130922, NegativePositiveStep_an_130922, Tanh_an_130922, ReLU_an_130922, LeakyReLU_an_130922, PReLU_an_130922, Gaussian_an_130922)
 
     
@@ -1011,6 +1022,7 @@ def neural_network_an_130922(res_mat, data, list_action):
 
 @njit()
 def test2_An_130922(p_state, temp_file,  file_per_2):
+    p_state = p_state[:-1]
     list_action = get_list_action(p_state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_an_130922(p_state, file_per_2, list_action)
@@ -1074,8 +1086,6 @@ def Ann_neural_network_an_200922(res_mat:np.ndarray, data, list_action):
         data3i1 = data[3*i+1].flatten()
         data3i2 = int(data[3*i+2][0][0])
         res_mat = np.dot(res_mat, data3i) + data3i1
-        # res_mat = np.nan_to_num(res_mat)
-        # res_mat = activation_function[data3i2](res_mat)
         res_mat = id_function_an_200922(data3i2, res_mat, Identity_an_200922, BinaryStep_an_200922, Sigmoid_an_200922, SignStep_an_200922, Tanh_an_200922, ReLU_an_200922, SoftPlus_an_200922, Gaussian_an_200922)
     
     res_arr = res_mat[list_action]
@@ -1090,6 +1100,7 @@ def Ann_neural_network_an_200922(res_mat:np.ndarray, data, list_action):
 
 @njit()
 def test2_An_200922(p_state, file_per_2):
+    p_state = p_state[:-1]
     list_action = get_list_action(p_state)
     list_action = np.where(list_action == 1)[0]
     if len(file_per_2) == 2: 
@@ -1100,9 +1111,6 @@ def test2_An_200922(p_state, file_per_2):
     if type_file_per_2 == 0: # fnn
         action = Ann_neural_network_an_200922(p_state, file_per_2[0], list_action)
     else: # sg
-        # if len(file_per_2) < 3:
-        #     file_per_2.append(file_per_2[0][0]/file_per_2[0][1])
-            # print(file_per_2[0])
             res_arr = file_per_2[0][2][0][list_action]
             a = np.max(res_arr)
             if a >= 0:
@@ -1183,15 +1191,10 @@ def id_function_an_270922(id, res_mat, Identity_an_270922, BinaryStep_an_270922,
 @njit()
 def Ann_neural_network_an_270922(res_mat:np.ndarray, data, list_action):
     for i in range(len(data)//3):
-        # data3i = data[3*i]
-        # data3i1 = data[3*i+1]
-        # data3i2 = data[3*i+2]
         data3i = data[3*i]
         data3i1 = data[3*i+1].flatten()
         data3i2 = int(data[3*i+2][0][0])
         res_mat = np.dot(res_mat, data3i) + data3i1
-        # res_mat = np.nan_to_num(res_mat)
-        # res_mat = activation_function[data3i2](res_mat)
         res_mat = id_function_an_270922(data3i2, res_mat, Identity_an_270922, BinaryStep_an_270922, Sigmoid_an_270922, SignStep_an_270922, Tanh_an_270922, ReLU_an_270922, LeakyReLU_an_270922, PReLU_an_270922, SoftPlus_an_270922, Gaussian_an_270922)
     
     res_arr = res_mat[list_action]
@@ -1205,6 +1208,7 @@ def Ann_neural_network_an_270922(res_mat:np.ndarray, data, list_action):
 
 @njit()
 def test2_An_270922(p_state, file_per_2):
+    p_state = p_state[:-1]
     list_action = get_list_action(p_state)
     list_action = np.where(list_action == 1)[0]
     if len(file_per_2) == 2: 
@@ -1215,14 +1219,11 @@ def test2_An_270922(p_state, file_per_2):
         action = Ann_neural_network_an_270922(p_state, file_per_2[0], list_action)
         # return action, temp_file,  file_per_2
     else:
-        # if len(file_per_2) < 3:
-        #     file_per_2.append(file_per_2[0][0]/file_per_2[0][1])
-        
+
         res_arr = file_per_2[0][2][0][list_action]
         a = np.max(res_arr)
         arr_max = np.where(res_arr >= 0.99*a)[0]
         action = list_action[np.random.choice(arr_max)]
-        
     return action
 
 
@@ -1232,6 +1233,7 @@ def test2_An_270922(p_state, file_per_2):
 
 @njit()
 def test2_Dat_130922(state,file_per_2):
+    state = state[:-1]
     list_action = get_list_action(state)
     list_action = np.where(list_action == 1)[0]
     hidden1 = np.dot(state, file_per_2[0])
@@ -1240,27 +1242,6 @@ def test2_Dat_130922(state,file_per_2):
     action = list_action[np.argmax(values[list_action])]
     return action
 
-#########################################################
-# @njit()
-# def test2_Dat_200922(state,temp, file_per_2):
-#     list_action = get_list_action(state)
-#     list_action = np.where(list_action == 1)[0]
-#     hidden1 = np.dot(state, file_per_2[0])
-#     hidden2 = hidden1 * (hidden1>0)
-#     values =  np.dot(hidden2, file_per_2[1])
-#     action = list_action[np.argmax(values[list_action])]
-#     return action,temp, file_per_2
-
-# ################################################################
-# @njit()
-# def test2_Dat_270922(state,temp, file_per_2):
-#     list_action = get_list_action(state)
-#     list_action = np.where(list_action == 1)[0]
-#     hidden1 = np.dot(state, file_per_2[0])
-#     hidden2 = hidden1 * (hidden1>0)
-#     values =  np.dot(hidden2, file_per_2[1])
-#     action = list_action[np.argmax(values[list_action])]
-#     return action,temp, file_per_2
 
 ###############################################################
 ###############################################################
@@ -1284,6 +1265,7 @@ def neural_network_hieu_130922(state, file_temp0, file_temp1, file_temp2, list_a
 
 @njit()
 def test2_Hieu_130922(state, file_per_2):
+    state = state[:-1]
     list_action = get_list_action(state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_hieu_130922(state, file_per_2[0], file_per_2[1], file_per_2[2], list_action)
@@ -1296,8 +1278,6 @@ def agent_hieu_270922(state,file_temp,file_per):
     action = np.random.choice(actions)
     file_per = (len(state),amount_action())
     return action,file_temp,file_per
-
-# LEN_STATE_hieu_270922,AMOUNT_ACTION_hieu_270922 = normal_main([agent_hieu_270922]*amount_player(), 1, [0])[1]
 
 @njit()
 def softmax_hieu_270922(X):
@@ -1314,7 +1294,6 @@ def tanh_hieu_270922(X):
 
 @njit()
 def neural_network_hieu_270922(norm_state, file_temp0, file_temp1, file_temp2, list_action):
-    # norm_state = state.copy()
     norm_state = norm_state/np.linalg.norm(norm_state, 1)
     norm_state = softmax_hieu_270922(norm_state)
     norm_action = np.zeros(amount_action())
@@ -1336,6 +1315,7 @@ def neural_network_hieu_270922(norm_state, file_temp0, file_temp1, file_temp2, l
 
 @njit()
 def test2_Hieu_270922(state, file_per_2):
+    state = state[:-1]
     list_action = get_list_action(state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_hieu_270922(state, file_per_2[0], file_per_2[1], file_per_2[2], list_action)
@@ -1357,22 +1337,9 @@ def file_temp_to_action_Phong_130922(state, file_temp):
 
 @njit() 
 def test2_Phong_130922(state,file_per_2):
+    state = state[:-1]
     action = file_temp_to_action_Phong_130922(state, file_per_2)
     return action
-
-#######################################################################
-
-# @njit()
-# def test2_Phong_200922(state,file_temp, file_per_2):
-#     action = file_temp_to_action_Phong_130922(state, file_per_2)
-#     return action
-
-# ######################################################################
-
-# @njit()
-# def test2_Phong_270922(state,file_temp, file_per_2):
-#     action = file_temp_to_action_Phong_130922(state, file_per_2)
-#     return action
 
 
 
@@ -1426,7 +1393,9 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     for idx in range(4):
         env[100] = idx
         if list_other[idx] == -1:
-            act, _temp_, per_player = p0(get_player_state(env, lv1, lv2, lv3), _temp_, per_player)
+            p_state = get_player_state(env, lv1, lv2, lv3)
+            p_state[160] = 1
+            act, _temp_, per_player = p0(p_state, _temp_, per_player)
     env[100] = turn
     winner = False
     if np.where(list_other == -1)[0] ==  (close_game(env) - 1): winner = True
@@ -1491,7 +1460,9 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     for idx in range(4):
         env[100] = idx
         if list_other[idx] == -1:
-            act, _temp_, per_player = p0(get_player_state(env, lv1, lv2, lv3), _temp_, per_player)
+            p_state = get_player_state(env, lv1, lv2, lv3)
+            p_state[160] = 1
+            act, _temp_, per_player = p0(p_state, _temp_, per_player)
     env[100] = turn
     winner = False
     if np.where(list_other == -1)[0] ==  (close_game(env) - 1): winner = True
