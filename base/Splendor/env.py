@@ -607,6 +607,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, env, lv1, lv2, lv3, per_fi
     for p_idx in range(4):
         env[154] = p_idx
         p_state = get_player_state(env, lv1, lv2, lv3)
+        p_state[164] = 1
         if p_lst_idx_shuffle[p_idx] == 0:
             act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
