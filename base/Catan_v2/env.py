@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+from numba.typed import List
 
 TILE_TILE = np.array(
     [[1, 11, 12, 17, -1, -1],  # 0
