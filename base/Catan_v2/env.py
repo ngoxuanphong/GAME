@@ -1,8 +1,5 @@
-from re import L
 import numpy as np
 from numba import njit
-
-import numpy as np
 
 TILE_TILE = np.array(
     [[1, 11, 12, 17, -1, -1],  # 0
@@ -315,7 +312,7 @@ LEN_P_STATE = 210
 AMOUNT_ACTION = 106
 
 # Càng cao thì chạy càng lâu, nhưng tỉ lệ không end được game càng thấp
-MAX_TURN_IN_ONE_GAME = 1500
+MAX_TURN_IN_ONE_GAME = 1200
 
 
 @njit
@@ -1681,18 +1678,18 @@ def close_game(env: np.ndarray):
             # 2 người chơi có cùng số điểm cao nhất
             if (all_total_score[list_more_than_9] == max_score).all():
                 return main_p_idx + 100
-            
+
             # Người chơi chiến thắng có điểm cao nhất
             if all_total_score[main_p_idx] == max_score:
                 return main_p_idx + 200
 
             # Người chơi chiến thắng không có điểm cao nhất
             return main_p_idx + 300
-        
+
         # Đến đây thì tức là người chơi chính có điểm cao nhất
         if all_total_score[main_p_idx] == 12:
             return main_p_idx + 400
-        
+
         # Chỉ đơn giản là chiến thắng với 10 hoặc 11 điểm, không có gì đặc biệt
         return main_p_idx
 
@@ -1706,15 +1703,15 @@ def check_victory(p_state: np.ndarray):
         # Thắng hoặc chưa kết thúc game
         if p_state[64] > 9:  # Hơn 9 điểm => auto thắng
             return 1
-        
+
         return -1  # Chưa có trên 9 điểm, chưa kết thúc game
-    
+
     # Không phải lượt của bản thân
     # Thua hoặc chưa kết thúc game
     # Người chơi chính có hơn 9 điểm => thua
     if p_state[69 + 29*main_p_idx] > 9:
         return 0
-    
+
     # Người chơi chính chưa có trên 9 điểm, chưa kết thúc game
     return -1
 
@@ -1908,11 +1905,11 @@ def explain_count_win(count_win):
         'Người chơi thứ tư thắng:': count_win[3],
         'Số trận không có ai thắng:': count_win[4],
         'Số trận có 2 người cùng đạt điểm cao nhất:': count_win[5],
-        'Số trận mà có 2 người trên 9 điểm, người chiến thắng đạt điểm cao nhất:': count_win[6],
-        'Số trận mà người chiến thắng không đạt điểm cao nhất:': count_win[7],
-        'Số trận mà người chiến thắng có 12 điểm:': count_win[8]
+        'Số trận có 2 người trên 9 điểm, người chiến thắng đạt điểm cao nhất:': count_win[6],
+        'Số trận người chiến thắng không đạt điểm cao nhất:': count_win[7],
+        'Số trận người chiến thắng có 12 điểm:': count_win[8]
     }
-    
+
     for item in dict_.items():
         print(item)
 
