@@ -17,11 +17,11 @@
 
 
 
-type_run_code = 'Test' #Train or Test or Train_1_player or Test_1_player
-players = ['Phong_270922']
-game_name = 'Sheriff'
+type_run_code = 'Train_1_player' #Train or Test or Train_1_player or Test_1_player
+players = ['Phong_200922']
+game_name = 'Catan_New'
 
 time_run_game = 79200
  
-number_of_matches = 10000 #Số trận test khi dùng khi test và test_1_player
+number_of_matches = 1000 #Số trận test khi dùng khi test và test_1_player
 path_save_json_test_player = '' #Nơi lưu file json data test các người chơi
