@@ -1,1594 +1,869 @@
-import sys
+import pandas as pd
 import numpy as np
+import re
+import numba
 from numba import njit
-import numpy as np
+import os
+import time
+from base.Catan.index import *
+from base.Catan.basic_action import *
+import random
 
-TILE_TILE = np.array(
-    [[1, 11, 12, 17, -1, -1],  # 0
-     [0, 2, 17, -1, -1, -1],  # 1
-     [1, 3, 16, 17, -1, -1],  # 2
-     [2, 4, 16, -1, -1, -1],  # 3
-     [3, 5, 15, 16, -1, -1],  # 4
-     [4, 6, 15, -1, -1, -1],  # 5
-     [5, 7, 14, 15, -1, -1],  # 6
-     [6, 8, 14, -1, -1, -1],  # 7
-     [7, 9, 13, 14, -1, -1],  # 8
-     [8, 10, 13, -1, -1, -1],  # 9
-     [9, 11, 12, 13, -1, -1],  # 10
-     [0, 10, 12, -1, -1, -1],  # 11
-     [0, 10, 11, 13, 17, 18],  # 12
-     [8, 9, 10, 12, 14, 18],  # 13
-     [6, 7, 8, 13, 15, 18],  # 14
-     [4, 5, 6, 14, 16, 18],  # 15
-     [2, 3, 4, 15, 17, 18],  # 16
-     [0, 1, 2, 12, 16, 18],  # 17
-     [12, 13, 14, 15, 16, 17]]  # 18
-)
+@njit()
+def get_list_action(player_state_origin):
+    player_state = player_state_origin.copy()
+    phase_env = int(player_state[P_PHASE])
+    # phase_env = 2
+    list_action = np.array([-1])
+    turn = player_state[P_TURN]
+    # print('turn', turn)
+    roads_data = player_state[P_ROAD_INDEX : P_ROAD_INDEX+ROAD_LEN]
+    points_data = player_state[P_POINT_INDEX : P_POINT_INDEX+POINT_LEN]
+    player_source = player_state[P_CARD_PLAYER_INDEX:P_CARD_PLAYER_INDEX+CARD_PLAYER_LEN]
+    if phase_env == 1:
+        #đổ xúc sắc hay dùng thẻ dev nào?
+        dev_card = player_state[P_DEV_CARD:P_DEV_CARD+4]
+        list_action = np.array([102])
+        #nếu được dùng dev_Card thì mới xét
+        if player_state[P_PLAYER_CAN_USE_DEV_CARD] == 1:
+            action_dev_card = np.where(dev_card>0)[0]
+            if len(action_dev_card) > 0:
+                list_action = np.append(list_action, action_dev_card+94)
+                if 96 in list_action and np.sum(player_state[P_SOURCE_IN_BANK_INDEX : P_SOURCE_IN_BANK_INDEX+P_SOURCE_IN_BANK_LEN]) == 0:
+                    list_action = np.delete(list_action, np.where(list_action == 96)[0])
+                if 95 in list_action:
+                    road_not_yet_have = np.where(roads_data == -1)[0]
+                    p_roads = np.where(roads_data == 0)[0]
+                    road_build, point_can_build = RoadCanBuild(p_roads, road_not_yet_have, 0, points_data)
+                    if len(np.where(roads_data == 0)[0]) >= 15 or len(point_can_build) == 0:
+                        list_action = np.delete(list_action, np.where(list_action == 95)[0])
+        return list_action.astype(np.int64)
+    elif phase_env == 2:
+        '''
+        1: Xây nhà,
+        2: Nâng cấp city,
+        3: Đặt đường,
+        4: Mua thẻ effect
+        '''
+        #Xây nhà
+        if CheckMaterialForAction(player_source,1):
+            relationship = HouseCanBuild(points_data, roads_data, turn)
+            if len(np.where(relationship > 0)[0]) > 0:
+                if len(np.where(points_data == 0)[0]) < 5:
+                    list_action = np.append(list_action,np.array([98]))
+        #Nâng cấp lên City
+        if CheckMaterialForAction(player_source,2):
+            if len(np.where(points_data == 4)[0]) < 4 and len(np.where(points_data == 0)[0]) > 0:
+                list_action = np.append(list_action,np.array([99]))
+        #Đặt đường
+        if CheckMaterialForAction(player_source,3):
+            road_not_yet_have = np.where(roads_data == -1)[0]
+            p_roads = np.where(roads_data == 0)[0]
+            if len(road_not_yet_have) > 0 and len(p_roads) > 0:
+                # RoadCanBuild(road_have, road_not_yet_have, id_action, points_data)
+                road_build, point_can_build = RoadCanBuild(p_roads, road_not_yet_have, 0, points_data)
+                if len(point_can_build) > 0 and len(p_roads) < 15:
+                    list_action = np.append(list_action,np.array([100]))
+        #Mua thẻ dev
+        dev_card = player_state[P_DEV_CARD:P_DEV_CARD+4]
+        if CheckMaterialForAction(player_source,4) and len(np.where(dev_card>-1)[0]) != 0:
+            if player_state[P_DEV_CARD_IN_BANK_INDEX] == 1:
+                list_action = np.append(list_action,np.array([101]))
+        # Dùng thẻ dev
+        if player_state[P_PLAYER_CAN_USE_DEV_CARD] == 1:
+            list_action = np.append(list_action, np.where(dev_card>0)[0]+94)
+            if 96 in list_action and np.sum(player_state[P_SOURCE_IN_BANK_INDEX : P_SOURCE_IN_BANK_INDEX+P_SOURCE_IN_BANK_LEN]) == 0:
+                list_action = np.delete(list_action, np.where(list_action == 96)[0])
+            if 95 in list_action and len(np.where(roads_data == 0)[0]) >= 15:
+                list_action = np.delete(list_action, np.where(list_action == 95)[0])
+        # Trading tài Nguyên
+        if player_state[P_NUMBER_TRADE_OF_PLAYER] > 0 and np.sum(player_source) > 0:
+            max_source_in_deal = np.max(np.array([player_state[P_P1_ATTRIBUTE_PLAYER+1], player_state[P_P2_ATTRIBUTE_PLAYER+1], player_state[P_P3_ATTRIBUTE_PLAYER+1]]))
+            if max_source_in_deal > 0:
+                list_action = np.append(list_action, np.array([106]))       #trading vs người
+        #Trading vs port and bank
+        player_res_trade_bank = np.where(player_source>3)[0]
+        bank_res = np.where(player_state[P_SOURCE_IN_BANK_INDEX:P_SOURCE_IN_BANK_INDEX+P_SOURCE_IN_BANK_LEN] > 0)[0]
+        if len(player_res_trade_bank)*len(bank_res) > 0:
+            if len(bank_res) > 1 or len(player_res_trade_bank) > 1 or player_res_trade_bank[0] != bank_res[0]:
+                # print('toang0', len(bank_res), len(player_res_trade_bank), player_res_trade_bank[0], bank_res[0])
+                list_action = np.append(list_action,np.array([107]))
+            # else:
+            #     if len(player_res_trade_bank) > 1 or player_res_trade_bank[0] != bank_res[0]:
+            #         list_action = np.append(list_action,np.array([107]))
+        if list_action[-1] != 107 and len(bank_res) > 0:
+            type_of_port = player_state[P_TYPE_HARBOR_INDEX : P_TYPE_HARBOR_INDEX+TYPE_HARBOR_LEN]  #Loại cảng theo thứ tự
+            point_in_port = points_data[POINT_IN_HARBOR]                #xét các điểm là cảng
+            # print(player_source,'-----', type_of_port, point_in_port)
+            player_port = np.where((point_in_port == 0) | (point_in_port == 4))[0]     #tìm các điểm là cảng của người chơi
+            if len(player_port) > 0:
+                for id in player_port:
+                    type_port = type_of_port[id//2]
+                    if type_port == 0:
+                        if np.max(player_source) > 2:
+                            if len(bank_res) > 1 or bank_res[0] != np.argmax(player_source):
+                                # print('toang1', len(bank_res), bank_res[0], np.argmax(player_source))
+                                list_action = np.append(list_action,np.array([107]))
+                            break
+                    elif type_port != 0 and player_source[int(type_port-1)] > 1:
+                        if len(bank_res) > 1 or bank_res[0] != player_source[int(type_port-1)]:
+                            # print('toang2', len(bank_res), bank_res[0], player_source[int(type_port-1)])
+                            list_action = np.append(list_action,np.array([107]))
+                        break
+                    else:
+                        pass
+        list_action = np.append(list_action,np.array([103]))
+        list_action = np.delete(list_action,0)       #bỏ qua -1 ở đầu 
+        return list_action.astype(np.int64)
+    elif phase_env == 3:
+        list_action = HouseCanBuild(points_data, roads_data, turn)
+        return list_action
+    elif phase_env == 4:#upgrade city (các điểm upgrade được)
+        point_can_upgrade_city = np.where(points_data == 0)[0]
+        return point_can_upgrade_city.astype(np.int64)
+    elif phase_env == 5: #chọn đỉnh thứ nhất của đường khi đặt đường hoặc dùng buildroad
+        road_not_yet_have = np.where(roads_data == -1)[0]
+        road_have = np.where(roads_data == 0)[0]
+        # RoadCanBuild(road_have, road_not_yet_have, 0, points_data)
+        road_build, list_action = RoadCanBuild(road_have, road_not_yet_have, 0, points_data)
+        if len(list_action) == 0 or len(road_have) == 15:
+            list_action = np.array([103])
+        return list_action
 
-POINT_POINT = np.array(
-    [[1, 29, -1],  # 0
-     [0, 2, 46],  # 1
-     [1, 3, -1],  # 2
-     [2, 4, -1],  # 3
-     [3, 5, 45],  # 4
-     [4, 6, -1],  # 5
-     [5, 7, 43],  # 6
-     [6, 8, -1],  # 7
-     [7, 9, -1],  # 8
-     [8, 10, 42],  # 9
-     [9, 11, -1],  # 10
-     [10, 12, 40],  # 11
-     [11, 13, -1],  # 12
-     [12, 14, -1],  # 13
-     [13, 15, 39],  # 14
-     [14, 16, -1],  # 15
-     [15, 17, 37],  # 16
-     [16, 18, -1],  # 17
-     [17, 19, -1],  # 18
-     [18, 20, 36],  # 19
-     [19, 21, -1],  # 20
-     [20, 22, 34],  # 21
-     [21, 23, -1],  # 22
-     [22, 24, -1],  # 23
-     [23, 25, 33],  # 24
-     [24, 26, -1],  # 25
-     [25, 27, 31],  # 26
-     [26, 28, -1],  # 27
-     [27, 29, -1],  # 28
-     [0, 28, 30],  # 29
-     [29, 31, 47],  # 30
-     [26, 30, 32],  # 31
-     [31, 33, 49],  # 32
-     [24, 32, 34],  # 33
-     [21, 33, 35],  # 34
-     [34, 36, 50],  # 35
-     [19, 35, 37],  # 36
-     [16, 36, 38],  # 37
-     [37, 39, 51],  # 38
-     [14, 38, 40],  # 39
-     [11, 39, 41],  # 40
-     [40, 42, 52],  # 41
-     [9, 41, 43],  # 42
-     [6, 42, 44],  # 43
-     [43, 45, 53],  # 44
-     [4, 44, 46],  # 45
-     [1, 45, 47],  # 46
-     [30, 46, 48],  # 47
-     [47, 49, 53],  # 48
-     [32, 48, 50],  # 49
-     [35, 49, 51],  # 50
-     [38, 50, 52],  # 51
-     [41, 51, 53],  # 52
-     [44, 48, 52]]  # 53
-)
-
-ROAD_POINT = np.array(
-    [[0, 29],  # 0
-     [0,  1],  # 1
-     [1, 46],  # 2
-     [1,  2],  # 3
-     [2,  3],  # 4
-     [3,  4],  # 5
-     [4, 45],  # 6
-     [4,  5],  # 7
-     [5,  6],  # 8
-     [6, 43],  # 9
-     [6,  7],  # 10
-     [7,  8],  # 11
-     [8,  9],  # 12
-     [9, 42],  # 13
-     [9, 10],  # 14
-     [10, 11],  # 15
-     [11, 40],  # 16
-     [11, 12],  # 17
-     [12, 13],  # 18
-     [13, 14],  # 19
-     [14, 39],  # 20
-     [14, 15],  # 21
-     [15, 16],  # 22
-     [16, 37],  # 23
-     [16, 17],  # 24
-     [17, 18],  # 25
-     [18, 19],  # 26
-     [19, 36],  # 27
-     [19, 20],  # 28
-     [20, 21],  # 29
-     [21, 34],  # 30
-     [21, 22],  # 31
-     [22, 23],  # 32
-     [23, 24],  # 33
-     [24, 33],  # 34
-     [24, 25],  # 35
-     [25, 26],  # 36
-     [26, 31],  # 37
-     [26, 27],  # 38
-     [27, 28],  # 39
-     [28, 29],  # 40
-     [29, 30],  # 41
-     [30, 31],  # 42
-     [31, 32],  # 43
-     [32, 49],  # 44
-     [32, 33],  # 45
-     [33, 34],  # 46
-     [34, 35],  # 47
-     [35, 50],  # 48
-     [35, 36],  # 49
-     [36, 37],  # 50
-     [37, 38],  # 51
-     [38, 51],  # 52
-     [38, 39],  # 53
-     [39, 40],  # 54
-     [40, 41],  # 55
-     [41, 52],  # 56
-     [41, 42],  # 57
-     [42, 43],  # 58
-     [43, 44],  # 59
-     [44, 53],  # 60
-     [44, 45],  # 61
-     [45, 46],  # 62
-     [46, 47],  # 63
-     [47, 48],  # 64
-     [30, 47],  # 65
-     [48, 49],  # 66
-     [49, 50],  # 67
-     [50, 51],  # 68
-     [51, 52],  # 69
-     [52, 53],  # 70
-     [48, 53]]  # 71
-)
-
-POINT_ROAD = np.array(
-    [[0,  1, -1],  # 0
-     [1,  2,  3],  # 1
-     [3,  4, -1],  # 2
-     [4,  5, -1],  # 3
-     [5,  6,  7],  # 4
-     [7,  8, -1],  # 5
-     [8,  9, 10],  # 6
-     [10, 11, -1],  # 7
-     [11, 12, -1],  # 8
-     [12, 13, 14],  # 9
-     [14, 15, -1],  # 10
-     [15, 16, 17],  # 11
-     [17, 18, -1],  # 12
-     [18, 19, -1],  # 13
-     [19, 20, 21],  # 14
-     [21, 22, -1],  # 15
-     [22, 23, 24],  # 16
-     [24, 25, -1],  # 17
-     [25, 26, -1],  # 18
-     [26, 27, 28],  # 19
-     [28, 29, -1],  # 20
-     [29, 30, 31],  # 21
-     [31, 32, -1],  # 22
-     [32, 33, -1],  # 23
-     [33, 34, 35],  # 24
-     [35, 36, -1],  # 25
-     [36, 37, 38],  # 26
-     [38, 39, -1],  # 27
-     [39, 40, -1],  # 28
-     [0, 40, 41],  # 29
-     [41, 42, 65],  # 30
-     [37, 42, 43],  # 31
-     [43, 44, 45],  # 32
-     [34, 45, 46],  # 33
-     [30, 46, 47],  # 34
-     [47, 48, 49],  # 35
-     [27, 49, 50],  # 36
-     [23, 50, 51],  # 37
-     [51, 52, 53],  # 38
-     [20, 53, 54],  # 39
-     [16, 54, 55],  # 40
-     [55, 56, 57],  # 41
-     [13, 57, 58],  # 42
-     [9, 58, 59],  # 43
-     [59, 60, 61],  # 44
-     [6, 61, 62],  # 45
-     [2, 62, 63],  # 46
-     [63, 64, 65],  # 47
-     [64, 66, 71],  # 48
-     [44, 66, 67],  # 49
-     [48, 67, 68],  # 50
-     [52, 68, 69],  # 51
-     [56, 69, 70],  # 52
-     [60, 70, 71]]  # 53
-)
-
-PORT_POINT = np.array(
-    [[0, 1],
-     [4, 5],
-     [7, 8],
-     [10, 11],
-     [14, 15],
-     [17, 18],
-     [20, 21],
-     [24, 25],
-     [27, 28]]
-)
-
-POINT_TILE = np.array(
-    [[0, -1, -1],  # 0
-     [0, 1, -1],  # 1
-     [1, -1, -1],  # 2
-     [1, -1, -1],  # 3
-     [1, 2, -1],  # 4
-     [2, -1, -1],  # 5
-     [2, 3, -1],  # 6
-     [3, -1, -1],  # 7
-     [3, -1, -1],  # 8
-     [3, 4, -1],  # 9
-     [4, -1, -1],  # 10
-     [4, 5, -1],  # 11
-     [5, -1, -1],  # 12
-     [5, -1, -1],  # 13
-     [5, 6, -1],  # 14
-     [6, -1, -1],  # 15
-     [6, 7, -1],  # 16
-     [7, -1, -1],  # 17
-     [7, -1, -1],  # 18
-     [7, 8, -1],  # 19
-     [8, -1, -1],  # 20
-     [8, 9, -1],  # 21
-     [9, -1, -1],  # 22
-     [9, -1, -1],  # 23
-     [9, 10, -1],  # 24
-     [10, -1, -1],  # 25
-     [10, 11, -1],  # 26
-     [11, -1, -1],  # 27
-     [11, -1, -1],  # 28
-     [0, 11, -1],  # 29
-     [0, 11, 12],  # 30
-     [10, 11, 12],  # 31
-     [10, 12, 13],  # 32
-     [9, 10, 13],  # 33
-     [8, 9, 13],  # 34
-     [8, 13, 14],  # 35
-     [7, 8, 14],  # 36
-     [6, 7, 14],  # 37
-     [6, 14, 15],  # 38
-     [5, 6, 15],  # 39
-     [4, 5, 15],  # 40
-     [4, 15, 16],  # 41
-     [3, 4, 16],  # 42
-     [2, 3, 16],  # 43
-     [2, 16, 17],  # 44
-     [1, 2, 17],  # 45
-     [0, 1, 17],  # 46
-     [0, 12, 17],  # 47
-     [12, 17, 18],  # 48
-     [12, 13, 18],  # 49
-     [13, 14, 18],  # 50
-     [14, 15, 18],  # 51
-     [15, 16, 18],  # 52
-     [16, 17, 18]]  # 53
-)
-
-TILE_POINT = np.array(
-    [[0,  1, 29, 30, 46, 47],  # 0
-     [1,  2,  3,  4, 45, 46],  # 1
-     [4,  5,  6, 43, 44, 45],  # 2
-     [6,  7,  8,  9, 42, 43],  # 3
-     [9, 10, 11, 40, 41, 42],  # 4
-     [11, 12, 13, 14, 39, 40],  # 5
-     [14, 15, 16, 37, 38, 39],  # 6
-     [16, 17, 18, 19, 36, 37],  # 7
-     [19, 20, 21, 34, 35, 36],  # 8
-     [21, 22, 23, 24, 33, 34],  # 9
-     [24, 25, 26, 31, 32, 33],  # 10
-     [26, 27, 28, 29, 30, 31],  # 11
-     [30, 31, 32, 47, 48, 49],  # 12
-     [32, 33, 34, 35, 49, 50],  # 13
-     [35, 36, 37, 38, 50, 51],  # 14
-     [38, 39, 40, 41, 51, 52],  # 15
-     [41, 42, 43, 44, 52, 53],  # 16
-     [44, 45, 46, 47, 48, 53],  # 17
-     [48, 49, 50, 51, 52, 53]]  # 18
-)
-
-ROAD_PRICE = np.array([1, 1, 0, 0, 0])
-SETTLEMENT_PRICE = np.array([1, 1, 1, 1, 0])
-CITY_PRICE = np.array([0, 0, 0, 2, 3])
-DEV_PRICE = np.array([0, 0, 1, 1, 1])
-
-
-@njit
-def reset():
-    env = np.zeros(255)
-
-    # [0:19]: Tài nguyên trên các ô đất
-    temp = np.array([5, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 3, 3, 1, 1, 1, 4, 4, 4])
-    np.random.shuffle(temp)
-    env[0:19] = temp
-
-    # [19]: Ví trí Robber
-    env[19] = np.where(temp == 5)[0][0]
-
-    # [20:39]: Số trên các ô đất
-    temp_prob = np.zeros(19)
-    temp = np.ones(19)
-    temp[int(env[19])] = 0
-    temp_1 = temp.copy()
-    for i in range(4):
-        k = np.random.choice(np.where(temp == 1)[0])
-        temp[k] = 0
-        temp_1[k] = 0
-        if i < 2:
-            temp_prob[k] = 6
+    elif phase_env == 6: #chọn đỉnh thứ 2 của đường
+        road_not_yet_have = np.where(roads_data == -1)[0]
+        road_have = np.where(roads_data == 0)[0]
+        
+        road_build, list_action = RoadCanBuild(road_have, road_not_yet_have, 0, points_data)
+        temp_point = player_state[P_TEMP_POINT]
+        road_have_point = np.where(ROAD_BY_POINT == temp_point)[0]
+        road_have_point_check = []
+        if turn < 8:
+            for road in road_have_point:
+                if player_state[P_ROAD_INDEX+road] == -1:
+                    road_have_point_check.append(road)
         else:
-            temp_prob[k] = 8
+            for road in road_have_point:
+                if road in road_build:
+                    road_have_point_check.append(road)
+        list_point = ROAD_BY_POINT[np.array(road_have_point_check)].flatten()
+        list_action = list_point[list_point != temp_point]
+        return list_action.astype(np.int64)
+    elif phase_env == 7:
+        #chọn ô đặt rober khi đổ 7 hoặc dùng knight 
+        all_block_number = player_state[P_TOKEN_BLOCK_INDEX:P_TYPE_SOURCE_INDEX]
+        robber_block = int(player_state[P_ROBBER_BLOCK_INDEX])
+        all_block_number[robber_block] = -1
+        list_action = np.where(all_block_number > -1)[0] + 54
+        return list_action.astype(np.int64)
+    elif phase_env == 8:
+        #chọn tài nguyên để bỏ đi khi bị chia bài
+        list_action = np.where(player_state[P_CARD_PLAYER_INDEX:P_DEV_CARD] > 0)[0] + 73
+        return list_action.astype(np.int64)
+    elif phase_env == 9:
+        #chọn người để cướp
+        robber_block = int(player_state[P_ROBBER_BLOCK_INDEX])
+        point_in_block = player_state[P_POINT_INDEX:P_ROAD_INDEX][POINT_IN_BLOCK[robber_block]]
+        point_in_block = point_in_block[point_in_block > -1]            #chỉ xét các đỉnh đã bị sở hữu
+        point_in_block = point_in_block % 4
 
-        temp[TILE_TILE[k][TILE_TILE[k] != -1]] = 0
+        point_in_block = point_in_block[point_in_block != 0]            #loại bản thân khỏi danh sách cướp
+        player_can_steal = np.unique(point_in_block)
+        for player in player_can_steal:
+            if player_state[int(P_P1_ATTRIBUTE_PLAYER + (player-1)*P_ATTRIBUTE_PLAYER_LEN+1)] > 0:
+                list_action = np.append(list_action, int(player))
+        list_action = np.delete(list_action, np.where(list_action == -1)[0])
+        list_action = (list_action + 77).astype(np.int64)
+        return list_action
+    elif phase_env == 10:
+        #chọn tài nguyên khi dùng year_of_plenty, chỉ chọn những cái mà ngân hàng còn
+        source_card_in_bank = player_state[P_SOURCE_IN_BANK_INDEX:P_SOURCE_IN_BANK_INDEX+P_SOURCE_IN_BANK_LEN]
+        list_action = np.where(source_card_in_bank != 0)[0] + 86
+        return list_action.astype(np.int64)
+    elif phase_env == 11:
+        #chọn tài nguyên khi dùng monopoly
+        list_action = np.arange(86, 91)
+        return list_action.astype(np.int64)
+    elif phase_env == 12:
+        # print('tai_nguyen: ', player_source)
+        #chọn tài nguyên để trading (nếu đã có tài nguyên rồi thì phải có action dừng)
+        #chỉ nạp các tài nguyên người chơi có
+        if player_state[P_ID_ACTION] == player_state[P_MAIN_PLAYER]:
+            # print('NGON NGHẺ', player_state[P_ID_ACTION], player_state[P_MAIN_PLAYER])
+            main_deal = player_state[P_OFFER_MAIN_INDEX:P_OFFER_MAIN_INDEX + OFFER_LEN]
+            # print(player_source,'main_deal: ', main_deal)
+            if len(np.where(main_deal[:CARD_BANK_LEN] > 0)[0]) > 3:     #neu da co 4 loai tai nguyen trong trade bang cach gan cho no bang 0 trong playersource
+                player_source[np.where(main_deal[:CARD_BANK_LEN] == 0)[0][0]] = 0
 
-    temp = np.array([3, 3, 4, 4, 5, 5, 9, 9, 10, 10, 11, 11, 2, 12])
-    np.random.shuffle(temp)
-    temp_prob[np.where(temp_1 == 1)[0]] = temp
-    env[20:39] = temp_prob
-
-    # [39:48]: Các cảng
-    temp = np.array([5, 5, 5, 5, 0, 1, 2, 3, 4])
-    np.random.shuffle(temp)
-    env[39:48] = temp
-
-    # [48:53]: Tài nguyên ngân hàng
-    env[48:53] = 19
-
-    # [53:58]: Thẻ dev bank
-    env[53:58] = np.array([14, 2, 2, 2, 5])
-
-    # Thông tin người chơi: [58,100], [100:142], [142,184], [184:226]
-    for p_idx in range(4):
-        s_ = 58 + 42*p_idx  # 58, 100, 142, 184
-        # [+0:+5]: Tài nguyên
-        # [+5:+10]: Thẻ dev
-        # [+10]: Điểm
-
-        # [+11:+26]: Đường
-        # [+26:+31]: Nhà
-        # [+31:+35]: Thành phố
-        env[s_+11:s_+35] = -1
-
-        # [+35]: Số thẻ knight đã dùng
-        # [+36]: Con đường dài nhất
-
-        # [+37:+42]: Tỉ lệ trao đổi với Bank
-        env[s_+37:s_+42] = 4
-
-    # [226]: Danh hiệu quân đội mạnh nhất
-    # [227]: Danh hiệu con đường dài nhất
-    # [228]: Tổng xx
-    env[226:229] = -1
-
-    # [229]: Pha
-    # [230]: Turn
-
-    # [231]: Điểm đặt thứ nhất
-    env[231] = -1
-
-    # [232]: Số tài nguyên trả do bị chia
-
-    # [233]: Đang dùng thẻ dev gì
-    env[233] = -1
-
-    # [234]: Số lần sử dụng thẻ dev
-    # [235:239]: Loại thẻ dev được sử dụng trong turn hiện tại
-    # [239]: Số lần tạo trade offer
-    # [240:245]: Tài nguyên đưa ra trong trade offer
-    # [245:250]: Tài nguyên yêu cầu trong trade offer
-    # 250: Lượng tài nguyên được yêu cầu tối đa trong trade offer
-
-    # [251:254]: Phản hồi của người chơi phụ về trade offer (đồng ý hay không)
-    env[251:254] = -1
-
-    # [254]: Người chơi đang action (không hẳn là người chơi chính)
-
-    return env
-
-
-@njit
-def get_player_state(env: np.ndarray):
-    p_state = np.zeros(210)
-
-    p_idx = int(env[254])
-    if env[230] >= 4 and env[230] <= 7:
-        main_p_idx = 7 - env[230]
-    else:
-        main_p_idx = env[230] % 4
-
-    # [0:48]: Tài nguyên trên các ô đất, Vị trí Robber, Số trên các ô đất, Các cảng
-    p_state[0:48] = env[0:48]
-
-    # [48:53]: Tài nguyên Bank dạng 0: không, 1: có
-    p_state[48:53] = env[48:53] > 0
-
-    # [53]: Thẻ dev Bank dạng không hoặc có
-    p_state[53] = (env[53:58] > 0).any()
-
-    # [54:96]: Thông tin cá nhân
-    # ##########
-    # [+0:+5]: Tài nguyên
-    # [+5:+10]: Thẻ dev
-    # [+10]: Điểm
-    # [+11:+26]: Đường
-    # [+26:+31]: Nhà
-    # [+31:+35]: Thành phố
-    # [+35]: Số thẻ knight đã dùng
-    # [+36]: Con đường dài nhất
-    # [+37:+42]: Tỉ lệ trao đổi với Bank
-    # ##########
-    s_ = 58 + 42*p_idx
-    p_state[54:96] = env[s_:s_+42]
-
-    # Thông tin người chơi khác: [96:125], [125:154], [154:183]
-    for i in range(1, 4):
-        e_idx = (p_idx + i) % 4
-        s_e = 58 + 42*e_idx
-        s_p = 96 + 29*(i-1)  # 96, 125, 154
-
-        # [+0]: Tổng tài nguyên
-        p_state[s_p] = np.sum(env[s_e:s_e+5])
-
-        # [+1]: Tổng số thẻ dev
-        p_state[s_p+1] = np.sum(env[s_e+5:s_e+10])
-
-        # [+2]: Điểm
-        # [+3:+18]: Đường
-        # [+18:+23]: Nhà
-        # [+23:+27]: Thành phố
-        # +27: Số thẻ knight đã dùng
-        # +28: Con đường dài nhất
-        p_state[s_p+2:s_p+29] = env[s_e+10:s_e+37]
-
-    # [183]: Danh hiệu quân đội mạnh nhất
-    # [184]: Danh hiệu con đường dài nhất
-    for i in range(2):
-        if env[226+i] == -1:
-            p_state[183+i] = -1
+            list_action = np.where(player_source > main_deal[:CARD_BANK_LEN])[0] + 81
+            if np.sum(main_deal) > 0:
+                list_action = np.append(list_action, 103)
         else:
-            p_state[183+i] = (env[226+i] - p_idx) % 4
+            other_deal = player_state[P_OFFER_1_INDEX:P_OFFER_1_INDEX + OFFER_LEN]
+            if len(np.where(player_source > other_deal[:CARD_BANK_LEN])[0]) > 3:     #neu da co 4 loai tai nguyen trong trade bang cach gan cho no bang 0 trong playersource
+                player_source[np.where(other_deal[:CARD_BANK_LEN] == 0)[0][0]] = 0
 
-    # [185]: Tổng xx
-    # [186]: Pha
-    p_state[185:187] = env[228:230]
+            list_action = np.where(player_source > other_deal[:CARD_BANK_LEN])[0] + 81
+            if np.sum(other_deal) > 0:
+                list_action = np.append(list_action, 103)
+        return list_action.astype(np.int64)
+    elif phase_env == 13:
+        #chọn tài nguyên muốn nhận được (nếu đã có tài nguyên rồi thì phải có action dừng)
+        own_offer = np.zeros(10)
+        max_source_in_deal = 0
+        if player_state[P_ID_ACTION] == player_state[P_MAIN_PLAYER]:
+            own_offer = player_state[P_OFFER_MAIN_INDEX:P_OFFER_MAIN_INDEX+OFFER_LEN]
+            max_source_in_deal = np.max(np.array([player_state[P_P1_ATTRIBUTE_PLAYER+1], player_state[P_P2_ATTRIBUTE_PLAYER+1], player_state[P_P3_ATTRIBUTE_PLAYER+1]]))
+        # else:
+        #     #người chơi khác đổi tối đa chỉ bằng số thẻ của người chơi chính
+        #     own_offer = player_state[P_OFFER_1_INDEX:P_OFFER_1_INDEX+OFFER_LEN]
+        #     max_source_in_deal = player_state[int(P_P1_ATTRIBUTE_PLAYER+P_ATTRIBUTE_PLAYER_LEN*((player_state[P_ID_ACTION] - player_state[P_MAIN_PLAYER])%4-1))]
+        
 
-    # [187]: Điểm đặt thứ nhất
-    # [188]: Số tài nguyên phải bỏ do bị chia
-    # [189]: Đang dùng thẻ dev gì
-    # [190]: Số lần dùng thẻ dev
-    # [191:195]: Loại thẻ dev được sử dụng trong turn hiện tại
-    # [195]: Số lần trạo trade offer
-    p_state[187:196] = env[231:240]
-
-    # [196:201]: Tài nguyên đưa ra trong trade offer
-    # [201:206]: Tài nguyên yêu cầu trong trade offer
-    # [206:209]: Phản hồi của người chơi phụ
-    # [209]: Người chơi chính
-    p_state[209] = (main_p_idx - p_idx) % 4
-
-    if p_state[209] != 0:  # Không phải người chơi chính
-        p_state[196:201] = env[245:250]
-        p_state[201:206] = env[240:245]
-        p_state[206:209] = -1
-    else:  # Người chơi chính
-        p_state[196:206] = env[240:250]
-        p_state[206:209] = env[251:254]
-
-    return p_state
-
-
-@njit
-def get_p_point_n_all_road(p_state: np.ndarray):
-    p_point = np.zeros(54)
-    all_road = np.zeros(72)
-
-    temp = p_state[65:80]
-    list_road = temp[temp != -1].astype(np.int32)
-    all_road[list_road] = 1
-    p_point[ROAD_POINT[list_road].flatten()] = 1
-
-    for i in range(3):
-        s_ = 96 + 29*i
-
-        temp = p_state[s_+3:s_+18]
-        list_road = temp[temp != -1].astype(np.int32)
-        all_road[list_road] = 1
-
-        temp = p_state[s_+18:s_+27]
-        stm_and_city = temp[temp != -1].astype(np.int32)
-        p_point[stm_and_city] = 0
-
-    return p_point, all_road
-
-
-@njit
-def check_firstPoint(p_state: np.ndarray):
-    p_point, all_road = get_p_point_n_all_road(p_state)
-    list_point = np.where(p_point == 1)[0]
-    for point in list_point:
-        list_road = POINT_ROAD[point][POINT_ROAD[point] != -1]
-        if (all_road[list_road] == 0).any():
-            return True
-
-    return False
-
-
-@njit
-def check_useDev(p_state: np.ndarray, list_action: np.ndarray):
-    # Knight: Có là được dùng
-    if p_state[191] == 1:
-        list_action[55] = 1
-
-    # Roadbuilding: Còn đường và còn vị trí xây đường
-    if p_state[192] == 1 and (p_state[65:80] == -1).any() and check_firstPoint(p_state):
-        list_action[56] = 1
-
-    # Yearofplenty: Ngân hàng có tài nguyên
-    if p_state[193] == 1 and (p_state[48:53] == 1).any():
-        list_action[57] = 1
-
-    # Monopoly: Có là được dùng
-    if p_state[194] == 1:
-        list_action[58] = 1
-
-
-@njit
-def get_p_point_n_all_stm_city(p_state: np.ndarray):
-    p_point = np.zeros(54)
-    all_stm_and_city = np.zeros(54)
-
-    temp = p_state[65:80]
-    list_road = temp[temp != -1].astype(np.int32)
-    p_point[ROAD_POINT[list_road].flatten()] = 1
-
-    temp = p_state[80:89]
-    stm_and_city = temp[temp != -1].astype(np.int32)
-    all_stm_and_city[stm_and_city] = 1
-    p_point[stm_and_city] = 0
-
-    for i in range(3):  # Loại đi các điểm của đối thủ
-        s_ = 96 + 29*i
-        temp = p_state[s_+18:s_+27]
-        stm_and_city = temp[temp != -1].astype(np.int32)
-        all_stm_and_city[stm_and_city] = 1
-        p_point[stm_and_city] = 0
-
-    return p_point, all_stm_and_city
-
-@njit
-def amount_action():
-    return 106
-
-@njit
-def amount_state():
-    return 210
-
-@njit
-def amount_player():
-    return 4
-
-@njit
-def get_list_action(p_state: np.ndarray):
-    phase = p_state[186]
-    list_action = np.zeros(106)
-
-    if phase == 0:  # Chọn điểm đặt nhà đầu game
-        list_action[0:54] = 1
-
-        temp = p_state[np.array([80, 81, 114, 115, 143, 144, 172, 173])]
-        all_stm = temp[temp != -1].astype(np.int32)
-        list_action[all_stm] = 0
-        for stm in all_stm:
-            temp = POINT_POINT[stm][POINT_POINT[stm] != -1]
-            list_action[temp] = 0
-
-    elif phase == 1:  # Chọn các điểm đầu mút của đường
-        if p_state[187] == -1:  # Chọn điểm thứ nhất
-            p_point, all_road = get_p_point_n_all_road(p_state)
-            list_point = np.where(p_point == 1)[0]
-            for point in list_point:
-                list_road = POINT_ROAD[point][POINT_ROAD[point] != -1]
-                if (all_road[list_road] == 0).any():
-                    list_action[point] = 1
-
-        else:  # Chọn điểm thứ hai
-            all_road = np.zeros(72)
-            temp = p_state[65:80]
-            list_road = temp[temp != -1].astype(np.int32)
-            all_road[list_road] = 1
-
-            for i in range(3):
-                s_ = 96 + 29*i
-                temp = p_state[s_+3:s_+18]
-                list_road = temp[temp != -1].astype(np.int32)
-                all_road[list_road] = 1
-
-            first_point = int(p_state[187])
-            list_road = POINT_ROAD[first_point][POINT_ROAD[first_point] != -1]
-            for road in list_road:
-                if all_road[road] == 0:
-                    list_action[ROAD_POINT[road]] = 1
-
-            list_action[first_point] = 0
-
-    elif phase == 2:  # Đổ xx hoặc dùng thẻ dev
-        # Đổ xx
-        list_action[54] = 1
-
-        check_useDev(p_state, list_action)
-
-    elif phase == 3:  # Trả tài nguyên do bị chia bài
-        list_action[95:100] = p_state[54:59] > 0
-
-    elif phase == 4:  # Di chuyển Robber
-        list_action[64:83] = 1
-        list_action[int(64+p_state[19])] = 0
-
-    elif phase == 5:  # Chọn người để cướp tài nguyên
-        robber_pos = int(p_state[19])
+        list_action = np.where(own_offer[:5] == 0)[0] + 86          #chi nap cac tai nguyen minh k bo ra
+        
+        if np.sum(own_offer[5:]) > 0 and np.sum(own_offer[5:]) < max_source_in_deal:
+            list_action = np.append(list_action, 103)
+        elif np.sum(own_offer[5:]) >= max_source_in_deal:
+            list_action = np.array([103])
+        return list_action.astype(np.int64)
+    elif phase_env == 14:
+        #chọn đổi với ai
+        list_action = np.array([104])       #luôn có action ko trao đổi vs ai
+        all_trade = player_state[P_OFFER_1_INDEX:P_OFFER_1_INDEX+OFFER_LEN*3]
+        trade_source = np.zeros(3)
         for i in range(3):
-            s_ = 96 + 29*i
-            if p_state[s_] > 0:  # Chỉ xét khi có tài nguyên
-                temp = p_state[s_+18:s_+27]
-                stm_and_city = temp[temp != -1].astype(np.int32)
-                for point in stm_and_city:
-                    if point in TILE_POINT[robber_pos]:
-                        list_action[83+i] = 1
-                        break
+            other_offer = all_trade[OFFER_LEN*i:OFFER_LEN*(i+1)][:CARD_BANK_LEN]
+            if np.sum(other_offer) > 0 and np.sum(other_offer > player_source) == 0:
+                trade_source[i] = 1
+        list_action = np.append(list_action, np.where(trade_source > 0)[0] + 91)
+        list_action = list_action.astype(np.int64)
+        return list_action
+    elif phase_env == 15:
+        #người chơi phụ nhận deal từ người chơi chính, đồng ý hoặc ko hoặc sửa deal
+        list_action = np.array([104])
+        main_deal = player_state[P_OFFER_MAIN_INDEX:P_OFFER_MAIN_INDEX + OFFER_LEN][:CARD_BANK_LEN]
+        #nếu đủ tài  nguyên cho deal thì thêm cái action đồng ý
+        if np.sum(main_deal > player_source) == 0:
+            # print(main_deal, player_source, 'ashdashdahsdgas')
+            list_action = np.append(list_action, 105)
+            #nếu ko đồng ý và có thể deal thì nạp nguyên liệu luôn vào deal
+            # list_action = np.append(list_action, np.where(player_source > 0)[0] + 81)         #update tắt redeal 08/09/2022
+        return list_action.astype(np.int64)
+    elif phase_env == 16:
+        #người chơi chọn tài nguyên bỏ ra để đổi vs cảng hoặc ngân hàng
+        trade_bank = np.where(player_source > 3)[0]
+        # print('checkbank16', trade_bank)
+        if len(trade_bank) > 0:
+            list_action = np.append(list_action, trade_bank)
+        type_of_port = player_state[P_TYPE_HARBOR_INDEX : P_TYPE_HARBOR_INDEX+TYPE_HARBOR_LEN]  #Loại cảng theo thứ tự
+        point_in_port = points_data[POINT_IN_HARBOR]                #xét các điểm là cảng
+        player_port = np.where((point_in_port == 0) | (point_in_port == 4))[0]     #tìm các điểm là cảng của người chơi
+        if len(player_port) > 0:
+            for id in player_port:
+                type_port = type_of_port[id//2]
+                if type_port == 0:
+                    trade_port_3 = np.where(player_source > 2)[0]
+                    if len(trade_port_3) > 0:
+                        list_action = np.append(list_action, trade_port_3)
+                elif type_port != 0 and player_source[int(type_port-1)] > 1:
+                    list_action = np.append(list_action,np.array([int(type_port-1)]))
+        bank_res = np.where(player_state[P_SOURCE_IN_BANK_INDEX:P_SOURCE_IN_BANK_INDEX+P_SOURCE_IN_BANK_LEN] > 0)[0]
+        if len(bank_res) == 1 and bank_res[0] in list_action:
+            #chống không cho đổi loại tài nguyên ngân hàng có duy nhất
+            list_action = np.delete(list_action, np.where(list_action == bank_res[0])[0])
+        list_action = list_action[1:] + 81       #bỏ qua -1 ở đầu 
+        return list_action.astype(np.int64)
+    elif phase_env == 17:
+        #người chơi chọn lấy tài nguyên mà ngân hàng có nhưng ko phải cái mình bỏ ra
+        main_deal = player_state[P_OFFER_MAIN_INDEX:P_OFFER_MAIN_INDEX + OFFER_LEN]
+        resource_sell = np.argmax(main_deal)
+        source_card_in_bank = player_state[P_SOURCE_IN_BANK_INDEX:P_SOURCE_IN_BANK_INDEX+P_SOURCE_IN_BANK_LEN]
+        source_card_in_bank[resource_sell] = 0
+        list_action = np.where(source_card_in_bank != 0)[0] + 86
 
-    elif phase == 6:  # Chọn các mô đun giữa turn
-        check_useDev(p_state, list_action)
-
-        if (p_state[54:59] >= ROAD_PRICE).all():
-            # Mua đường (86)
-            if (p_state[65:80] == -1).any() and check_firstPoint(p_state):
-                list_action[86] = 1
-
-            # Mua nhà (87)
-            if (p_state[54:59] >= SETTLEMENT_PRICE).all() and (p_state[80:85] == -1).any():
-                p_point, all_stm_and_city = get_p_point_n_all_stm_city(p_state)
-                list_point = np.where(p_point == 1)[0]
-                for point in list_point:
-                    list_road = POINT_ROAD[point][POINT_ROAD[point] != -1]
-                    nearest_points = ROAD_POINT[list_road].flatten()
-                    if (all_stm_and_city[nearest_points] == 0).all():
-                        list_action[87] = 1
-                        break
-
-        # Mua thành phố (88)
-        if (p_state[54:59] >= CITY_PRICE).all() and (p_state[80:85] != -1).any() and (p_state[85:89] == -1).any():
-            list_action[88] = 1
-
-        # Mua thẻ dev (89)
-        if (p_state[54:59] >= DEV_PRICE).all() and p_state[53] == 1:
-            list_action[89] = 1
-
-        if (p_state[54:59] > 0).any():
-            # Trade với người (90)
-            if p_state[195] > 0 and (p_state[np.array([96, 125, 154])] > 0).any():
-                list_action[90] = 1
-
-            # Trade với bank (91)
-            if (p_state[54:59] >= p_state[91:96]).any():
-                temp = np.where(p_state[54:59] >= p_state[91:96])[0]
-                temp_1 = np.arange(5)
-                for res in temp:
-                    temp_2 = temp_1[temp_1 != res]
-                    if (p_state[48+temp_2] == 1).any():
-                        list_action[91] = 1
-                        break
-
-        # Kết thúc lượt (92)
-        list_action[92] = 1
-
-    elif phase == 7:  # Chọn tài nguyên khi dùng thẻ dev
-        if p_state[189] == 2:  # Đang dùng yearofplenty
-            list_action[59:64] = p_state[48:53]
-        elif p_state[189] == 3:  # Đang dùng monopoly
-            list_action[59:64] = 1
-
-    elif phase == 8:  # Chọn các điểm mua nhà
-        p_point, all_stm_and_city = get_p_point_n_all_stm_city(p_state)
-        list_point = np.where(p_point == 1)[0]
-        for point in list_point:
-            list_road = POINT_ROAD[point][POINT_ROAD[point] != -1]
-            nearest_points = ROAD_POINT[list_road].flatten()
-            if (all_stm_and_city[nearest_points] == 0).all():
-                list_action[point] = 1
-
-    elif phase == 9:  # Chọn các điểm mua thành phố
-        temp = p_state[80:85]
-        p_stm = temp[temp != -1].astype(np.int32)
-        list_action[p_stm] = 1
-
-    elif phase == 10:  # Đưa ra tài nguyên khi trade với người
-        # Nếu đã có ít nhất 1 tài nguyên, thì phải có action dừng
-        if (p_state[196:201] > 0).any():
-            list_action[103] = 1
-
-        # Các action thêm tài nguyên: các tài nguyên mà bản thân có
-        list_action[95:100] = p_state[54:59] > p_state[196:201]
-
-        # Nếu số loại tài nguyên bỏ vào là 4 thì không cho bỏ loại thứ 5 vào
-        if np.count_nonzero(p_state[196:201] > 0) == 4:
-            list_action[95+np.where(p_state[196:201] == 0)[0][0]] = 0
-
-    elif phase == 11:  # Yêu cầu tài nguyên khi trade với người
-        # Nếu đã có ít nhất 1 tài nguyên, thì phải có action dừng
-        if (p_state[201:206] > 0).any():
-            list_action[104] = 1
-
-        # Các action thêm tài nguyên: các loại tài nguyên mà không có trong phần đưa ra
-        list_action[59:64] = p_state[196:201] == 0
-
-    elif phase == 12:  # Người chơi phụ phản hồi trade
-        # Action từ chối: 93, Action: đồng ý: 94
-        list_action[93:95] = 1
-
-        # Vào pha này thì chắc chắn người chơi phụ phải có thể trade
-        # if (p_state[54:59] >= p_state[196:201]).all():
-        #     list_action[94] = 1
-
-    elif phase == 13:  # Người chơi chính duyệt trade
-        # Action bỏ qua
-        list_action[105] = 1
-
-        # Chọn người để trade
-        # Vào pha này thì chắc chắn có ít nhất một người đồng ý trade
-        list_action[100:103] = p_state[206:209]
-
-    elif phase == 14:  # Chọn tài nguyên khi trade với ngân hàng
-        # Chọn những tài nguyên mà khi chọn, ngân hàng còn ít nhất 1 loại tài nguyên khác
-        temp = np.where(p_state[54:59] >= p_state[91:96])[0]
-        temp_1 = np.arange(5)
-        for res in temp:
-            temp_2 = temp_1[temp_1 != res]
-            if (p_state[48+temp_2] == 1).any():
-                list_action[95+res] = 1
-
-    elif phase == 15:  # Chọn tài nguyên muốn nhận từ ngân hàng
-        # Chọn những tài nguyên mà ngân hàng có, khác tài nguyên đưa ra
-        list_action[59:64] = p_state[48:53]
-        list_action[59+np.where(p_state[196:201] != 0)[0][0]] = 0
-
-    list_action = np.where(list_action == 1)[0]
-    return list_action
-
-
-@njit
-def find_max_road(len_: int, diemXP: int, duongDaDi: np.ndarray, p_road: np.ndarray, p_point: np.ndarray):
-    duongCanCheck = np.zeros(72)
-    for road in POINT_ROAD[diemXP]:
-        if road != -1 and p_road[road] == 1 and duongDaDi[road] == 0:
-            duongCanCheck[road] = 1
-
-    list_duongCanCheck = np.where(duongCanCheck == 1)[0]
-    if len(list_duongCanCheck) == 0 or p_point[diemXP] == 0:
-        if len_ > 0:
-            return len_
-
-    max_len = len_
-    for road in list_duongCanCheck:
-        duongDaDi_copy = duongDaDi.copy()
-        duongDaDi_copy[road] = 1
-        diemXP_1 = 9999
-        for diem in ROAD_POINT[road]:
-            if diem != diemXP:
-                diemXP_1 = diem
-                break
-
-        len_1 = find_max_road(
-            len_+1, diemXP_1, duongDaDi_copy, p_road, p_point)
-        if len_1 > max_len:
-            max_len = len_1
-
-    return max_len
-
-
-@njit
-def get_p_longest_road(env: np.ndarray, p_idx: int):
-    s_ = 58 + 42*p_idx
-    p_road = np.zeros(72)
-    p_full_point = np.zeros(54)
-
-    temp = env[s_+11:s_+26]
-    list_road = temp[temp != -1].astype(np.int32)
-    p_road[list_road] = 1
-    p_full_point[ROAD_POINT[list_road].flatten()] = 1
-
-    p_point = p_full_point.copy()
-    for i in range(1, 4):
-        e_idx = (p_idx + i) % 4
-        s_e = 58 + 42*e_idx
-        temp = env[s_e+26:s_e+35]
-        stm_and_city = temp[temp != -1].astype(np.int32)
-        p_point[stm_and_city] = 0
-
-    duongDaDi = np.zeros(72)
-    max_len = 0
-    list_full_point = np.where(p_full_point == 1)[0]
-    for point in list_full_point:
-        len_ = find_max_road(0, point, duongDaDi, p_road, p_point)
-        if len_ > max_len:
-            max_len = len_
-
-    return max_len
-
-
-@njit
-def roll_xx(env: np.ndarray):
-    p_idx = int(env[254])
-    dice1 = np.random.randint(1, 7)
-    dice2 = np.random.randint(1, 7)
-    env[228] = dice1 + dice2  # Cập nhật xx vào env
-
-    if env[228] == 7:  # Check xem ai phải bỏ bài
-        # Giả sử không ai bị chia bài, thì sẽ sang phase di chuyển Robber
-        env[229] = 4
-        for i in range(0, 4):
-            e_idx = (p_idx + i) % 4
-            s_e = 58 + 42*e_idx
-            if np.sum(env[s_e:s_e+5]) > 7:  # Thừa, sang pha bỏ bài
-                env[229] = 3  # Sang pha bỏ tài nguyên do bị chia
-                # Cập nhật số lượng tài nguyên phải bỏ
-                env[232] = np.sum(env[s_e:s_e+5]) // 2
-                env[254] = e_idx  # Đổi người chơi action
-                break
-
-    else:  # Trả tài nguyên từ ngân hàng
-        temp = np.where(env[20:39] == env[228])[0]
-        list_tile = temp[temp != env[19]]
-        p_res_receive = np.zeros((4, 5))
-        for i in range(4):
-            s_i = 58 + 42*i
-
-            temp = env[s_i+26:s_i+31]
-            p_stm = temp[temp != -1].astype(np.int32)
-
-            temp = env[s_i+31:s_i+35]
-            p_city = temp[temp != -1].astype(np.int32)
-
-            for tile in list_tile:
-                env_tile = int(env[tile])
-                for stm in p_stm:
-                    if stm in TILE_POINT[tile]:
-                        p_res_receive[i][env_tile] += 1
-
-                for city in p_city:
-                    if city in TILE_POINT[tile]:
-                        p_res_receive[i][env_tile] += 2
-
-        total_res_receive = np.sum(p_res_receive, axis=0)
-
-        # Chỉ trả những loại tài nguyên mà ngân hàng có đủ
-        temp = np.where(env[48:53] < total_res_receive)[0]
-        p_res_receive[:, temp] = 0
-        total_res_receive = np.sum(p_res_receive, axis=0)
-
-        # Trả tài nguyên
-        env[48:53] -= total_res_receive  # Trừ tài nguyên ngân hàng
-        for i in range(4):
-            s_i = 58 + 42*i
-            # Cộng tài nguyên cho người chơi
-            env[s_i:s_i+5] += p_res_receive[i]
-
-        # Sang phase chọn mô đun
-        env[229] = 6
-
-
-@njit
-def update_new_stm(env: np.ndarray, new_stm_pos: int, s_: int):
-    # Cập nhật tập nhà
-    r_ = np.count_nonzero(env[s_+26:s_+31] != -1)
-    env[s_+26+r_] = new_stm_pos
-
-    # Cộng 1 điểm
-    env[s_+10] += 1
-
-    # Kiểm tra cảng
-    for port in range(9):
-        if new_stm_pos in PORT_POINT[port]:
-            if env[39+port] == 5:
-                env[s_+37:s_+42] = np.minimum(3, env[s_+37:s_+42])
+        return list_action.astype(np.int64)
+   
+@njit()
+def step(env_state, action):
+    id_action = int(env_state[ID_ACTION])
+    turn = int(env_state[TURN])
+    phase_env = env_state[PHASE]
+    house_data = env_state[POINT_INDEX: POINT_INDEX+POINT_LEN]
+    road_data = env_state[ROAD_INDEX:ROAD_INDEX+ROAD_LEN]
+    if phase_env == 1:
+        '''nếu đổ xúc sắc thì roll rồi cộng tài nguyên cho các người chơi khác, nếu roll ra 7
+        thì check xem có cần chia bài ko, nếu chia thì về phase8, còn ko chia thì về phase7, ko 
+        đổ ra 7 thì lên phase2 
+        nếu dùng thẻ thì chuyển về phase tương ứng (5,7,10,11)
+        '''
+        if action == 102:
+            #nếu đổ xúc sắc
+            dice1 = np.random.randint(1,7)
+            dice2 = np.random.randint(1,7)
+           
+            env_state[LAST_ROLL] = dice1 + dice2
+            # print('xúc sắc ra ', env_state[LAST_ROLL] )
+            # print('all_last_in4_deal', env_state[OFFER_MAIN_INDEX:OFFER_MAIN_INDEX+40])
+            # print('ĐỔ xúc sắc ra ', env_state[LAST_ROLL])
+            env_state[CHECK_ROLL_INDEX] = 0
+            if env_state[LAST_ROLL] == 7:
+                #đi chia bài
+                # env_state[MAIN_PLAYER] = id_action
+                if np.sum(env_state[ALL_INFOR_PLAYER*id_action:ALL_INFOR_PLAYER*(id_action+1)][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN]) > 7:
+                    env_state[PHASE] = 8
+                    env_state[CARD_NEED_DROP] = np.sum(env_state[ALL_INFOR_PLAYER*id_action:ALL_INFOR_PLAYER*(id_action+1)][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN]) // 2
+                else:
+                    env_state[PHASE] = 7 
+                    #nếu ko ai phải chia bài, nhảy đến phase 7 để di knight
+                    for id in range(1,4):
+                        id_next = (id_action + id) % 4
+                        if np.sum(env_state[ALL_INFOR_PLAYER*id_next:ALL_INFOR_PLAYER*(id_next+1)][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN]) > 7:
+                            env_state[PHASE] = 8
+                            env_state[ID_ACTION] = id_next
+                            env_state[CARD_NEED_DROP] = np.sum(env_state[ALL_INFOR_PLAYER*id_next:ALL_INFOR_PLAYER*(id_next+1)][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN]) // 2
+                            break
+                    
             else:
-                env[int(s_+37+env[39+port])] = 2
+                #nếu ko phải di knight thì nhận tài nguyên rồi về phase 2
+                # print(env_state)
+                a = env_state.copy()
+                env_state = process_return_roll(env_state)
+                # for i in range(4):
+                #     print(env_state[int(i*ALL_INFOR_PLAYER+5): int(i*ALL_INFOR_PLAYER+10)])
+                env_state[PHASE] = 2
+        else:
+            env_state[PLAYER_CAN_USE_DEV_CARD] = 0
+            env_state[int(ALL_INFOR_PLAYER*id_action + 2)] -= 1         #giảm số lượng thẻ effect đang ẩn
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_EFFECT_1_PLAYER_INDEX + action - 94] -= 1
+            if action == 94:
+                env_state = dung_the_knight(env_state)
+                env_state[PHASE] = 7
+            elif action == 95:
+                env_state[PHASE] = 5
+                env_state[USE_BUILD_ROAD] = 2
+            elif action == 96:
+                env_state[PHASE] = 10
+                env_state[USE_YEAR_OF_PLENTY] = 1
+            else:
+                env_state[PHASE] = 11
+        return env_state
+    elif phase_env == 2:
+        #nếu xây nhà thì chuyển phase3, upgrade thì chuyển phase4, đặt đường thì sang phas5
+        # print('thong tin ng choi: ', env_state[ALL_INFOR_PLAYER*id_action:ALL_INFOR_PLAYER*(id_action+1)])
+        if action == 98:
+            env_state[PHASE] = 3        
+        elif action == 99:
+            env_state[PHASE] = 4
+        elif action == 100:
+            env_state[PHASE] = 5
+        #dùng knight thì sang phase7, year_plenty thì phase10, monopoly thì phase 11
+        elif action == 94:
+            env_state = dung_the_knight(env_state)
+            env_state[PLAYER_CAN_USE_DEV_CARD] = 0
+            env_state[PHASE] = 7
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_EFFECT_1_PLAYER_INDEX + 0] -= 1
+            env_state[int(ALL_INFOR_PLAYER*id_action + 2)] -= 1         #giảm số lượng thẻ effect đang ẩn
+        elif action == 96:
+            env_state[PHASE] = 10
+            env_state[USE_YEAR_OF_PLENTY] = 1
+            env_state[PLAYER_CAN_USE_DEV_CARD] = 0
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_EFFECT_1_PLAYER_INDEX + 2] -= 1
+            env_state[int(ALL_INFOR_PLAYER*id_action + 2)] -= 1         #giảm số lượng thẻ effect đang ẩn
 
-            break
+        elif action == 97:
+            env_state[PHASE] = 11
+            env_state[PLAYER_CAN_USE_DEV_CARD] = 0
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_EFFECT_1_PLAYER_INDEX + 3] -= 1
+            env_state[int(ALL_INFOR_PLAYER*id_action + 2)] -= 1         #giảm số lượng thẻ effect đang ẩn
+
+        elif action == 95:
+            env_state[PHASE] = 5
+            env_state[USE_BUILD_ROAD] = 2
+            env_state[PLAYER_CAN_USE_DEV_CARD] = 0
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_EFFECT_1_PLAYER_INDEX + 1] -= 1
+            env_state[int(ALL_INFOR_PLAYER*id_action + 2)] -= 1         #giảm số lượng thẻ effect đang ẩn
+
+        #nếu mua dev card thì mua rồi lại lặp phase2
+        elif action == 101:
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] = env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] - np.array([0,0,1,1,1])
+            env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN] = env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN]  + np.array([0,0,1,1,1])
+            card = env_state[CARD_EFFECT_BANK_INDEX]
+            env_state[int(ALL_INFOR_PLAYER*id_action + CARD_EFFECT_1_PLAYER_INDEX+card)] += 1
+            env_state[int(ALL_INFOR_PLAYER*id_action + 2)] += 1
+            env_state[CARD_EFFECT_BANK_INDEX:CARD_EFFECT_BANK_INDEX+CARD_EFFECT_BANK_LEN] = np.concatenate((env_state[CARD_EFFECT_BANK_INDEX+1:CARD_EFFECT_BANK_INDEX+CARD_EFFECT_BANK_LEN],np.array([-1])))
+            env_state[PHASE] = 2
+            env_state = updateSumMaterial(env_state)
+        #nếu trading với người vào phase12, dùng devcard thì tham khảo phase1
+        elif action == 106:
+            env_state[NUMBER_TRADE_OF_PLAYER] -= 1
+            env_state[PHASE] = 12
+        #nếu trading cảng thì sang phase 16
+        elif action == 107:
+            player_source = env_state[int(ALL_INFOR_PLAYER*id_action+ATTRIBUTE_PLAYER) : int(ALL_INFOR_PLAYER*id_action+ATTRIBUTE_PLAYER+CARD_PLAYER_LEN)]
+            house_data = env_state[POINT_INDEX: POINT_INDEX+POINT_LEN]
+            point_in_port = house_data[POINT_IN_HARBOR]
+            player_port = np.where((point_in_port == id_action) | (point_in_port == (id_action + 4)))[0]     #tìm các điểm là cảng của người chơi
+            type_of_port = env_state[TYPE_HARBOR_INDEX : TYPE_HARBOR_INDEX+TYPE_HARBOR_LEN]
+            # print(player_source,'cảng', player_port, type_of_port)
+            env_state[PHASE] = 16
+        #nếu endturn thì check xem người kế có dev_card ko, nếu có thì về phase 1, chuyển ng chơi, nếu ko thì roll luôn
+        elif action == 103:
+            env_state[ID_ACTION] = (id_action+1)%4
+            env_state[MAIN_PLAYER] = env_state[ID_ACTION]
+            env_state[PLAYER_CAN_USE_DEV_CARD] = np.sum(env_state[int(ALL_INFOR_PLAYER*env_state[ID_ACTION]+CARD_EFFECT_1_PLAYER_INDEX):int(ALL_INFOR_PLAYER*env_state[ID_ACTION]+CARD_EFFECT_1_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN -1)]) > 0
+            if env_state[TURN] >= 8:
+                env_state[PHASE] = 1
+            env_state[TURN] += 1
+            env_state[NUMBER_TRADE_OF_PLAYER] = 1
+            # for i in range(4):
+            #     print(env_state[int(i*ALL_INFOR_PLAYER+5): int(i*ALL_INFOR_PLAYER+10)])
+            # print('all_deal', env_state[OFFER_MAIN_INDEX:OFFER_MAIN_INDEX + OFFER_LEN*4])
+            env_state[CHECK_ROLL_INDEX] = 1
+        return env_state
+    elif phase_env == 3:
+        #cập nhật nhà, trừ tài nguyên, về phase2
+        env_state[POINT_INDEX + action] = id_action
+        if turn > 8:
+            #trừ tài nguyên xây nhà
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] = env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] - np.array([1,1,1,1,0])
+            env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN] = env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN]  + np.array([1,1,1,1,0])
+            env_state[PHASE] = 2
+
+        elif turn >=4 and turn <8:
+            all_type_source = env_state[TYPE_SOURCE_INDEX:TYPE_HARBOR_INDEX]
+            list_token = GetMaterialFirst(all_type_source,action)
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] = env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] + list_token
+            env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN] = env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN]  - list_token
+
+        if turn < 8:
+            env_state[PHASE] = 6
+            env_state[OTHER_IN4_INDEX] = action
+        else:
+            env_state[PHASE] = 2
+        env_state = updateSumMaterial(env_state)
+        env_state[int(ALL_INFOR_PLAYER*id_action)] += 1 #Cộng thêm điểm cho người xây nhà
+        # Check longest road
+
+        road_near_point = POINT_ROAD_RELATIVE[action]
+        road_near_point = road_near_point[road_near_point != -1]
+
+        if len(road_near_point) >= 2:
+            player_have_road_cut = -1
+            if len(road_near_point) == 2:
+                if road_data[road_near_point[0]] == road_data[road_near_point[1]] and road_data[road_near_point[1]] != -1:
+                    player_have_road_cut = road_data[road_near_point[1]]
+            if len(road_near_point) == 3:
+                if road_data[road_near_point[0]] == road_data[road_near_point[1]] and road_data[road_near_point[1]] != -1:
+                    player_have_road_cut = road_data[road_near_point[1]]
+                if road_data[road_near_point[2]] == road_data[road_near_point[1]] and road_data[road_near_point[1]] != -1:
+                    player_have_road_cut = road_data[road_near_point[1]]
+                if road_data[road_near_point[0]] == road_data[road_near_point[2]] and road_data[road_near_point[2]] != -1:
+                    player_have_road_cut = road_data[road_near_point[2]]
+
+            if player_have_road_cut != -1:
+                player_have_road_cut = int(player_have_road_cut)
+                p_road = np.where(road_data == player_have_road_cut)[0].astype(np.int64)
+                longest_road_player = env_state[LONGEST_ROAD_PLAYER]
+                house_data = env_state[POINT_INDEX: int(POINT_INDEX+POINT_LEN)].astype(np.int64)
+                if len(p_road) > 0:
+                    # player_have_road_cut = 0
+                    longest_road = calculator_longest_road(p_road, player_have_road_cut, house_data)
+                    env_state[int(ALL_INFOR_PLAYER*player_have_road_cut + 4)] = longest_road
+                    # longest_road_other_player = np.array([env_state[int(ALL_INFOR_PLAYER*i + 4)] for i in range(4)])
+                    longest_road_other_player = env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+4:ALL_INFOR_PLAYER]
+                    if longest_road_player != -1 and longest_road_player == player_have_road_cut:
+                        if longest_road < max(longest_road_other_player):
+                            count_player_longest_road = len(np.where(longest_road_other_player == max(longest_road_other_player))[0])
+                            if count_player_longest_road >= 1:
+                                env_state[int(ALL_INFOR_PLAYER*longest_road_player)] -= 2
+                                env_state[LONGEST_ROAD_PLAYER] = -1
+                                if count_player_longest_road == 1:
+                                    player_longest_road = np.argmax(longest_road_other_player)
+                                    env_state[int(ALL_INFOR_PLAYER*player_longest_road)] += 2
+                                    env_state[LONGEST_ROAD_PLAYER] = player_longest_road
+        return env_state
+    elif phase_env == 4:
+        #cập nhật city, trừ tài nguyên, về phase2
+        env_state[POINT_INDEX + action] = id_action + 4
+        position_curson = ALL_INFOR_PLAYER*id_action
+        env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] = env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] - np.array([0,0,0,2,3])
+        env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN] = env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN]  + np.array([0,0,0,2,3])
+        env_state[int(ALL_INFOR_PLAYER*id_action)] += 1
+        env_state[PHASE] = 2
+        env_state = updateSumMaterial(env_state)
+        return env_state
+    elif phase_env == 5: #cập nhật temp_point, sang phase 6
+        if action == 103:
+            env_state[PHASE] = 2
+        else:
+            env_state[OTHER_IN4_INDEX] = action #Update temp_point in env_state
+            env_state[PHASE] = 6 #To phase 6
+        return env_state
+    elif phase_env == 6:
+        temp_point = env_state[OTHER_IN4_INDEX]  #đỉnh thứ nhất của đường
+        if turn > 7 and env_state[USE_BUILD_ROAD] == 0:
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] =  env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] - ROAD  #Trả nguyên liệu cho bàn chơi
+            env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN] = env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN] + ROAD
+            env_state[ATTRIBUTE_PLAYER_1_INDEX + 1] = np.sum(env_state[CARD_1_PLAYER_INDEX : CARD_1_PLAYER_INDEX + CARD_BANK_LEN])
+            env_state[ATTRIBUTE_PLAYER_2_INDEX + 1] = np.sum(env_state[CARD_2_PLAYER_INDEX : CARD_2_PLAYER_INDEX + CARD_BANK_LEN])
+            env_state[ATTRIBUTE_PLAYER_3_INDEX + 1] = np.sum(env_state[CARD_3_PLAYER_INDEX : CARD_3_PLAYER_INDEX + CARD_BANK_LEN])
+            env_state[ATTRIBUTE_PLAYER_4_INDEX + 1] = np.sum(env_state[CARD_4_PLAYER_INDEX : CARD_4_PLAYER_INDEX + CARD_BANK_LEN])
+
+        for road in np.where(ROAD_BY_POINT == temp_point)[0]: #update road_index in env_state
+            if action in ROAD_BY_POINT[road]:
+                env_state[ROAD_INDEX + road] = id_action
 
 
-@njit
-def useDev(env: np.ndarray, action: int, s_: int, p_idx: int):
-    env[s_+action-50] -= 1  # Giảm số lá dev của người chơi
-    env[235:239] = 0  # Mỗi turn chỉ được sử dụng 1 thẻ dev
-    if action == 55:  # Thẻ knight
-        env[233] = 0
-        env[234] = 1
-        env[229] = 4  # Chuyển sang pha di chuyển Robber
-        env[s_+35] += 1
+        p_road = np.where(env_state[ROAD_INDEX:ROAD_INDEX+ROAD_LEN] == id_action)[0] #đường của người choi sỏ hữu
+        road_not_yet_have = np.where(env_state[ROAD_INDEX:ROAD_INDEX+ROAD_LEN] == -1)[0] #Đường chua có nguoif nào sở hữu
+        points_data = env_state[POINT_INDEX: POINT_INDEX+POINT_LEN] #thông tin các điểm ở trên bàn
+        
+        road_build, list_action = RoadCanBuild(p_road, road_not_yet_have, id_action, points_data)
 
-        list_p_usedKnight = env[np.array([93, 135, 177, 219])]
-        largestArmy = np.max(list_p_usedKnight)
+        if env_state[USE_BUILD_ROAD] != 0: #khi dùng thẻ road building
+            env_state[USE_BUILD_ROAD] -= 1 
+            env_state[PHASE] = 5
+            if env_state[USE_BUILD_ROAD] == 0 or len(p_road) == 15 or len(list_action) == 0: #hết lượt dùng thẻ road, hoạc đủ 15 đường, hoặc không còn dduofng để xây
+                env_state[PHASE] = 2
+                env_state[USE_BUILD_ROAD] = 0
+            if env_state[USE_BUILD_ROAD] == 0 and env_state[CHECK_ROLL_INDEX] == 1:
+                env_state[PHASE] = 1
+        else:
+            if turn > 7:
+                env_state[PHASE] = 2 #to phase 2
+            elif turn < 3:
+                env_state[PHASE] = 3
+                env_state[ID_ACTION] = (env_state[ID_ACTION]+1)%4
+                env_state[TURN] += 1
+            elif turn >3 and turn < 7:
+                env_state[TURN] += 1
+                env_state[PHASE] = 3
+                env_state[ID_ACTION] = (env_state[ID_ACTION]-1)%4
+            elif turn == 3: 
+                env_state[TURN] += 1
+                env_state[PHASE] = 3
+            elif turn == 7:
+                env_state[TURN] += 1
+                env_state[PHASE] = 1
 
-        # Check lại danh hiệu
-        if env[s_+35] >= 3 and env[s_+35] == largestArmy and env[226] != p_idx:
-            # Nếu cddn < 3 thì ko cần xét do ko thể giành danh hiệu
-            # Nếu cddn != longestRoad thì cũng ko cần xét do có xét cũng ko được danh hiệu
-            # Nếu đang có danh hiệu thì việc xây đường giúp củng cố danh hiệu, nên ko cần xét
-            list_p_check = np.where(
-                list_p_usedKnight == largestArmy)[0]
-            if len(list_p_check) == 1:  # Ghi nhận danh hiệu hoặc thay đổi danh hiệu
-                if env[226] == -1:  # Chưa có danh hiệu
-                    env[226] = p_idx  # Ghi nhận danh hiệu
-                    env[s_+10] += 2  # Cộng điểm
-                else:  # Thay đổi danh hiệu
-                    # Trừ điểm người cũ
-                    env[int(58+42*env[226]+10)] -= 2
-                    env[226] = p_idx  # Ghi nhận người mới
-                    env[s_+10] += 2  # Cộng điểm người cũ
-            # Nếu có 2 người cùng có con đường dài nhất, không thay đổi danh hiệu
+        env_state[OTHER_IN4_INDEX] = -1
 
-    elif action == 56:  # Roadbuilding
-        env[233] = 1
-        env[234] = 2
-        env[229] = 1  # Chuyển về pha đặt đường
-
-    elif action == 57:  # Yearofplenty
-        env[233] = 2
-        env[234] = 2
-        env[229] = 7
-
-    elif action == 58:  # Monopoly
-        env[233] = 3
-        env[234] = 1
-        env[229] = 7
-
-
-@njit
-def after_useDev(env: np.ndarray):
-    env[233] = -1
-    env[234] = 0
-    if env[228] == -1:  # Chưa roll xx
-        env[229] = 2
-        roll_xx(env)
-    else:  # Đã roll xx
-        env[229] = 6
-
-
-@njit
-def after_Rob(env: np.ndarray):
-    if env[233] == 0:  # Đang dùng thẻ knight
-        after_useDev(env)
-    else:  # Vừa đổ ra 7
-        env[229] = 6
-
-
-@njit
-def weighted_random(p: np.ndarray):
-    a = np.sum(p)
-    b = np.random.uniform(0, a)
-    for i in range(len(p)):
-        b -= p[i]
-        if b <= 0:
-            return i
-
-
-@njit
-def step(env: np.ndarray, action: int):
-    phase = env[229]
-    p_idx = int(env[254])
-    s_ = 58 + 42*p_idx
-
-    if phase == 0:  # Chọn điểm đặt nhà đầu game
-        update_new_stm(env, action, s_)
-
-        # Nếu là lần 2 thì cộng tài nguyên
-        if env[s_+10] == 2:
-            temp = POINT_TILE[action][POINT_TILE[action] != -1]
-            nearest_tiles = temp[env[temp] != 5]
-            for tile in nearest_tiles:
-                env_tile = int(env[tile])
-                env[s_+env_tile] += 1  # Cộng tài nguyên cho người chơi
-                env[48+env_tile] -= 1  # Trừ tài nguyên ở ngân hàng
+        # check longest road
+        p_road = np.where(env_state[ROAD_INDEX:ROAD_INDEX+ROAD_LEN] == id_action)[0]
+        longest_road_player = env_state[LONGEST_ROAD_PLAYER]
+        if len(p_road) > 0:
+            longest_road = calculator_longest_road(p_road, id_action, house_data)
+            env_state[int(ALL_INFOR_PLAYER*id_action + 4)] = longest_road
+            if longest_road_player == -1:
+                if longest_road >= 5:
+                    env_state[int(ALL_INFOR_PLAYER*id_action)] += 2
+                    env_state[LONGEST_ROAD_PLAYER] = id_action
+            else:
+                if longest_road_player != id_action:
+                    if longest_road > env_state[int(ALL_INFOR_PLAYER*longest_road_player + 4)]:
+                        env_state[int(ALL_INFOR_PLAYER*id_action)] += 2
+                        env_state[int(ALL_INFOR_PLAYER*longest_road_player)] -= 2
+                        env_state[LONGEST_ROAD_PLAYER] = id_action
+        # print(env_state[int(ALL_INFOR_PLAYER*id_action + 4)])
+        return env_state
+    elif phase_env == 7:
+        #cập nhật vị trí robber theo env_state[ROBBER_BLOCK_INDEX], kiểm tra các người chơi còn tài nguyên hay ko để đi cướp
+        block_robber = action - 54
+        env_state[ROBBER_BLOCK_INDEX] = block_robber
+        all_player_map = env_state[POINT_INDEX:POINT_INDEX+POINT_LEN]
+        point_in_block = all_player_map[POINT_IN_BLOCK[block_robber]]
+        point_in_block = point_in_block[(point_in_block > -1) & (point_in_block != id_action) & (point_in_block != (id_action+4))]      #xét các điểm bị sở hữu k phải của người chơi hiện tại, xem cướp đc k
+        if env_state[CHECK_ROLL_INDEX] == 1:
+            env_state[PHASE] = 1
+        else:
+            env_state[PHASE] = 2
+        if len(point_in_block) > 0:
+            point_in_block = point_in_block % 4
+            for id in point_in_block:
+                #nếu có người nào đó có tài nguyên để cướp thì sang phase 9, ko thì về phase 2
+                if np.sum(env_state[int(ALL_INFOR_PLAYER*id) : int(ALL_INFOR_PLAYER*(id+1))][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN]) > 0:
+                    env_state[PHASE] = 9
+                    break
+        return env_state
+    elif phase_env == 8:
+        # print('tai nguyen: ', env_state[ALL_INFOR_PLAYER*id_action:ALL_INFOR_PLAYER*(id_action+1)][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN], 'cần bỏ thêm: ', env_state[CARD_NEED_DROP])
+        source_drop = action - 73
+        #trừ tài nguyên người chơi và trả vào ngân hàng
+        env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX + source_drop] -= 1
+        env_state[CARD_BANK_INDEX + source_drop] += 1
+        env_state[ALL_INFOR_PLAYER*id_action + 1] -= 1          #giảm tổng số lượng thẻ
+        env_state[CARD_NEED_DROP] -= 1
+        if env_state[CARD_NEED_DROP] == 0:
+            #nếu đã trả đủ
+            id_next = id_action
+            for id in range(1, 5):
+                #kiểm tra các người chơi kế tiếp, ai nhiều hơn 7 lá thì phải bỏ bài, ai ít hơn thì thôi, nếu quay lại đến người chơi chính thì đến phase đănt knight
+                id_next = (id_action + id) % 4 
+                if id_next == env_state[MAIN_PLAYER]:
+                    env_state[PHASE] = 7            #update 12h39 ngày 28/8
+                    env_state[ID_ACTION] = env_state[MAIN_PLAYER]
+                    break
+                else:
+                    if np.sum(env_state[ALL_INFOR_PLAYER*id_next:ALL_INFOR_PLAYER*(id_next+1)][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN]) > 7:
+                        env_state[CARD_NEED_DROP] = np.sum(env_state[ALL_INFOR_PLAYER*id_next:ALL_INFOR_PLAYER*(id_next+1)][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN]) // 2
+                        env_state[ID_ACTION] = id_next
+                        break
+                    else:
+                        pass
+        
+        return env_state 
+    elif phase_env == 9:
+        #trừ ngẫu nhiên 1 tài nguyên của người chơi bị cướp
+        #các action tăng dần tương ứng với thứ tự người chơi 1,2,3 sau mình
+        player_robbed = (action - 77 + id_action)%4
+        # print('kêt quả cươp: ', action, env_state[MAIN_PLAYER], player_robbed, env_state[TURN])
+        player_robbed_source = env_state[ALL_INFOR_PLAYER*player_robbed:ALL_INFOR_PLAYER*(player_robbed+1)][CARD_1_PLAYER_INDEX:CARD_1_PLAYER_INDEX+CARD_PLAYER_LEN]
+        source_can_steal = np.where(player_robbed_source>0)[0]
+        random_steal_source = np.random.choice(source_can_steal)        #xác nhận tài nguyên bị cướp
+        #cập nhật tài nguyên người chơi
+        env_state[ALL_INFOR_PLAYER*player_robbed + CARD_1_PLAYER_INDEX + random_steal_source] -= 1
+        env_state[ALL_INFOR_PLAYER*player_robbed + 1] -= 1
+        env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX + random_steal_source] += 1
+        env_state[ALL_INFOR_PLAYER*id_action + 1] += 1
+        #update tài nguyên xong về phase 2
+        if env_state[CHECK_ROLL_INDEX] == 1:
+            env_state[PHASE] = 1
+        else:
+            env_state[PHASE] = 2
+        return env_state
+    elif phase_env == 10:
+        #nhận action, tăng tài nguyên lên, trừ ở ngân hàng đi, nếu còn được lấy thì chuyển phase 10, ko thì về phase2
+        source_get = action - 86
+        env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX + source_get] += 1
+        env_state[ALL_INFOR_PLAYER*id_action + 1] += 1
+        env_state[CARD_BANK_INDEX + source_get] -= 1
+        if env_state[USE_YEAR_OF_PLENTY] != 0 and np.sum(env_state[CARD_BANK_INDEX : CARD_BANK_INDEX+CARD_BANK_LEN]) > 0:
+            env_state[USE_YEAR_OF_PLENTY] = 0
+        else:
+            if env_state[CHECK_ROLL_INDEX] == 1:
+                env_state[PHASE] = 1
+            else:
+                env_state[PHASE] = 2
+        return env_state
+    elif phase_env == 11:
+        #nhận action, trừ hết tài nguyên tương ứng của các ng chơi khác rồi cộng cho ng chơi hiện tại, sau đó về phase 2
+        source_get = action - 86
+        sum_steal_monopoly = 0
+        for id in range(1,4):
+            id_robbed = (id+id_action)%4
+            sum_steal_monopoly += env_state[int(ALL_INFOR_PLAYER*id_robbed + CARD_1_PLAYER_INDEX + source_get)]
+            env_state[int(ALL_INFOR_PLAYER*id_robbed + CARD_1_PLAYER_INDEX + source_get)] = 0
+        env_state[int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX + source_get)] += sum_steal_monopoly
+        env_state[ATTRIBUTE_PLAYER_1_INDEX + 1] = np.sum(env_state[CARD_1_PLAYER_INDEX : CARD_1_PLAYER_INDEX + CARD_BANK_LEN])
+        env_state[ATTRIBUTE_PLAYER_2_INDEX + 1] = np.sum(env_state[CARD_2_PLAYER_INDEX : CARD_2_PLAYER_INDEX + CARD_BANK_LEN])
+        env_state[ATTRIBUTE_PLAYER_3_INDEX + 1] = np.sum(env_state[CARD_3_PLAYER_INDEX : CARD_3_PLAYER_INDEX + CARD_BANK_LEN])
+        env_state[ATTRIBUTE_PLAYER_4_INDEX + 1] = np.sum(env_state[CARD_4_PLAYER_INDEX : CARD_4_PLAYER_INDEX + CARD_BANK_LEN])
+        if env_state[CHECK_ROLL_INDEX] == 1:
+            env_state[PHASE] = 1
+        else:
+            env_state[PHASE] = 2        
+        return env_state
+    elif phase_env == 12:
+        #nhận action, cập nhật offer
+        if action == 103:
+            env_state[PHASE] = 13
+        else:
+            source_sell = action - 81
+            index_in_list_offer = (id_action - env_state[MAIN_PLAYER])%4
+            if id_action == env_state[MAIN_PLAYER]:
+                env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN + source_sell)] += 1
+                # print(env_state[OFFER_MAIN_INDEX : OFFER_MAIN_INDEX + OFFER_LEN], env_state[int(ALL_INFOR_PLAYER*env_state[ID_ACTION] + 1)], np.sum(env_state[int(ALL_INFOR_PLAYER*env_state[ID_ACTION] + 5) :int(ALL_INFOR_PLAYER*env_state[ID_ACTION] + 10)]), '1111111111')
+                if np.sum(env_state[OFFER_MAIN_INDEX : OFFER_MAIN_INDEX + OFFER_LEN]) == env_state[int(ALL_INFOR_PLAYER*env_state[ID_ACTION] + 1)]:        #hết tài nguyên rồi thì next phase
+                    env_state[PHASE] = 13
+            # else:
+            #     env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN + CARD_BANK_LEN + source_sell)] += 1
+            #     if np.where(env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN) : int(OFFER_MAIN_INDEX + (index_in_list_offer+1)*OFFER_LEN)]) == env_state[int(ALL_INFOR_PLAYER*env_state[ID_ACTION] + 1)]:        #hết tài nguyên rồi thì next phase
+            #         env_state[PHASE] = 13
             
 
-        # Chuyển sang pha đặt đường
-        env[231] = action  # Điểm đặt thứ nhất
-        env[229] = 1  # Chuyển sang pha 1: Đặt đường
-
-    elif phase == 1:  # Chọn các điểm đầu mút của đường
-        if env[231] == -1:  # Chưa có điểm đặt thứ nhất
-            env[231] = action
-
-        else:
-            # Tìm con đường tương ứng và thay đổi tập đường
-            for road in np.where(ROAD_POINT == env[231])[0]:
-                if action in ROAD_POINT[road]:
-                    i = np.count_nonzero(env[s_+11:s_+26] != -1)
-                    env[s_+11+i] = road
-                    break
-
-            # Check con đường dài nhất
-            env[s_+36] = get_p_longest_road(env, p_idx)
-            list_p_longestRoad = env[np.array([94, 136, 178, 220])]
-            longestRoad = np.max(list_p_longestRoad)
-
-            # Check lại danh hiệu
-            if env[s_+36] >= 5 and env[s_+36] == longestRoad and env[227] != p_idx:
-                # Nếu cddn < 5 thì ko cần xét do ko thể giành danh hiệu
-                # Nếu cddn != longestRoad thì cũng ko cần xét do có xét cũng ko được danh hiệu
-                # Nếu đang có danh hiệu thì việc xây đường giúp củng cố danh hiệu, nên ko cần xét
-                list_p_check = np.where(list_p_longestRoad == longestRoad)[0]
-                if len(list_p_check) == 1:  # Ghi nhận danh hiệu hoặc thay đổi danh hiệu
-                    if env[227] == -1:  # Chưa có danh hiệu
-                        env[227] = p_idx  # Ghi nhận danh hiệu
-                        env[s_+10] += 2  # Cộng điểm
-                    else:  # Thay đổi danh hiệu
-                        env[int(58+42*env[227]+10)] -= 2  # Trừ điểm người cũ
-                        env[227] = p_idx  # Ghi nhận người mới
-                        env[s_+10] += 2  # Cộng điểm người cũ
-                # Nếu có 2 người cùng có con đường dài nhất, không thay đổi danh hiệu
-
-            # Xóa điểm đặt thứ nhất
-            env[231] = -1
-
-            # 8 turn đầu: Kết thúc turn, chuyển người chơi, nếu là turn 8 thì chỉ chuyển pha
-            if env[230] <= 7:
-                env[230] += 1
-                if env[230] == 8:  # Chỉ chuyển pha
-                    env[239] = 1  # Cài lại số lần tạo trade offer
-                    env[229] = 2  # Sang pha 2: Đổ xx hoặc dùng thẻ dev
-                    roll_xx(env)  # Chưa thể có thẻ dev trong trường hợp này
-                else:  # Thay đổi người chơi, chuyển pha
-                    env[229] = 0  # Chuyển sang pha đặt nhà đầu game
-                    if env[230] < 4:
-                        env[254] = env[230]
-                    else:
-                        env[254] = 7 - env[230]
-
-            else:  # Các turn giữa game
-                if env[233] == 1:  # Đang dùng thẻ roadbuilding
-                    env[234] -= 1
-                    # Hoặc là hết lượt dùng, hoặc đủ 15 đường, hoặc hết vị trí xây đường
-                    check = True
-                    if env[234] == 0 or (env[s_+11:s_+26] != -1).all():
-                        check = False
-
-                    if check:
-                        check = False
-                        p_point = np.zeros(54)
-                        all_road = np.zeros(72)
-
-                        temp = env[s_+11:s_+26]  # Đường và điểm của người chơi
-                        list_road = temp[temp != -1].astype(np.int32)
-                        all_road[list_road] = 1
-                        p_point[ROAD_POINT[list_road].flatten()] = 1
-
-                        for i in range(1, 4):
-                            e_idx = (p_idx + i) % 4
-                            s_e = 58 + 42*e_idx
-
-                            temp = env[s_e+11:s_e+26]
-                            list_road = temp[temp != -1].astype(np.int32)
-                            all_road[list_road] = 1
-
-                            temp = env[s_e+26:s_e+35]
-                            stm_and_city = temp[temp != -1].astype(np.int32)
-                            p_point[stm_and_city] = 0
-
-                        list_point = np.where(p_point == 1)[0]
-                        for point in list_point:
-                            nearest_roads = POINT_ROAD[point][POINT_ROAD[point] != -1]
-                            if (all_road[nearest_roads] == 0).any():
-                                check = True
-                                break
-
-                    if not check:  # Kết thúc trạng thái sử dụng thẻ roadbuilding
-                        after_useDev(env)
-                else:  # Không dùng thẻ roadbuilding, về pha 6
-                    env[229] = 6
-
-    elif phase == 2:  # Đổ xx hoặc dùng thẻ dev
-        if action == 54:  # Đổ xúc xắc
-            roll_xx(env)
-
-        else:
-            useDev(env, action, s_, p_idx)
-
-    elif phase == 3:  # Trả tài nguyên do bị chia bài
-        env[s_+action-95] -= 1  # Trừ tài nguyên của người chơi
-        env[action-47] += 1  # Trả tài nguyên này cho ngân hàng
-
-        env[232] -= 1  # Giảm số lượng thẻ cần trả
-        if env[232] == 0:  # Đã trả đủ
-            for i in range(1, 5):
-                e_idx = (p_idx + i) % 4
-                s_e = 58 + 42*e_idx
-                if e_idx == env[230] % 4:  # Quay về người chơi chính
-                    env[229] = 4  # Sang pha di chuyển Robber
-                    env[254] = e_idx  # Chuyển người action
-                    break
-                else:
-                    if np.sum(env[s_e:s_e+5]) > 7:
-                        # Cập nhật số lá phải bỏ
-                        env[232] = np.sum(env[s_e:s_e+5]) // 2
-                        env[254] = e_idx  # Chuyển người action
-                        break
-
-    elif phase == 4:  # Di chuyển Robber
-        env[19] = action - 64  # Cập nhật vị trí Robber
-
-        # Xét xem có cướp được tài nguyên của ai hay ko
-        check = False
-        for i in range(4):
-            if i != p_idx:
-                s_i = 58 + 42*i
-                if (env[s_i:s_i+5] > 0).any():  # Nếu người này có tài nguyên
-                    temp = env[s_i+26:s_i+35]
-                    stm_and_city = temp[temp != -1].astype(np.int32)
-                    for point in stm_and_city:
-                        if point in TILE_POINT[int(env[19])]:
-                            env[229] = 5
-                            check = True
-                            break
-
-            if check:
-                break
-
-        if not check:  # Không cướp được của ai
-            after_Rob(env)
-
-    elif phase == 5:  # Chọn người để cướp tài nguyên
-        e_idx = (p_idx + action - 82) % 4
-        s_e = 58 + 42*e_idx
-        temp = env[s_e:s_e+5]  # Tài nguyên
-
-        res_idx = weighted_random(temp)
-        env[s_e+res_idx] -= 1  # Trừ tài nguyên của người bị cướp
-        env[s_+res_idx] += 1  # Cộng tài nguyên cho người cướp
-
-        after_Rob(env)
-        return res_idx
-
-    elif phase == 6:  # Chọn các mô đun giữa turn
-        if action >= 55 and action < 59:  # Dùng thẻ dev
-            useDev(env, action, s_, p_idx)
-
-        elif action == 86:  # Mua đường
-            env[s_:s_+5] -= ROAD_PRICE  # Trả tài nguyên
-            env[48:53] += ROAD_PRICE
-            env[229] = 1  # Chuyển sang pha đặt đường
-
-        elif action == 87:  # Mua nhà
-            env[s_:s_+5] -= SETTLEMENT_PRICE
-            env[48:53] += SETTLEMENT_PRICE
-            env[229] = 8  # Sang pha mua nhà
-
-        elif action == 88:  # Mua thành phố
-            env[s_:s_+5] -= CITY_PRICE
-            env[48:53] += CITY_PRICE
-            env[229] = 9  # Chuyển sang pha mua thành phố
-
-        elif action == 89:  # Mua thẻ dev, không chuyển pha
-            env[s_:s_+5] -= DEV_PRICE  # Trả tài nguyên mua thẻ dev
-            env[48:53] += DEV_PRICE
-            temp = env[53:58]
-
-            dev_idx = weighted_random(temp)
-            env[53+dev_idx] -= 1  # Trừ thẻ dev ở ngân hàng
-            env[s_+5+dev_idx] += 1  # Cộng thẻ dev cho người chơi
-
-            # Nếu thẻ dev vừa nhận là thẻ vp (dev_idx = 4) thì cộng điểm cho người chơi
-            # if dev_idx == 4:
-            #     env[s_+10] += 1
-            # Note: Không được cộng do như thế các người khác sẽ biết
-
-        elif action == 90:  # Trade với người
-            env[239] -= 1  # Giảm số lần được tạo trade offer với người chơi
-            env[229] = 10  # Sang pha đưa ra tài nguyên khi tạo trade
-
-            # Kiểm tra lượng tài nguyên tối đa
-            max_res = 0
-            for i in range(1, 4):
-                e_idx = (p_idx + i) % 4
-                s_e = 58 + 42*e_idx
-                a = np.sum(env[s_e:s_e+5])
-                if a > max_res:
-                    max_res = a
-
-            env[250] = max_res  # Lượng tài nguyên tối đa được đưa vào trong trade
-
-        elif action == 91:  # Trade với bank
-            env[229] = 14
-
-        elif action == 92:  # Kết thúc lượt
-            env[239] = 1  # Reset lại số lần tạo trade offer
-            env[230] += 1  # Tăng turn
-            n_idx = env[230] % 4
-            s_n = int(58 + 42*n_idx)
-            env[254] = n_idx  # Người đi tiếp theo
-
-            # Kiểm tra thẻ dev có thể sử dụng
-            env[235:239] = env[s_n+5:s_n+9] > 0
-
-            # Tổng xx
-            env[228] = -1
-
-            # Pha
-            env[229] = 2
-
-            if (env[235:239] == 0).all():
-                roll_xx(env)
-
-    elif phase == 7:  # Chọn tài nguyên khi dùng thẻ dev
-        if env[233] == 2:  # Đang dùng thẻ yearofplenty
-            env[action-11] -= 1  # Trừ tài nguyên cho ngân hàng
-            env[s_+action-59] += 1  # Cộng tài nguyên cho người chơi
-
-            # Giảm số lần sử dụng thẻ xuống
-            env[234] -= 1
-
-            # Nếu hết số lần sử dụng hoặc ngân hàng hết tài nguyên
-            if env[234] == 0 or (env[48:53] == 0).all():
-                after_useDev(env)
-
-        elif env[233] == 3:  # Đang dùng thẻ monopoly
-            sum_res = 0
-            res_idx = action - 59
-            for i in range(1, 4):
-                e_idx = (p_idx + i) % 4
-                s_e = 58 + 42*e_idx
-                sum_res += env[s_e+res_idx]
-                env[s_e+res_idx] = 0
-
-            env[s_+res_idx] += sum_res
-            after_useDev(env)
-
-    elif phase == 8:  # Chọn các điểm mua nhà
-        update_new_stm(env, action, s_)
-
-        # Check xem nhà vừa xây có nằm trên con đường của ai khác hay ko
-        check = False
-        w_idx = 9999
-
-        for i in range(1, 4):
-            e_idx = (p_idx + i) % 4
-            s_e = 58 + 42*e_idx
-
-            temp = env[s_e+11:s_e+26]
-            list_road = temp[temp != -1].astype(np.int32)
-            count = 0
-            for road in POINT_ROAD[action]:
-                if road != -1 and road in list_road:
-                    count += 1
-
-            if count == 2:
-                check = True
-                w_idx = e_idx
-                break
-
-        if check:  # Người này vừa xây nhà cắt đường người khác
-            s_w = 58 + 42*w_idx
-            env[s_w+36] = get_p_longest_road(env, w_idx)
-            list_p_longestRoad = env[np.array([94, 136, 178, 220])]
-            longestRoad = np.max(list_p_longestRoad)
-
-            if longestRoad < 5:
-                if env[227] != -1:  # Có ông có danh hiệu, chứng tỏ vừa bị cướp
-                    env[int(58+42*env[227]+10)] -= 2  # Trừ điểm
-                    env[227] = -1  # Thu hồi danh hiệu
-                #  Nếu chưa ai có danh hiệu thì bỏ qua
+        return env_state
+    elif phase_env == 13:
+        #nhận action, cập nhật offer
+        if action == 103:
+            #DONE deal
+            # if check_trade_with_harbor(env_state) and env_state[ID_ACTION] == env_state[MAIN_PLAYER]:
+            #     #nếu deal đổi vs cảng hay ngân hàng đc, thực hiện vs ngân hàng r về phase 2
+            #     main_deal = env_state[OFFER_MAIN_INDEX : OFFER_MAIN_INDEX + OFFER_LEN]
+            #     env_state[int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX) : int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN)] = env_state[int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX) : int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN)] + main_deal[CARD_BANK_LEN:] - main_deal[:CARD_BANK_LEN]
+            #     env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN] = env_state[CARD_BANK_INDEX : CARD_BANK_INDEX + CARD_BANK_LEN] - main_deal[CARD_BANK_LEN:] + main_deal[:CARD_BANK_LEN]
+            #     env_state[OFFER_MAIN_INDEX : OFFER_MAIN_INDEX+OFFER_LEN] = np.zeros(OFFER_LEN)      #cập nhật lại thành deal trống
+            #     env_state[int(ALL_INFOR_PLAYER*id_action+1)] = np.sum(env_state[int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX) : int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN)])
+            #     env_state[NUMBER_TRADE_OF_PLAYER] += 1
+            #     env_state[PHASE] = 2
+            # else:
+            id_next = (id_action + 1)%4
+            env_state[ID_ACTION] = id_next
+            if id_next == env_state[MAIN_PLAYER]:
+                env_state[PHASE] = 14
             else:
-                list_p_check = np.where(list_p_longestRoad == longestRoad)[0]
-                if len(list_p_check) == 1:  # Có đúng 1 ông có con đường dài nhất
-                    if env[227] == -1:  # Chưa có ai có danh hiệu
-                        env[227] = list_p_check[0]  # Bàn chơi ghi nhận
-                        env[int(58+42*env[227]+10)] += 2  # Cộng điểm
-                    else:  # Có ông đã có danh hiệu
-                        if env[227] != list_p_check[0]:  # Thay đổi danh hiệu
-                            env[int(58+42*env[227]+10)] -= 2  # Trừ điểm ông cũ
-                            env[227] = list_p_check[0]  # Bàn chơi ghi nhận
-                            # Cộng điểm ông mới
-                            env[int(58+42*env[227]+10)] += 2
-                        #  Nếu cùng là một người thì không thay đổi danh hiệu
-                else:  # Có từ 2 ông trở lên cùng có con đường dài nhất
-                    # Đang có người có danh hiệu, nhưng con đường không dài nhất
-                    if env[227] != -1 and env[227] not in list_p_check:
-                        env[int(58+42*env[227]+10)] -= 2  # Trừ điểm
-                        env[227] = -1
-                    # Hoặc là chưa ai có danh hiệu, hoặc là danh hiệu nằm trong list thì ko cần check
-
-        env[229] = 6  # Về pha chọn mô đun
-
-    elif phase == 9:  # Chọn các điểm mua thành phố
-        # Cập nhật tập nhà
-        r_ = np.count_nonzero(env[s_+31:s_+35] != -1)
-        env[s_+31+r_] = action
-
-        # Xóa nhà vừa được nâng cấp lên thành phố
-        temp = env[s_+26:s_+31]
-        for i in range(5):
-            if temp[i] == action:
-                temp[i] = -1
-                break
-
-        temp = temp[temp != -1]
-        env[s_+26:s_+31] = -1
-        env[s_+26:s_+26+len(temp)] = temp
-
-        # Cộng điểm
-        env[s_+10] += 1
-
-        env[229] = 6  # Sang pha chọn mô đun
-
-    elif phase == 10:  # Đưa ra tài nguyên khi trade với người
-        if action == 103:  # Kết thúc
-            env[229] = 11  # Chuyển sang pha yêu cầu tài nguyên
-
-        else:  # Thêm tài nguyên
-            res_idx = action - 95
-            env[240+res_idx] += 1
-            if np.sum(env[240:245]) == np.sum(env[s_:s_+5]):  # Đã bỏ hết tài nguyên
-                env[229] = 11
-
-    elif phase == 11:  # Yêu cầu tài nguyên khi trade với người
-        check = False
-        if action == 104:  # Kết thúc
-            check = True
-        else:  # Thêm tài nguyên
-            res_idx = action - 59
-            env[245+res_idx] += 1
-            if np.sum(env[245:250]) == env[250]:  # Lượng tài nguyên đạt đến tối đa
-                check = True
-
-        if check:
-            env[250] = 0
-            for i in range(1, 5):
-                e_idx = (p_idx + i) % 4
-                s_e = 58 + 42*e_idx
-
-                if i == 4:  # Quay về người chơi chính, không có ai trade,
-                    env[229] = 6  # Về luôn phase chọn mô đun
-                    env[240:250] = 0  # Reset trade
-                    env[251:254] = -1  # Reset phản hồi người chơi phụ
-                    break
-
-                if (env[s_e:s_e+5] < env[245:250]).any():
-                    env[250+i] = 0
-                else:
-                    env[229] = 12
-                    env[254] = e_idx
-                    break
-
-    elif phase == 12:  # Người chơi phụ phản hồi trade
-        r_ = int(p_idx - env[230]) % 4
-        env[250+r_] = action - 93
-
-        for i in range(1, 4):
-            next_idx = (p_idx + i) % 4
-            s_n = 58 + 42*next_idx
-            env[254] = next_idx
-            if next_idx == env[230] % 4:  # Chuyển về người chơi chính
-                if (env[251:254] == 0).all():  # Không ai trade
-                    env[229] = 6  # Về luôn phase chọn mô đun
-                    env[240:250] = 0  # Reset trade
-                    env[251:254] = -1  # Reset phản hồi người chơi phụ
-                else:
-                    env[229] = 13
-
-                break
-
-            if (env[s_n:s_n+5] < env[245:250]).any():
-                env[250+r_+i] = 0
-            else:
-                env[229] = 12
-                break
-
-        # if r_ == 3:  # Chuyển về người chơi chính
-        #     if (env[251:254] == 0).all():  # Không ai trade
-        #         env[229] = 6  # Về luôn phase chọn mô đun
-        #         env[240:250] = 0  # Reset trade
-        #         env[251:254] = -1  # Reset phản hồi người chơi phụ
-        #     else:
-        #         env[229] = 13
-        # Note: Đoạn này xử lí thiếu
-
-    elif phase == 13:  # Người chơi chính duyệt trade
-        if action == 105:  # Bỏ qua hết
-            env[229] = 6  # Về luôn phase chọn mô đun
-            env[240:250] = 0  # Reset trade
-            env[251:254] = -1  # Reset phản hồi người chơi phụ
+                env_state[PHASE] = 15
         else:
-            e_idx = (p_idx + action - 99) % 4
-            s_e = 58 + 42*e_idx
+            #tiếp tục nạp vào deal
+            source_buy = action - 86
+            index_in_list_offer = (id_action - env_state[MAIN_PLAYER])%4
+            if id_action == env_state[MAIN_PLAYER]: 
+                env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN + CARD_BANK_LEN + source_buy)] += 1
+                all_number_res = env_state[1:POINT_INDEX:ALL_INFOR_PLAYER].copy()
+                all_number_res[int(env_state[MAIN_PLAYER])] = 0
+                if np.sum(env_state[OFFER_MAIN_INDEX+CARD_BANK_LEN : OFFER_MAIN_INDEX+OFFER_LEN]) >= np.max(all_number_res):
+                    id_next = (id_action + 1)%4
+                    env_state[ID_ACTION] = id_next
+                    env_state[PHASE] = 15
+            # else: 
+            #     env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN + source_buy)] += 1
+            #     if np.sum(env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN) : int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN)+CARD_BANK_LEN]) > env_state[int(env_state[MAIN_PLAYER]*ALL_INFOR_PLAYER+1)]:
+            #         #neu ng choi phu redeal
+            #         id_next = (id_action + 1)%4
+            #         env_state[ID_ACTION] = id_next
+            #         if id_next == env_state[MAIN_PLAYER]:
+            #             env_state[PHASE] = 14
+            #         else:
+            #             env_state[PHASE] = 15
+        return env_state
+    elif phase_env == 14:
+        #cập nhật thông tin nếu có trao đổi sau đấy về phase 2
+        if action == 104:
+            #bỏ qua các deal khác, về phase 2
+            env_state[OFFER_MAIN_INDEX:OFFER_MAIN_INDEX + OFFER_LEN*4] = np.zeros(OFFER_LEN*4)
+            env_state[PHASE] = 2
+        else:
+            #nếu người chơi chính đồng ý trao đổi
+            # if 90 < action and action < 94:
+            id_trading = (id_action + action - 90)%4
+            deal_traded = env_state[OFFER_MAIN_INDEX + OFFER_LEN*(action - 90):OFFER_MAIN_INDEX + OFFER_LEN*(action - 90+1)]
+            #cập nhật tài nguyên của người được đồng ý trade
+            env_state[ALL_INFOR_PLAYER*id_trading + CARD_1_PLAYER_INDEX : int(ALL_INFOR_PLAYER*id_trading + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN)] = deal_traded[:CARD_BANK_LEN] + env_state[ALL_INFOR_PLAYER*id_trading + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_trading + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] - deal_traded[CARD_BANK_LEN:]
+            #cập nhật tài nguyên của người chơi chính
+            env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX : int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN)] = deal_traded[CARD_BANK_LEN:] + env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX:ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN] - deal_traded[:CARD_BANK_LEN]
+            env_state[ALL_INFOR_PLAYER*id_trading + 1] = np.sum(env_state[ALL_INFOR_PLAYER*id_trading + CARD_1_PLAYER_INDEX : int(ALL_INFOR_PLAYER*id_trading + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN)])
+            env_state[ALL_INFOR_PLAYER*id_action + 1] = np.sum(env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX : int(ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX+ CARD_BANK_LEN)])
+            #làm mới lại các deal
+            env_state[OFFER_MAIN_INDEX:OFFER_MAIN_INDEX + OFFER_LEN*4] = np.zeros(OFFER_LEN*4)
+            env_state[PHASE] = 2      
+        return env_state
+    elif phase_env == 15:
+        index_in_list_offer = (id_action - env_state[MAIN_PLAYER])%4
+        if action == 104:
+            #nếu người chơi ko đồng ý, trả về offer rỗng tương ứng, nhảy sang người chơi khác
+            env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN) : int(OFFER_MAIN_INDEX + (1 + index_in_list_offer)*OFFER_LEN)] = np.zeros(OFFER_LEN)
+            id_next = (id_action + 1)%4
+            env_state[ID_ACTION] = id_next
+            if id_next == env_state[MAIN_PLAYER]:
+                env_state[PHASE] = 14
+                
+        elif action == 105:
+            #nếu người chơi đồng ý, đặt offer của người chơi chính thành của người chơi này
+            main_deal = env_state[OFFER_MAIN_INDEX : OFFER_MAIN_INDEX + OFFER_LEN]
+            env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN) : int(OFFER_MAIN_INDEX + (1 + index_in_list_offer)*OFFER_LEN)] = main_deal
+            id_next = (id_action + 1)%4
+            env_state[ID_ACTION] = id_next
+            if id_next == env_state[MAIN_PLAYER]:
+                env_state[PHASE] = 14
+        # else:      #update tắt redeal 08/09/2022
+        #     #nếu đi tạo deal mới, nạp tài nguyên vào deal rồi sang phase 12
+        #     source_sell = action - 81
+        #     env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN + CARD_BANK_LEN + source_sell)] += 1
+        #     env_state[PHASE] = 12
+        return env_state
+    elif phase_env == 16:
+        #nhậc action, xác định soso lượn tài nguyên đem đổi
+        source_sell = action - 81
+        index_in_list_offer = (id_action - env_state[MAIN_PLAYER])%4
+        house_data = env_state[POINT_INDEX: POINT_INDEX+POINT_LEN]
+        point_in_port = house_data[POINT_IN_HARBOR]
+        player_port = np.where((point_in_port == id_action) | (point_in_port == (id_action + 4)))[0]     #tìm các điểm là cảng của người chơi
+        number_res_sell = 4
+        player_source = env_state[int(ALL_INFOR_PLAYER*id_action+ATTRIBUTE_PLAYER) : int(ALL_INFOR_PLAYER*id_action+ATTRIBUTE_PLAYER+CARD_PLAYER_LEN)]
+        type_of_port = env_state[TYPE_HARBOR_INDEX : TYPE_HARBOR_INDEX+TYPE_HARBOR_LEN]
+        for id in player_port:
+            type_port = type_of_port[id//2]
+            if type_port == 0 and player_source[source_sell] > 2:
+                number_res_sell = 3
+            elif type_port != 0 and player_source[source_sell] > 1 and source_sell == (type_port-1):
+                number_res_sell = 2
+                break
+        env_state[int(OFFER_MAIN_INDEX + index_in_list_offer*OFFER_LEN + source_sell)] += number_res_sell
+        env_state[PHASE] = 17
+        return env_state
+    elif phase_env == 17:
+        #nhận action, cập nhật tài nguyên cho ng chơi và ngân hàng
+        source_get = action - 86
+        main_deal = env_state[OFFER_MAIN_INDEX : OFFER_MAIN_INDEX + OFFER_LEN]
+        # print(main_deal, 'checkkkkkkkk')
+        source_sell = np.where(main_deal > 0)[0][0]
+        env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX + source_get] += 1
+        env_state[ALL_INFOR_PLAYER*id_action + CARD_1_PLAYER_INDEX + source_sell] -= main_deal[source_sell]
+        env_state[ALL_INFOR_PLAYER*id_action + 1] += 1 - main_deal[source_sell]
+        env_state[CARD_BANK_INDEX + source_get] -= 1       
+        env_state[CARD_BANK_INDEX + source_sell] += main_deal[source_sell]   
+        env_state[OFFER_MAIN_INDEX:OFFER_MAIN_INDEX + OFFER_LEN] = np.zeros(OFFER_LEN)          #làm mới lại deal
+        env_state[PHASE] = 2
+        return env_state
 
-            # Người chơi chính
-            env[s_:s_+5] -= env[240:245]
-            env[s_:s_+5] += env[245:250]
-
-            # Người chơi phụ
-            env[s_e:s_e+5] -= env[245:250]
-            env[s_e:s_e+5] += env[240:245]
-
-            env[229] = 6  # Về pha chọn mô đun
-            env[240:250] = 0
-            env[251:254] = -1  # Reset phản hồi người chơi phụ
-
-    elif phase == 14:  # Chọn tài nguyên khi trade với ngân hàng
-        res_idx = action - 95
-        env[240+res_idx] = env[s_+37+res_idx]
-
-        env[229] = 15
-
-    elif phase == 15:  # Chọn tài nguyên muốn nhận từ ngân hàng
-        res_idx = action - 59
-
-        # Người chơi
-        env[s_+res_idx] += 1
-        env[s_:s_+5] -= env[240:245]
-
-        # Ngân hàng
-        env[48+res_idx] -= 1
-        env[48:53] += env[240:245]
-
-        env[240:245] = 0
-        env[229] = 6
 
 
-@njit
-def close_game(env: np.ndarray):
-    score = env[np.array([68, 110, 152, 194])] + \
-        env[np.array([67, 109, 151, 193])]
-    max_score = np.max(score)
-    if max_score >= 10:
-        return np.where(score == max_score)[0][-1]
+def one_game(list_player_, per_file):
+    env_state = reset()
+    temp_file = [[0] for i in range(amount_player())]
+    count_turn = 0
 
-    return -1
-
-
-def rdb(p_state, temp_file, per_file):
-    arr_action = get_list_action(p_state)
-    arr_action = np.where(arr_action == 1)[0]
-    action = np.random.choice(arr_action)
-    return action, temp_file, per_file
-
-
-@njit
-def rdb_numba(p_state, temp_file, per_file):
-    arr_action = get_list_action(p_state)
-    arr_action = np.where(arr_action == 1)[0]
-    action = np.random.choice(arr_action)
-    return action, temp_file, per_file
-
-
-def o_n_e_g_a_m_e(list_player, per_file):
-    env = reset()
-    temp_file = [np.array([0]), np.array([0]), np.array([0]), np.array([0])]
-
-    while env[230] < 1000:
-        p_idx = int(env[254])
-        p_state = get_player_state(env)
-        action, temp_file[p_idx], per_file = list_player[p_idx](
-            p_state, temp_file[p_idx], per_file)
-        step(env, action)
-        if close_game(env) != -1:
+    while count_turn < 15000:
+        action, temp_file, per_file = action_player(env_state,list_player_,temp_file,per_file)     
+        # print_mode_action(action, env_state)
+        env_state = step(env_state, action)
+        # print_mode_board(action, env_state)
+        count_turn += 1
+        if check_winner(env_state) != -1:
+            score = env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+2:ALL_INFOR_PLAYER].copy()
+            vitory_card = env_state[CARD_EFFECT_1_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN-1:CARD_EFFECT_4_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN+1:ALL_INFOR_PLAYER].copy()
+            env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+2:ALL_INFOR_PLAYER] = score+vitory_card
             break
-
-    winner = close_game(env)
-    if winner != -1:
-        for i in range(4):
-            env[254] = i
-            env[229] = 2
-            p_state = get_player_state(env)
-            action, temp_file[i], per_file = list_player[i](
-                p_state, temp_file[i], per_file)
-
-    return winner, per_file, env[230]
-
-
-def one_game(list_player, per_file):
-    env = reset()
-    temp_file = [[0], [0], [0], [0]]
-
-    while env[230] < 1000:
-        p_idx = int(env[254])
-        p_state = get_player_state(env)
-        action, temp_file[p_idx], per_file = list_player[p_idx](
-            p_state, temp_file[p_idx], per_file)
-        step(env, action)
-        if close_game(env) != -1:
-            break
-
-    winner = close_game(env)
-    if winner != -1:
-        for i in range(4):
-            env[254] = i
-            env[229] = 2
-            p_state = get_player_state(env)
-            action, temp_file[i], per_file = list_player[i](
-                p_state, temp_file[i], per_file)
-
+    
+    winner = check_winner(env_state)
+    # print('winner', winner)
+    if winner == -1:
+        pass
+    else:
+        for id_player in range(amount_player()):
+            env_state[PHASE] = 1
+            action, temp_file, per_file = action_player(env_state,list_player_,temp_file,per_file)
+            # print(per_file)
+            env_state[ID_ACTION] = (env_state[ID_ACTION] + 1)%4
+    # score = env_state[ATTRIBUTE_PLAYER_1_INDEX:ATTRIBUTE_PLAYER_4_INDEX+2:ALL_INFOR_PLAYER]
+    # vitory_card = env_state[CARD_EFFECT_1_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN-1:CARD_EFFECT_4_PLAYER_INDEX+CARD_EFFECT_PLAYER_LEN+1:ALL_INFOR_PLAYER]
+    # score_real = score+vitory_card
+    # print('điểm các người chơi: ', score_real)
+    # print('Số lần truyền vào player:', count_turn)
     return winner, per_file
 
 
-@njit
-def update_turn_stats(stats: np.ndarray, value: float):
-    if value == 1000:
-        stats[4] += 1
-    else:
-        stats[1] = (stats[1] * stats[0] + value) / (stats[0] + 1)
-        stats[0] += 1
-        if value < stats[2]:
-            stats[2] = value
-
-        if value > stats[3]:
-            stats[3] = value
-
-
-def n_o_r_m_a_l_m_a_i_n(list_player, times, per_file):
-    count_win = np.zeros(5)
-    p_lst_idx = np.arange(4)
-    turn_stats = np.array(
-        [
-            0.0,  # Số trận đã đấu
-            0.0,  # Số turn trung bình
-            999.0,  # Số turn min
-            0.0,  # Số turn max
-            0.0  # Số trận có turn = 1000
-        ])
-
-    for _n in range(times):
-        if _n % 50 == 0 and _n != 0:
-            print(_n, count_win, turn_stats)
-
-        np.random.shuffle(p_lst_idx)
-        winner, per_file, count_turn = o_n_e_g_a_m_e(
-            [list_player[p_lst_idx[0]], list_player[p_lst_idx[1]],
-                list_player[p_lst_idx[2]], list_player[p_lst_idx[3]]], per_file
-        )
-
-        update_turn_stats(turn_stats, count_turn)
-
-        if winner == -1:
-            count_win[4] += 1
-        else:
-            count_win[winner] += 1
-
-    print(_n+1, count_win, turn_stats)
-    return count_win, per_file, turn_stats
-
-
 def normal_main(list_player, times, per_file):
-    count_win = np.zeros(5)
-    p_lst_idx = np.arange(4)
-
-    for _n in range(times):
-        np.random.shuffle(p_lst_idx)
-        winner, per_file = one_game(
-            [list_player[p_lst_idx[0]], list_player[p_lst_idx[1]],
-                list_player[p_lst_idx[2]], list_player[p_lst_idx[3]]], per_file
-        )
-
+    count = np.zeros(len(list_player)+1)
+    all_id_player = np.arange(len(list_player))
+    for van in range(times):
+        shuffle = np.random.choice(all_id_player, amount_player(), replace=False)
+        shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
+        winner, per_file = one_game(shuffle_player, per_file)
         if winner == -1:
-            count_win[4] += 1
+            count[winner] += 1
         else:
-            count_win[winner] += 1
+            count[shuffle[winner]] += 1
+    return list(count.astype(np.int64)), per_file
 
-    return count_win, per_file
+@njit()
+def check_victory(player_state):
+    all_score = np.array([player_state[P_SCORE], player_state[P_P1_ATTRIBUTE_PLAYER], player_state[P_P2_ATTRIBUTE_PLAYER], player_state[P_P3_ATTRIBUTE_PLAYER]])
+    # print(all_score)
+    if np.max(all_score) < 10:
+        return -1 
+    else:
+        if np.argmax(all_score) == 0:
+            return 1
+        else:
+            return 0

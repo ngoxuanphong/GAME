@@ -64,22 +64,6 @@ def state_to_player(env_state):
 def amount_action():
     return 65
 
-def player_random(player_state, file_temp, file_per):
-
-    list_action = get_list_action(player_state)
-    action = int(np.random.choice(list_action))
-    # print(list_action)
-    if check_victory(player_state) == -1:
-        # print('chưa hết game')
-        pass
-    else:
-        if check_victory(player_state) == 1:
-            # print('win')
-            pass
-        else:
-            # print('lose')
-            pass
-    return action, file_temp, file_per
 
 
 
