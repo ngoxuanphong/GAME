@@ -631,7 +631,7 @@ def get_p_point_n_all_stm_city(p_state: np.ndarray):
 @njit
 def get_list_action(p_state: np.ndarray):
     phase = p_state[186]
-    list_action = np.zeros(AMOUNT_ACTION)
+    list_action = np.full(AMOUNT_ACTION, 0)
 
     if phase == 11:  # Yêu cầu tài nguyên khi trade với người
         # Nếu đã có ít nhất 1 tài nguyên, thì phải có action dừng
