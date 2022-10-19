@@ -1895,7 +1895,7 @@ def normal_main(list_player, times, per_file):
             if special_case_idx != 0:
                 count_win[4+special_case_idx] += 1
 
-    return count_win, per_file
+    return list(count_win.astype(np.int64)), per_file
 
 
 def explain_count_win(count_win):
