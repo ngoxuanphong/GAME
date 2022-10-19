@@ -270,151 +270,151 @@ def get_list_action(player_state_origin:np.int64):
 
 @njit
 def step(action, e_state, lv1, lv2, lv3):
-    list_action = get_list_action(get_player_state(e_state, lv1, lv2, lv3))
-    if list_action[action] != 1:
-        '''
-        Action không hợp lệ
-        '''
-        # print('Action không hợp lệ')
-        e_state[154] += 1 # Sang turn mới
-        e_state[160] = 0
+    # list_action = get_list_action(get_player_state(e_state, lv1, lv2, lv3))
+    # if list_action[action] != 1:
+    #     '''
+    #     Action không hợp lệ
+    #     '''
+    #     # print('Action không hợp lệ')
+    #     e_state[154] += 1 # Sang turn mới
+    #     e_state[160] = 0
     
-    else:
-        phase = e_state[160]
-        p_idx = e_state[154] % 4
-        cur_p = e_state[106+12*p_idx:118+12*p_idx]
-        b_stocks = e_state[100:106]
+    # else:
+    phase = e_state[160]
+    p_idx = e_state[154] % 4
+    cur_p = e_state[106+12*p_idx:118+12*p_idx]
+    b_stocks = e_state[100:106]
 
-        if phase == 0: # Lựa chọn pha tiếp theo
-            e_state[160] = action
-            if action == 0: # Sang turn mới
-                e_state[154] += 1 # Chỉnh turn
-        
-        elif phase == 1: # Pha lấy nguyên liệu, nguyên liệu = action - 4
-            check_phase1 = False
-            if action == 0:
-                check_phase1 = True
-            else:
-                st_ = action - 4
-                taken = e_state[155:160]
-                taken[st_] += 1 # Thêm vào nguyên liệu đã lấy
-                cur_p[st_] += 1 # Thêm nguyên liệu cho người chơi hiện tại
-                b_stocks[st_] -= 1 # Trừ nguyên liệu ở bàn chơi
-                # Tính toán xem pha lấy nguyên liệu còn tiếp tục hay không
-                # Chuyển sang pha trả nguyên liệu hoặc sang turn mới
-                s_taken = np.sum(taken)
-                if s_taken == 1: # Chỉ còn đúng loại nl vừa lấy nhưng sl < 3
-                    if b_stocks[st_] < 3 and (np.sum(b_stocks[:5]) - b_stocks[st_]) == 0:
-                        check_phase1 = True
-                elif s_taken == 2: # Lấy double, hoặc không còn nl nào khác 2 cái vừa lấy
-                    if np.max(taken) == 2 or (np.sum(b_stocks[:5]) - np.sum(b_stocks[np.where(taken>0)[0]])) == 0:
-                        check_phase1 = True
-                else: # sum(taken) = 3
-                    check_phase1 = True
-            
-            if check_phase1:
-                if np.sum(cur_p[:6]) > 10:
-                    e_state[160] = 4 # Sang pha trả nguyên liệu
-                else:
-                    e_state[154] += 1 # Sang turn mới
-                    e_state[160] = 0
-                
-                e_state[155:160] = [0,0,0,0,0]
-
-        elif phase == 2: # Pha úp thẻ, thẻ = action - 9, đặc biệt 90,91,92
-            card_id = action - 9
-            if b_stocks[5] > 0: # Check nhận nguyên liệu vàng
-                cur_p[5] += 1 # Cộng nguyên liệu vàng cho người chơi
-                b_stocks[5] -= 1 # Trừ nguyên liệu vàng ở bàn chơi
-            
-            if card_id == 90: # Úp thẻ ẩn cấp 1
-                e_state[lv1[lv1[-1]]] = -(p_idx+1)
-                lv1[-1] += 1
-            elif card_id == 91: # Úp thẻ ẩn cấp 2
-                e_state[lv2[lv2[-1]]] = -(p_idx+1)
-                lv2[-1] += 1
-            elif card_id == 92: # Úp thẻ ẩn cấp 3
-                e_state[lv3[lv3[-1]]] = -(p_idx+1)
-                lv3[-1] += 1
-            else:
-                e_state[card_id] = -(p_idx+1)
-                if card_id < 40:
-                    if lv1[-1] < 40:
-                        e_state[lv1[lv1[-1]]] = 5
-                        lv1[-1] += 1
-                elif card_id >= 40 and card_id < 70:
-                    if lv2[-1] < 30:
-                        e_state[lv2[lv2[-1]]] = 5
-                        lv2[-1] += 1
-                else:
-                    if lv3[-1] < 20:
-                        e_state[lv3[lv3[-1]]] = 5
-                        lv3[-1] += 1
-
+    if phase == 0: # Lựa chọn pha tiếp theo
+        e_state[160] = action
+        if action == 0: # Sang turn mới
+            e_state[154] += 1 # Chỉnh turn
+    
+    elif phase == 1: # Pha lấy nguyên liệu, nguyên liệu = action - 4
+        check_phase1 = False
+        if action == 0:
+            check_phase1 = True
+        else:
+            st_ = action - 4
+            taken = e_state[155:160]
+            taken[st_] += 1 # Thêm vào nguyên liệu đã lấy
+            cur_p[st_] += 1 # Thêm nguyên liệu cho người chơi hiện tại
+            b_stocks[st_] -= 1 # Trừ nguyên liệu ở bàn chơi
+            # Tính toán xem pha lấy nguyên liệu còn tiếp tục hay không
             # Chuyển sang pha trả nguyên liệu hoặc sang turn mới
+            s_taken = np.sum(taken)
+            if s_taken == 1: # Chỉ còn đúng loại nl vừa lấy nhưng sl < 3
+                if b_stocks[st_] < 3 and (np.sum(b_stocks[:5]) - b_stocks[st_]) == 0:
+                    check_phase1 = True
+            elif s_taken == 2: # Lấy double, hoặc không còn nl nào khác 2 cái vừa lấy
+                if np.max(taken) == 2 or (np.sum(b_stocks[:5]) - np.sum(b_stocks[np.where(taken>0)[0]])) == 0:
+                    check_phase1 = True
+            else: # sum(taken) = 3
+                check_phase1 = True
+        
+        if check_phase1:
             if np.sum(cur_p[:6]) > 10:
                 e_state[160] = 4 # Sang pha trả nguyên liệu
             else:
                 e_state[154] += 1 # Sang turn mới
                 e_state[160] = 0
-        
-        elif phase == 3: # Pha mua thẻ, thẻ = action - 102
-            card_id = action - 102
-            card_infor = normal_cards_infor[card_id]
-            card_price = card_infor[-5:]
-            nl_bo_ra = (card_price>cur_p[6:11]) * (card_price-cur_p[6:11])
-            nl_bt = np.minimum(nl_bo_ra, cur_p[:5])
-            nl_auto = np.sum(nl_bo_ra - nl_bt)
-
-            # Trả nguyên liệu
-            cur_p[:5] -= nl_bt
-            cur_p[5] -= nl_auto
-            b_stocks[:5] += nl_bt
-            b_stocks[5] += nl_auto
-
-            # Nhận thẻ
-            x_ = e_state[card_id]
-            e_state[card_id] = p_idx+1
-            if x_ == 5:
-                if card_id < 40:
-                    if lv1[-1] < 40:
-                        e_state[lv1[lv1[-1]]] = 5
-                        lv1[-1] += 1
-                elif card_id >= 40 and card_id < 70:
-                    if lv2[-1] < 30:
-                        e_state[lv2[lv2[-1]]] = 5
-                        lv2[-1] += 1
-                else:
-                    if lv3[-1] < 20:
-                        e_state[lv3[lv3[-1]]] = 5
-                        lv3[-1] += 1
-
-            # Score, const_stock
-            cur_p[6:11][card_infor[1]] += 1
-            cur_p[11] += card_infor[0]
-
-            # Check Noble
-            noble_lst = []
-            nobles = [i for i in range(90,100) if e_state[:100][i]==5]
-            for noble_id in nobles:
-                if (noble_cards_infor[noble_id-90][-5:] <= cur_p[6:11]).all():
-                    noble_lst.append(noble_id)
-
-            for noble_id in noble_lst:
-                e_state[noble_id] = p_idx+1
-                cur_p[11] += 3
             
+            e_state[155:160] = [0,0,0,0,0]
+
+    elif phase == 2: # Pha úp thẻ, thẻ = action - 9, đặc biệt 90,91,92
+        card_id = action - 9
+        if b_stocks[5] > 0: # Check nhận nguyên liệu vàng
+            cur_p[5] += 1 # Cộng nguyên liệu vàng cho người chơi
+            b_stocks[5] -= 1 # Trừ nguyên liệu vàng ở bàn chơi
+        
+        if card_id == 90: # Úp thẻ ẩn cấp 1
+            e_state[lv1[lv1[-1]]] = -(p_idx+1)
+            lv1[-1] += 1
+        elif card_id == 91: # Úp thẻ ẩn cấp 2
+            e_state[lv2[lv2[-1]]] = -(p_idx+1)
+            lv2[-1] += 1
+        elif card_id == 92: # Úp thẻ ẩn cấp 3
+            e_state[lv3[lv3[-1]]] = -(p_idx+1)
+            lv3[-1] += 1
+        else:
+            e_state[card_id] = -(p_idx+1)
+            if card_id < 40:
+                if lv1[-1] < 40:
+                    e_state[lv1[lv1[-1]]] = 5
+                    lv1[-1] += 1
+            elif card_id >= 40 and card_id < 70:
+                if lv2[-1] < 30:
+                    e_state[lv2[lv2[-1]]] = 5
+                    lv2[-1] += 1
+            else:
+                if lv3[-1] < 20:
+                    e_state[lv3[lv3[-1]]] = 5
+                    lv3[-1] += 1
+
+        # Chuyển sang pha trả nguyên liệu hoặc sang turn mới
+        if np.sum(cur_p[:6]) > 10:
+            e_state[160] = 4 # Sang pha trả nguyên liệu
+        else:
             e_state[154] += 1 # Sang turn mới
             e_state[160] = 0
-                
-        else: # Pha trả nguyên liệu, nguyên liệu = action - 192
-            st_ = action - 192
-            cur_p[st_] -= 1
-            b_stocks[st_] += 1
+    
+    elif phase == 3: # Pha mua thẻ, thẻ = action - 102
+        card_id = action - 102
+        card_infor = normal_cards_infor[card_id]
+        card_price = card_infor[-5:]
+        nl_bo_ra = (card_price>cur_p[6:11]) * (card_price-cur_p[6:11])
+        nl_bt = np.minimum(nl_bo_ra, cur_p[:5])
+        nl_auto = np.sum(nl_bo_ra - nl_bt)
 
-            if np.sum(cur_p[:6]) <= 10: # Thỏa mãn điều kiện này thì sang turn mới
-                e_state[154] += 1 # Sang turn mới
-                e_state[160] = 0
+        # Trả nguyên liệu
+        cur_p[:5] -= nl_bt
+        cur_p[5] -= nl_auto
+        b_stocks[:5] += nl_bt
+        b_stocks[5] += nl_auto
+
+        # Nhận thẻ
+        x_ = e_state[card_id]
+        e_state[card_id] = p_idx+1
+        if x_ == 5:
+            if card_id < 40:
+                if lv1[-1] < 40:
+                    e_state[lv1[lv1[-1]]] = 5
+                    lv1[-1] += 1
+            elif card_id >= 40 and card_id < 70:
+                if lv2[-1] < 30:
+                    e_state[lv2[lv2[-1]]] = 5
+                    lv2[-1] += 1
+            else:
+                if lv3[-1] < 20:
+                    e_state[lv3[lv3[-1]]] = 5
+                    lv3[-1] += 1
+
+        # Score, const_stock
+        cur_p[6:11][card_infor[1]] += 1
+        cur_p[11] += card_infor[0]
+
+        # Check Noble
+        noble_lst = []
+        nobles = [i for i in range(90,100) if e_state[:100][i]==5]
+        for noble_id in nobles:
+            if (noble_cards_infor[noble_id-90][-5:] <= cur_p[6:11]).all():
+                noble_lst.append(noble_id)
+
+        for noble_id in noble_lst:
+            e_state[noble_id] = p_idx+1
+            cur_p[11] += 3
+        
+        e_state[154] += 1 # Sang turn mới
+        e_state[160] = 0
+            
+    else: # Pha trả nguyên liệu, nguyên liệu = action - 192
+        st_ = action - 192
+        cur_p[st_] -= 1
+        b_stocks[st_] += 1
+
+        if np.sum(cur_p[:6]) <= 10: # Thỏa mãn điều kiện này thì sang turn mới
+            e_state[154] += 1 # Sang turn mới
+            e_state[160] = 0
 
 @njit
 def amount_action():
@@ -474,7 +474,11 @@ def one_game(list_player, env, lv1, lv2, lv3, per_file):
     temp_file = [[0],[0],[0],[0]]
     while env[154] <= 400:
         p_idx = env[154]%4
-        act, temp_file[p_idx], per_file = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file)
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(p_state)
+        act, temp_file[p_idx], per_file = list_player[p_idx](p_state, temp_file[p_idx], per_file)
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
         step(act, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
@@ -533,7 +537,11 @@ def one_game_print(list_player, env, lv1, lv2, lv3, print_mode, per_file):
     _cc = 0
     while env[154] <= 400 and _cc <= 10000:
         p_idx = env[154]%4
-        act, temp_file[p_idx], per_file = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file)
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(p_state)
+        act, temp_file[p_idx], per_file = list_player[p_idx](p_state, temp_file[p_idx], per_file)
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
         step(act, env, lv1, lv2, lv3)
         if print_mode:
             if act == 0:
@@ -589,6 +597,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, env, lv1, lv2, lv3, per_fi
     while env[154] <= 400:
         p_idx = env[154]%4
         p_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(p_state)
         if p_lst_idx_shuffle[p_idx] == 0:
             act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
@@ -598,6 +607,8 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, env, lv1, lv2, lv3, per_fi
         else:
             act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
 
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
         step(act, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
@@ -1360,10 +1371,14 @@ def one_game_numba(env, lv1, lv2, lv3, p0, list_other, per_player, per0, per1, p
     while env[154] <= 400:
         idx = env[154]%4
         player_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(player_state)
         if list_other[idx] == -1:
             action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13)
+        
+        if list_action[action] != 1:
+            raise Exception('Action không hợp lệ')
         step(action, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
@@ -1427,10 +1442,13 @@ def one_game_numba_2(env, lv1, lv2, lv3, p0, list_other, per_player, per0, per1,
     while env[154] <= 400:
         idx = env[154]%4
         player_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(player_state)
         if list_other[idx] == -1:
             action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13)
+        if list_action[action] != 1:
+            raise Exception('Action không hợp lệ')
         step(action, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
