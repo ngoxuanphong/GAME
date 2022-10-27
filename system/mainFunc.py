@@ -36,7 +36,8 @@ dict_game_for_player = {
     'Century' : ['An_270922', 'Dat_270922', 'Hieu_270922', 'Khanh_270922','Phong_270922', 'An_200922','Phong_200922', 'Khanh_200922', 'Hieu_130922', 'Khanh_130922', 'Dat_130922'],
     'Sheriff' : ['Phong_270922', 'Hieu_270922', 'Khanh_270922', 'An_200922','Phong_200922', 'Dat_200922', 'Khanh_200922', 'NhatAnh_200922', 'Dat_130922', 'Khanh_130922'],
     'MachiKoro' : ['An_270922', 'Dat_270922', 'Hieu_270922', 'Khanh_270922', 'Phong_270922', 'An_200922','Phong_200922', 'Dat_200922', 'Khanh_200922', 'NhatAnh_200922','Dat_130922', 'NhatAnh_130922'],
-    'SushiGo' : ['An_270922', 'Dat_270922', 'Hieu_270922', 'Khanh_270922', 'Phong_270922', 'An_200922','Phong_200922', 'Dat_200922', 'Khanh_200922', 'NhatAnh_200922', 'Hieu_130922', 'Phong_130922','Khanh_130922','Dat_130922', 'NhatAnh_130922','An_130922']
+    'SushiGo' : ['An_270922', 'Dat_270922', 'Hieu_270922', 'Khanh_270922', 'Phong_270922', 'An_200922','Phong_200922', 'Dat_200922', 'Khanh_200922', 'NhatAnh_200922', 'Hieu_130922', 'Phong_130922','Khanh_130922','Dat_130922', 'NhatAnh_130922','An_130922'],
+    'Catan_v2': ['An_130922', 'Dat_270922', 'Hieu_130922', 'Hieu_270922', 'Khanh_200922', 'NhatAnh_130922', 'NhatAnh_200922', 'NhatAnh_270922', 'Phong_130922', 'Phong_200922', 'Phong_270922']
 }
 
 from numba.typed import List
@@ -59,6 +60,7 @@ def load_data_per2(list_all_players, game_name_):
             if game_name_ == 'TLMN_v2': id_model = 2
             if game_name_ == 'SushiGo': id_model = 1
             if game_name_ == 'Sheriff': id_model = 2
+            if game_name_ == 'Catan_v2': id_model = 0
             data_in_file = data_in_file[id_model][0][-1]
             lst_data.append(data_in_file)
         elif 'Phong_200922' in name:
@@ -70,10 +72,11 @@ def load_data_per2(list_all_players, game_name_):
             if game_name_ == 'Splendor_v2': id_model = 1
             if game_name_ == 'TLMN_v2': id_model = 1
             if game_name_ == 'Sheriff': id_model = 1
+            if game_name_ == 'Catan_v2': id_model = 0
             data_in_file = data_in_file[id_model][0][-1]
             lst_data.append(data_in_file)
         elif 'Phong_130922' in name:
-            if game_name_ == 'Splendor':
+            if game_name_ == 'Splendor' or game_name_ == 'Catan_v2':
                 data_in_file = data_in_file[0][0][-1]
                 lst_data.append(data_in_file)
             if game_name_ == 'SushiGo':
@@ -186,3 +189,56 @@ def load_data_per2(list_all_players, game_name_):
         else:
             lst_data.append(data_in_file)
     return lst_data
+
+
+
+# def test_1_player_fight(game, game_name_, number_of_matches, players):
+#         start = time.time()
+#         win, lose = 0,0
+#         if type(players[0]) == str: print('Agent:', players[0])
+
+#         list_all_players = dict_game_for_player[game_name_]
+#         list_data = load_data_per2(list_all_players, game_name_)
+#         list_func_player = dict_func_all_player[game_name_]
+
+#         id_players_all = np.arange(len(list_all_players))
+#         per_2__ = 0
+
+#         if type(players[0]) == str:
+#             module_player = load_module_fight(players[0], 'Test')
+#             players_main = [module_player.test2]
+#         else:
+#             players_main = [players[0]]
+
+#         for match in range(number_of_matches):
+#             np.random.shuffle(id_players_all)
+#             lst_player_fight = players_main + [list_all_players[id_players_all[i]] for i in range(game.amount_player()-1)]
+#             data_players = [per_2__] + [list_data[id_players_all[i]] for i in range(game.amount_player()-1)]
+#             list_func = [list_func_player[id_players_all[i]] for i in range(game.amount_player()-1)]
+
+#             count, per_2__ = fight_test_1_player(game, lst_player_fight, data_players, list_func)
+
+#             if type(players[0]) == str: progress_bar(match+1, number_of_matches)
+#             if count[0] == 0: lose += 1   
+#             else: win += 1
+        
+#         if type(players[0]) == str: 
+#             print(f'\nThắng: {win}, Thua: {lose}')
+#             end = time.time()
+#             print(f'Thời gian test:{end - start: .2f}s', )
+#         return [win, lose], per_2__
+
+# def test_1_player(game_name_, players, number_of_matches):
+#     game = setup_game(game_name_)
+#     if len(sys.argv) >= 2:
+#         sys.argv = [sys.argv[0]]
+#     sys.argv.append(game_name_)
+#     # print(sys.argv, 'tên thật', game_name_)
+#     importlib.reload(Agent_full)
+#     if type(players) != list:
+#         players = [players]
+#     if len(players) == 1:
+#         count_kq, per_2__ = test_1_player_fight(game, game_name_, number_of_matches, players)
+#         return count_kq, per_2__
+#     else:
+#         print_raise('Test_1_player')

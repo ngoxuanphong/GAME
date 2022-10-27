@@ -21,17 +21,6 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
 warnings.simplefilter('ignore', category=NumbaWarning)
 
-from system import Agent_full
-dict_func_all_player = {
-    'Splendor': [Agent_full.test2_An_270922, Agent_full.test2_Dat_130922, Agent_full.test2_Hieu_270922, Agent_full.test2_Khanh_270922, Agent_full.test2_NhatAnh_270922, Agent_full.test2_Phong_130922, Agent_full.test2_An_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_200922, Agent_full.test2_NhatAnh_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Khanh_130922, Agent_full.test2_Dat_130922, ],
-    'Splendor_v2': [Agent_full.test2_An_270922, Agent_full.test2_Dat_130922, Agent_full.test2_Hieu_270922, Agent_full.test2_Khanh_270922, Agent_full.test2_Phong_130922, Agent_full.test2_An_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_200922, Agent_full.test2_Khanh_130922, Agent_full.test2_Dat_130922, Agent_full.test2_Hieu_130922, ],
-    'TLMN': [Agent_full.test2_An_270922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_270922, Agent_full.test2_An_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_200922, Agent_full.test2_Khanh_130922, Agent_full.test2_Dat_130922, ],
-    'TLMN_v2': [Agent_full.test2_An_270922, Agent_full.test2_Dat_130922, Agent_full.test2_Hieu_270922, Agent_full.test2_Khanh_270922, Agent_full.test2_NhatAnh_270922, Agent_full.test2_Phong_130922, Agent_full.test2_An_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_200922, Agent_full.test2_Khanh_130922, Agent_full.test2_Dat_130922, ],
-    'Century': [Agent_full.test2_An_270922, Agent_full.test2_Dat_130922, Agent_full.test2_Hieu_270922, Agent_full.test2_Khanh_270922, Agent_full.test2_Phong_130922, Agent_full.test2_An_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Khanh_200922, Agent_full.test2_Hieu_130922, Agent_full.test2_Khanh_130922, Agent_full.test2_Dat_130922, ],
-    'Sheriff': [Agent_full.test2_Phong_130922, Agent_full.test2_Hieu_270922, Agent_full.test2_Khanh_270922, Agent_full.test2_An_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_200922, Agent_full.test2_NhatAnh_200922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_130922, ],
-    'MachiKoro': [Agent_full.test2_An_270922, Agent_full.test2_Dat_130922, Agent_full.test2_Hieu_270922, Agent_full.test2_Khanh_270922, Agent_full.test2_Phong_130922, Agent_full.test2_An_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_200922, Agent_full.test2_NhatAnh_200922, Agent_full.test2_Dat_130922, Agent_full.test2_NhatAnh_130922, ],
-    'SushiGo': [Agent_full.test2_An_270922, Agent_full.test2_Dat_130922, Agent_full.test2_Hieu_270922, Agent_full.test2_Khanh_270922, Agent_full.test2_Phong_130922, Agent_full.test2_An_200922, Agent_full.test2_Phong_130922, Agent_full.test2_Dat_130922, Agent_full.test2_Khanh_200922, Agent_full.test2_NhatAnh_200922, Agent_full.test2_Hieu_130922, Agent_full.test2_Phong_130922, Agent_full.test2_Khanh_130922, Agent_full.test2_Dat_130922, Agent_full.test2_NhatAnh_130922, Agent_full.test2_An_130922, ],
-}
 
 from setup import *
 def timeout(max_timeout):
@@ -117,6 +106,7 @@ def fight(game, players):
 
 def fight_multi_player(game, players):
     dict_save_win = {'Catan':{},
+                    'Catan_v2': {},
                     'Century':{},
                     'MachiKoro':{}, 
                     'TLMN':{}, 
@@ -176,58 +166,6 @@ def fight_test_1_player_2(game, players, data_players, list_func):
 
 
 
-def test_1_player_fight(game, game_name_, number_of_matches, players):
-        start = time.time()
-        win, lose = 0,0
-        if type(players[0]) == str: print('Agent:', players[0])
-
-        list_all_players = dict_game_for_player[game_name_]
-        list_data = load_data_per2(list_all_players, game_name_)
-        list_func_player = dict_func_all_player[game_name_]
-
-        id_players_all = np.arange(len(list_all_players))
-        per_2__ = 0
-
-        if type(players[0]) == str:
-            module_player = load_module_fight(players[0], 'Test')
-            players_main = [module_player.test2]
-        else:
-            players_main = [players[0]]
-
-        for match in range(number_of_matches):
-            np.random.shuffle(id_players_all)
-            lst_player_fight = players_main + [list_all_players[id_players_all[i]] for i in range(game.amount_player()-1)]
-            data_players = [per_2__] + [list_data[id_players_all[i]] for i in range(game.amount_player()-1)]
-            list_func = [list_func_player[id_players_all[i]] for i in range(game.amount_player()-1)]
-
-            count, per_2__ = fight_test_1_player(game, lst_player_fight, data_players, list_func)
-
-            if type(players[0]) == str: progress_bar(match+1, number_of_matches)
-            if count[0] == 0: lose += 1   
-            else: win += 1
-        
-        if type(players[0]) == str: 
-            print(f'\nThắng: {win}, Thua: {lose}')
-            end = time.time()
-            print(f'Thời gian test:{end - start: .2f}s', )
-        return [win, lose], per_2__
-
-def test_1_player(game_name_, players, number_of_matches):
-    game = setup_game(game_name_)
-    if len(sys.argv) >= 2:
-        sys.argv = [sys.argv[0]]
-    sys.argv.append(game_name_)
-    # print(sys.argv, 'tên thật', game_name_)
-    importlib.reload(Agent_full)
-    if type(players) != list:
-        players = [players]
-    if len(players) == 1:
-        count_kq, per_2__ = test_1_player_fight(game, game_name_, number_of_matches, players)
-        return count_kq, per_2__
-    else:
-        print_raise('Test_1_player')
-
-
 if __name__ == '__main__':
     game = setup_game(game_name)
     print('GAME:',  game_name)
@@ -238,11 +176,3 @@ if __name__ == '__main__':
         fight_multi_player(game, players)
     if type_run_code == 'Train_1_player':
         train_1_player_with_timeout(game, players)
-    if type_run_code == 'Test_1_player':
-        test_1_player(game_name, players, number_of_matches)
-
-#splendor 447
-#splendor_v2 250
-#sushigo 103
-#TLMN 106
-#TLMN_v2 108, 2485
