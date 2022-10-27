@@ -1148,11 +1148,11 @@ def neural_network_an_130922(res_mat, data, list_action):
     return list_action[action_max_idx]
 
 @njit()
-def test2_An_130922(p_state, temp_file,  file_per_2):
+def test2_An_130922(p_state,file_per_2):
     list_action = get_list_action(p_state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_an_130922(p_state, file_per_2, list_action)
-    return action, temp_file,  file_per_2
+    return action
 
 ############################################################
 @njit()
