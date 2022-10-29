@@ -1,0 +1,15 @@
+[0:54]: Các điểm đặt nhà và đặt thành phố
+[54]: đổ xúc xắc
+[55]: dùng knight
+[56]: road_builing(còn đường và vị trí xây đường)
+[57]: Year_of_plenty(ngân hàng có tài nguyên)
+[58]: monopoly
+[59:64]: Tài nguyên nhận khi trade, khi dùng thẻ dev, nomopoli, yearofplenty
+[64:83]: di chuyển robber
+[83]: Chọn mua đường
+[84]: chọn mua nhà
+[85]: chọn mua thành phố
+[86]: chọn mua dev
+[87]: Chọn trade với bank
+[88]: End turn
+[89:94]: Chọn tài nguyên khi trade với ngân hàng, bỏ lại khi chia bài

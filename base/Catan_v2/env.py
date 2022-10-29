@@ -2514,7 +2514,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
                 act, _temp_, per_player = p0(p_state, _temp_, per_player)
 
     winner_ = False
-    if np.where(list_other == -1)[0] ==  winner_: winner_ = True
+    if np.where(list_other == -1)[0] ==  winner: winner_ = True
     else: winner_ = False
     return winner_,  per_player
 
@@ -2580,7 +2580,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
                 act, _temp_, per_player = p0(p_state, _temp_, per_player)
 
     winner_ = False
-    if np.where(list_other == -1)[0] ==  winner_: winner_ = True
+    if np.where(list_other == -1)[0] ==  winner: winner_ = True
     else: winner_ = False
     return winner_,  per_player
 
