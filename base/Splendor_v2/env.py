@@ -453,6 +453,9 @@ def one_game(list_player, per_file):
         p_idx = env[100]%4
         p_state = get_player_state(env, lv1, lv2, lv3)
         act, temp_file[p_idx], per_file = list_player[p_idx](p_state, temp_file[p_idx], per_file)
+        list_action = get_list_action(p_state)
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
         env, lv1, lv2, lv3 = step(act, env, lv1, lv2, lv3)
 
         if close_game(env) != 0:
@@ -513,6 +516,10 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
         else:
             act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
 
+        list_action = get_list_action(p_state)
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
+            
         env, lv1, lv2, lv3 = step(act, env, lv1, lv2, lv3)
 
         if close_game(env) != 0:
@@ -615,6 +622,10 @@ def one_game_print(list_player, per_file, *print_mode):
                 _print_action_(act_test)
             print('________')
             _print_action_(act)
+
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
+
         env, lv1, lv2, lv3 = step(act, env, lv1, lv2, lv3)
         # print('Dây là lv1', lv1)
         if close_game(env) != 0:
@@ -1385,6 +1396,11 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
             action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
+
+        list_action = get_list_action(player_state)
+        if list_action[action] != 1:
+            raise Exception('Action không hợp lệ')
+
         env, lv1, lv2, lv3 = step(action, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
@@ -1452,6 +1468,11 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
             action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
+
+        list_action = get_list_action(player_state)
+        if list_action[action] != 1:
+            raise Exception('Action không hợp lệ')
+
         env, lv1, lv2, lv3 = step(action, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
