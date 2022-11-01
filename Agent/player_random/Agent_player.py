@@ -10,7 +10,7 @@ from env import *
 # @njit()
 def test(p_state, temp_file, per_file):
     arr_action = get_list_action(p_state)
-    arr_action = np.where(arr_action == 1)[0]
+    # arr_action = np.where(arr_action == 1)[0]
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx], temp_file, per_file
 

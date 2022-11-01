@@ -61,7 +61,11 @@ def get_player_state(e_state, lv1, lv2, lv3):
         p_state[162] = 0
     if lv3[-1] == 20:
         p_state[163] = 0
-    
+    cls_game = int(close_game(e_state))
+    if cls_game == 0:
+        p_state = np.append(p_state, 0)
+    else:
+        p_state = np.append(p_state, 1)
     return p_state.astype(np.float64)
 
 @njit
@@ -266,151 +270,151 @@ def get_list_action(player_state_origin:np.int64):
 
 @njit
 def step(action, e_state, lv1, lv2, lv3):
-    list_action = get_list_action(get_player_state(e_state, lv1, lv2, lv3))
-    if list_action[action] != 1:
-        '''
-        Action không hợp lệ
-        '''
-        # print('Action không hợp lệ')
-        e_state[154] += 1 # Sang turn mới
-        e_state[160] = 0
+    # list_action = get_list_action(get_player_state(e_state, lv1, lv2, lv3))
+    # if list_action[action] != 1:
+    #     '''
+    #     Action không hợp lệ
+    #     '''
+    #     # print('Action không hợp lệ')
+    #     e_state[154] += 1 # Sang turn mới
+    #     e_state[160] = 0
     
-    else:
-        phase = e_state[160]
-        p_idx = e_state[154] % 4
-        cur_p = e_state[106+12*p_idx:118+12*p_idx]
-        b_stocks = e_state[100:106]
+    # else:
+    phase = e_state[160]
+    p_idx = e_state[154] % 4
+    cur_p = e_state[106+12*p_idx:118+12*p_idx]
+    b_stocks = e_state[100:106]
 
-        if phase == 0: # Lựa chọn pha tiếp theo
-            e_state[160] = action
-            if action == 0: # Sang turn mới
-                e_state[154] += 1 # Chỉnh turn
-        
-        elif phase == 1: # Pha lấy nguyên liệu, nguyên liệu = action - 4
-            check_phase1 = False
-            if action == 0:
-                check_phase1 = True
-            else:
-                st_ = action - 4
-                taken = e_state[155:160]
-                taken[st_] += 1 # Thêm vào nguyên liệu đã lấy
-                cur_p[st_] += 1 # Thêm nguyên liệu cho người chơi hiện tại
-                b_stocks[st_] -= 1 # Trừ nguyên liệu ở bàn chơi
-                # Tính toán xem pha lấy nguyên liệu còn tiếp tục hay không
-                # Chuyển sang pha trả nguyên liệu hoặc sang turn mới
-                s_taken = np.sum(taken)
-                if s_taken == 1: # Chỉ còn đúng loại nl vừa lấy nhưng sl < 3
-                    if b_stocks[st_] < 3 and (np.sum(b_stocks[:5]) - b_stocks[st_]) == 0:
-                        check_phase1 = True
-                elif s_taken == 2: # Lấy double, hoặc không còn nl nào khác 2 cái vừa lấy
-                    if np.max(taken) == 2 or (np.sum(b_stocks[:5]) - np.sum(b_stocks[np.where(taken>0)[0]])) == 0:
-                        check_phase1 = True
-                else: # sum(taken) = 3
-                    check_phase1 = True
-            
-            if check_phase1:
-                if np.sum(cur_p[:6]) > 10:
-                    e_state[160] = 4 # Sang pha trả nguyên liệu
-                else:
-                    e_state[154] += 1 # Sang turn mới
-                    e_state[160] = 0
-                
-                e_state[155:160] = [0,0,0,0,0]
-
-        elif phase == 2: # Pha úp thẻ, thẻ = action - 9, đặc biệt 90,91,92
-            card_id = action - 9
-            if b_stocks[5] > 0: # Check nhận nguyên liệu vàng
-                cur_p[5] += 1 # Cộng nguyên liệu vàng cho người chơi
-                b_stocks[5] -= 1 # Trừ nguyên liệu vàng ở bàn chơi
-            
-            if card_id == 90: # Úp thẻ ẩn cấp 1
-                e_state[lv1[lv1[-1]]] = -(p_idx+1)
-                lv1[-1] += 1
-            elif card_id == 91: # Úp thẻ ẩn cấp 2
-                e_state[lv2[lv2[-1]]] = -(p_idx+1)
-                lv2[-1] += 1
-            elif card_id == 92: # Úp thẻ ẩn cấp 3
-                e_state[lv3[lv3[-1]]] = -(p_idx+1)
-                lv3[-1] += 1
-            else:
-                e_state[card_id] = -(p_idx+1)
-                if card_id < 40:
-                    if lv1[-1] < 40:
-                        e_state[lv1[lv1[-1]]] = 5
-                        lv1[-1] += 1
-                elif card_id >= 40 and card_id < 70:
-                    if lv2[-1] < 30:
-                        e_state[lv2[lv2[-1]]] = 5
-                        lv2[-1] += 1
-                else:
-                    if lv3[-1] < 20:
-                        e_state[lv3[lv3[-1]]] = 5
-                        lv3[-1] += 1
-
+    if phase == 0: # Lựa chọn pha tiếp theo
+        e_state[160] = action
+        if action == 0: # Sang turn mới
+            e_state[154] += 1 # Chỉnh turn
+    
+    elif phase == 1: # Pha lấy nguyên liệu, nguyên liệu = action - 4
+        check_phase1 = False
+        if action == 0:
+            check_phase1 = True
+        else:
+            st_ = action - 4
+            taken = e_state[155:160]
+            taken[st_] += 1 # Thêm vào nguyên liệu đã lấy
+            cur_p[st_] += 1 # Thêm nguyên liệu cho người chơi hiện tại
+            b_stocks[st_] -= 1 # Trừ nguyên liệu ở bàn chơi
+            # Tính toán xem pha lấy nguyên liệu còn tiếp tục hay không
             # Chuyển sang pha trả nguyên liệu hoặc sang turn mới
+            s_taken = np.sum(taken)
+            if s_taken == 1: # Chỉ còn đúng loại nl vừa lấy nhưng sl < 3
+                if b_stocks[st_] < 3 and (np.sum(b_stocks[:5]) - b_stocks[st_]) == 0:
+                    check_phase1 = True
+            elif s_taken == 2: # Lấy double, hoặc không còn nl nào khác 2 cái vừa lấy
+                if np.max(taken) == 2 or (np.sum(b_stocks[:5]) - np.sum(b_stocks[np.where(taken>0)[0]])) == 0:
+                    check_phase1 = True
+            else: # sum(taken) = 3
+                check_phase1 = True
+        
+        if check_phase1:
             if np.sum(cur_p[:6]) > 10:
                 e_state[160] = 4 # Sang pha trả nguyên liệu
             else:
                 e_state[154] += 1 # Sang turn mới
                 e_state[160] = 0
-        
-        elif phase == 3: # Pha mua thẻ, thẻ = action - 102
-            card_id = action - 102
-            card_infor = normal_cards_infor[card_id]
-            card_price = card_infor[-5:]
-            nl_bo_ra = (card_price>cur_p[6:11]) * (card_price-cur_p[6:11])
-            nl_bt = np.minimum(nl_bo_ra, cur_p[:5])
-            nl_auto = np.sum(nl_bo_ra - nl_bt)
-
-            # Trả nguyên liệu
-            cur_p[:5] -= nl_bt
-            cur_p[5] -= nl_auto
-            b_stocks[:5] += nl_bt
-            b_stocks[5] += nl_auto
-
-            # Nhận thẻ
-            x_ = e_state[card_id]
-            e_state[card_id] = p_idx+1
-            if x_ == 5:
-                if card_id < 40:
-                    if lv1[-1] < 40:
-                        e_state[lv1[lv1[-1]]] = 5
-                        lv1[-1] += 1
-                elif card_id >= 40 and card_id < 70:
-                    if lv2[-1] < 30:
-                        e_state[lv2[lv2[-1]]] = 5
-                        lv2[-1] += 1
-                else:
-                    if lv3[-1] < 20:
-                        e_state[lv3[lv3[-1]]] = 5
-                        lv3[-1] += 1
-
-            # Score, const_stock
-            cur_p[6:11][card_infor[1]] += 1
-            cur_p[11] += card_infor[0]
-
-            # Check Noble
-            noble_lst = []
-            nobles = [i for i in range(90,100) if e_state[:100][i]==5]
-            for noble_id in nobles:
-                if (noble_cards_infor[noble_id-90][-5:] <= cur_p[6:11]).all():
-                    noble_lst.append(noble_id)
-
-            for noble_id in noble_lst:
-                e_state[noble_id] = p_idx+1
-                cur_p[11] += 3
             
+            e_state[155:160] = [0,0,0,0,0]
+
+    elif phase == 2: # Pha úp thẻ, thẻ = action - 9, đặc biệt 90,91,92
+        card_id = action - 9
+        if b_stocks[5] > 0: # Check nhận nguyên liệu vàng
+            cur_p[5] += 1 # Cộng nguyên liệu vàng cho người chơi
+            b_stocks[5] -= 1 # Trừ nguyên liệu vàng ở bàn chơi
+        
+        if card_id == 90: # Úp thẻ ẩn cấp 1
+            e_state[lv1[lv1[-1]]] = -(p_idx+1)
+            lv1[-1] += 1
+        elif card_id == 91: # Úp thẻ ẩn cấp 2
+            e_state[lv2[lv2[-1]]] = -(p_idx+1)
+            lv2[-1] += 1
+        elif card_id == 92: # Úp thẻ ẩn cấp 3
+            e_state[lv3[lv3[-1]]] = -(p_idx+1)
+            lv3[-1] += 1
+        else:
+            e_state[card_id] = -(p_idx+1)
+            if card_id < 40:
+                if lv1[-1] < 40:
+                    e_state[lv1[lv1[-1]]] = 5
+                    lv1[-1] += 1
+            elif card_id >= 40 and card_id < 70:
+                if lv2[-1] < 30:
+                    e_state[lv2[lv2[-1]]] = 5
+                    lv2[-1] += 1
+            else:
+                if lv3[-1] < 20:
+                    e_state[lv3[lv3[-1]]] = 5
+                    lv3[-1] += 1
+
+        # Chuyển sang pha trả nguyên liệu hoặc sang turn mới
+        if np.sum(cur_p[:6]) > 10:
+            e_state[160] = 4 # Sang pha trả nguyên liệu
+        else:
             e_state[154] += 1 # Sang turn mới
             e_state[160] = 0
-                
-        else: # Pha trả nguyên liệu, nguyên liệu = action - 192
-            st_ = action - 192
-            cur_p[st_] -= 1
-            b_stocks[st_] += 1
+    
+    elif phase == 3: # Pha mua thẻ, thẻ = action - 102
+        card_id = action - 102
+        card_infor = normal_cards_infor[card_id]
+        card_price = card_infor[-5:]
+        nl_bo_ra = (card_price>cur_p[6:11]) * (card_price-cur_p[6:11])
+        nl_bt = np.minimum(nl_bo_ra, cur_p[:5])
+        nl_auto = np.sum(nl_bo_ra - nl_bt)
 
-            if np.sum(cur_p[:6]) <= 10: # Thỏa mãn điều kiện này thì sang turn mới
-                e_state[154] += 1 # Sang turn mới
-                e_state[160] = 0
+        # Trả nguyên liệu
+        cur_p[:5] -= nl_bt
+        cur_p[5] -= nl_auto
+        b_stocks[:5] += nl_bt
+        b_stocks[5] += nl_auto
+
+        # Nhận thẻ
+        x_ = e_state[card_id]
+        e_state[card_id] = p_idx+1
+        if x_ == 5:
+            if card_id < 40:
+                if lv1[-1] < 40:
+                    e_state[lv1[lv1[-1]]] = 5
+                    lv1[-1] += 1
+            elif card_id >= 40 and card_id < 70:
+                if lv2[-1] < 30:
+                    e_state[lv2[lv2[-1]]] = 5
+                    lv2[-1] += 1
+            else:
+                if lv3[-1] < 20:
+                    e_state[lv3[lv3[-1]]] = 5
+                    lv3[-1] += 1
+
+        # Score, const_stock
+        cur_p[6:11][card_infor[1]] += 1
+        cur_p[11] += card_infor[0]
+
+        # Check Noble
+        noble_lst = []
+        nobles = [i for i in range(90,100) if e_state[:100][i]==5]
+        for noble_id in nobles:
+            if (noble_cards_infor[noble_id-90][-5:] <= cur_p[6:11]).all():
+                noble_lst.append(noble_id)
+
+        for noble_id in noble_lst:
+            e_state[noble_id] = p_idx+1
+            cur_p[11] += 3
+        
+        e_state[154] += 1 # Sang turn mới
+        e_state[160] = 0
+            
+    else: # Pha trả nguyên liệu, nguyên liệu = action - 192
+        st_ = action - 192
+        cur_p[st_] -= 1
+        b_stocks[st_] += 1
+
+        if np.sum(cur_p[:6]) <= 10: # Thỏa mãn điều kiện này thì sang turn mới
+            e_state[154] += 1 # Sang turn mới
+            e_state[160] = 0
 
 @njit
 def amount_action():
@@ -422,13 +426,13 @@ def amount_player():
 
 @njit()
 def amount_state():
-    return 164
+    return 165
 
 @njit
 def check_victory(p_state):
     score_arr = p_state[np.array([117,129,141,153])]
     max_score = np.max(score_arr)
-    if max_score < 15 or p_state[160] != 0:
+    if max_score < 15 or p_state[160] != 0 or p_state[164] == 0:
         return -1
     
     lst_p = np.where(score_arr==max_score)[0] + 1
@@ -470,7 +474,11 @@ def one_game(list_player, env, lv1, lv2, lv3, per_file):
     temp_file = [[0],[0],[0],[0]]
     while env[154] <= 400:
         p_idx = env[154]%4
-        act, temp_file[p_idx], per_file = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file)
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(p_state)
+        act, temp_file[p_idx], per_file = list_player[p_idx](p_state, temp_file[p_idx], per_file)
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
         step(act, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
@@ -478,7 +486,9 @@ def one_game(list_player, env, lv1, lv2, lv3, per_file):
     turn = env[154]
     for i in range(4):
         env[154] = i
-        act, temp_file[i], per_file = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file)
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        p_state[164] = 1
+        act, temp_file[i], per_file = list_player[i](p_state, temp_file[i], per_file)
     
     env[154] = turn
     return close_game(env), per_file
@@ -504,49 +514,7 @@ def normal_main(list_player, num_game, per_file):
 
     return num_won, per_file
         
-# def one_game_2(list_player, env, lv1, lv2, lv3, per_file_2):
-#     # print(list_player, per_file_2)
-#     reset(env, lv1, lv2, lv3)
-#     temp_file = [[0],[0],[0],[0]]
-#     while env[154] <= 400:
-#         p_idx = env[154]%4
-#         act, temp_file[p_idx], per_file_2[p_idx] = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file_2[p_idx])
-#         step(act, env, lv1, lv2, lv3)
-#         if close_game(env) != 0:
-#             break
-    
-#     turn = env[154]
-#     for i in range(4):
-#         env[154] = i
-#         act, temp_file[i], per_file_2[i] = list_player[i](get_player_state(env, lv1, lv2, lv3), temp_file[i], per_file_2[i])
-    
-#     env[154] = turn
-#     return close_game(env), per_file_2
 
-# def normal_main_2(list_player, num_game, per_file_2):
-#     if len(list_player) != 4:
-#         print('Game chỉ cho phép có đúng 4 người chơi')
-#         return [-1,-1,-1,-1,-1]
-        
-#     env, lv1, lv2, lv3 = generate()
-#     num_won = [0,0,0,0,0]
-#     p_lst_idx = [0,1,2,3]
-#     for _n in range(num_game):
-#         rd.shuffle(p_lst_idx)
-#         # print(p_lst_idx)
-#         file_per_2_new = [per_file_2[p_lst_idx[i]] for i in range(amount_player())]
-#         list_player_new = [list_player[p_lst_idx[i]] for i in range(amount_player())]
-#         winner, per_file_2 = one_game_2(
-#             list_player_new, env, lv1, lv2, lv3, file_per_2_new)
-
-#         list_p_id_new = [p_lst_idx.index(i) for i in range(amount_player())]
-#         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
-#         if winner != 0:
-#             num_won[p_lst_idx[winner-1]] += 1
-#         else:
-#             num_won[4] += 1
-
-#     return num_won, per_file_2
 
 def one_game_print(list_player, env, lv1, lv2, lv3, print_mode, per_file):
     reset(env, lv1, lv2, lv3)
@@ -569,7 +537,11 @@ def one_game_print(list_player, env, lv1, lv2, lv3, print_mode, per_file):
     _cc = 0
     while env[154] <= 400 and _cc <= 10000:
         p_idx = env[154]%4
-        act, temp_file[p_idx], per_file = list_player[p_idx](get_player_state(env, lv1, lv2, lv3), temp_file[p_idx], per_file)
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(p_state)
+        act, temp_file[p_idx], per_file = list_player[p_idx](p_state, temp_file[p_idx], per_file)
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
         step(act, env, lv1, lv2, lv3)
         if print_mode:
             if act == 0:
@@ -607,45 +579,71 @@ def one_game_print(list_player, env, lv1, lv2, lv3, print_mode, per_file):
     env[154] = turn
     return close_game(env), per_file
 
-def n_games(list_player, num_game, print_mode):
-    '''
-    Chạy nhiều game thì tắt cái print_mode đi không lag máy
-    Nếu bật print_mode thì nên chạy ở jupyter notebook để xem full output
-    '''
-    if len(list_player) != 4:
-        print('Game chỉ cho phép có đúng 4 người chơi')
-        return [-1,-1,-1,-1,-1], per_file
-    
-    per_file = [0]
-    env, lv1, lv2, lv3 = generate()
-    num_won = [0,0,0,0,0]
-    p_lst_idx = [0,1,2,3]
-    for _n in range(num_game):
-        # if _n % 100 == 0 and _n != 0:
-            # print(_n, num_won)
-
-        # Shuffle người chơi
-        rd.shuffle(p_lst_idx)
-        if print_mode:
-            print('Thứ tự người chơi (thứ tự này sẽ ứng với P1,P2,P3,P4):', p_lst_idx)
-            print('Lưu ý: không phải người chơi index 0 là P1')
-
-        winner, per_file = one_game(
-            [list_player[p_lst_idx[0]], list_player[p_lst_idx[1]], list_player[p_lst_idx[2]], list_player[p_lst_idx[3]]], env, lv1, lv2, lv3, print_mode, per_file
-        )
-
-        if winner != 0:
-            num_won[p_lst_idx[winner-1]] += 1
-        else:
-            num_won[4] += 1
-
-    return num_won, per_file
 
 def random_player(p_state, temp_file, per_file):
     arr_action = get_list_action(p_state)
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx], temp_file, per_file
 
+
+@njit()
+def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, env, lv1, lv2, lv3, per_file):
+    reset(env, lv1, lv2, lv3)
+
+    temp_1_player = List()
+    temp_1_player.append(np.array([[0.]]))
+    temp_file = [temp_1_player]*(amount_player())
+
+    while env[154] <= 400:
+        p_idx = env[154]%4
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(p_state)
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
+        step(act, env, lv1, lv2, lv3)
+        if close_game(env) != 0:
+            break
+
+    
+    turn = env[154]
+    for p_idx in range(4):
+        env[154] = p_idx
+        p_state = get_player_state(env, lv1, lv2, lv3)
+        p_state[164] = 1
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+    
+    env[154] = turn
+    return close_game(env), per_file
+
+
+@njit()
+def numba_main(p0, p1, p2, p3, num_game,per_file):
+    num_won = [0,0,0,0,0]
+    p_lst_idx = np.array([0,1,2,3])
+    env, lv1, lv2, lv3 = generate()
+    for _n in range(num_game):
+        np.random.shuffle(p_lst_idx)
+        winner, per_file = numba_one_game(p_lst_idx, p0, p1, p2, p3, env, lv1, lv2, lv3, per_file )
+        if winner != 0: num_won[p_lst_idx[winner-1]] += 1
+        else:num_won[4] += 1
+
+    return num_won, per_file
 
 
 
@@ -692,6 +690,7 @@ def data_to_layer_NhatAnh_130922(state,data0, data1):
 
 @njit()
 def test2_NhatAnh_130922(state,file_per_2):
+    state = state[:-1]
     layer = np.zeros(amount_action())
     for id in range(len(file_per_2[0])):
         layer += data_to_layer_NhatAnh_130922(state,file_per_2[0][id], file_per_2[1][id])
@@ -720,6 +719,7 @@ def basic_act_NhatAnh_200922(state,base):
 
 @njit()
 def test2_NhatAnh_200922(state,file_per_2):
+    state = state[:-1]
     action = basic_act_NhatAnh_200922(state,file_per_2)
     return action
 
@@ -740,6 +740,7 @@ def advance_act_NhatAnh_270922(state,data):
 
 @njit()
 def test2_NhatAnh_270922(state, file_per_2):
+    state = state[:-1]
     action = advance_act_NhatAnh_270922(state,file_per_2)
     return action
 
@@ -797,6 +798,7 @@ def neural_network_khanh_130922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_130922(play_state, file_per_2):
+    play_state = play_state[:-1]
     a = get_list_action(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
@@ -860,6 +862,7 @@ def neural_network_khanh_200922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_200922(play_state,file_per_2):
+    play_state = play_state[:-1]
     a = get_list_action(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
@@ -875,10 +878,6 @@ def test2_Khanh_200922(play_state,file_per_2):
     return action_max
 
 #############################################################
-
-# @njit()
-# def relu6_khanh_270922(x):
-#     return np.minimum(np.maximum(0, x),6)
 
 @njit()
 def neural_network_khanh_270922(play_state, file_temp0, file_temp1, file_temp2):
@@ -922,6 +921,7 @@ def neural_network_khanh_270922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_270922(play_state,file_per_2):
+    play_state = play_state[:-1]
     a = get_list_action(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
@@ -994,7 +994,6 @@ def id_function_an_130922(id, res_mat, Identity_an_130922, BinaryStep_an_130922,
     elif id == 7: return PReLU_an_130922(res_mat)
     else: return Gaussian_an_130922(res_mat)
 
-# list_activation_function = [Identity_an_130922, BinaryStep_an_130922, Sigmoid_an_130922, NegativePositiveStep_an_130922, Tanh_an_130922, ReLU_an_130922, LeakyReLU_an_130922, PReLU_an_130922, Gaussian_an_130922]
 @njit()
 def neural_network_an_130922(res_mat, data, list_action):
     for i in range(len(data)):
@@ -1005,7 +1004,6 @@ def neural_network_an_130922(res_mat, data, list_action):
             res_mat = res_mat / max_x_1
         else:
             id = int(data[i][0][0])
-            # res_mat = list_activation_function[id](res_mat)
             res_mat = id_function_an_130922(id, res_mat, Identity_an_130922, BinaryStep_an_130922, Sigmoid_an_130922, NegativePositiveStep_an_130922, Tanh_an_130922, ReLU_an_130922, LeakyReLU_an_130922, PReLU_an_130922, Gaussian_an_130922)
 
     
@@ -1016,6 +1014,7 @@ def neural_network_an_130922(res_mat, data, list_action):
 
 @njit()
 def test2_An_130922(p_state, temp_file,  file_per_2):
+    p_state = p_state[:-1]
     list_action = get_list_action(p_state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_an_130922(p_state, file_per_2, list_action)
@@ -1079,8 +1078,6 @@ def Ann_neural_network_an_200922(res_mat:np.ndarray, data, list_action):
         data3i1 = data[3*i+1].flatten()
         data3i2 = int(data[3*i+2][0][0])
         res_mat = np.dot(res_mat, data3i) + data3i1
-        # res_mat = np.nan_to_num(res_mat)
-        # res_mat = activation_function[data3i2](res_mat)
         res_mat = id_function_an_200922(data3i2, res_mat, Identity_an_200922, BinaryStep_an_200922, Sigmoid_an_200922, SignStep_an_200922, Tanh_an_200922, ReLU_an_200922, SoftPlus_an_200922, Gaussian_an_200922)
     
     res_arr = res_mat[list_action]
@@ -1095,6 +1092,7 @@ def Ann_neural_network_an_200922(res_mat:np.ndarray, data, list_action):
 
 @njit()
 def test2_An_200922(p_state, file_per_2):
+    p_state = p_state[:-1]
     list_action = get_list_action(p_state)
     list_action = np.where(list_action == 1)[0]
     if len(file_per_2) == 2: 
@@ -1105,9 +1103,6 @@ def test2_An_200922(p_state, file_per_2):
     if type_file_per_2 == 0: # fnn
         action = Ann_neural_network_an_200922(p_state, file_per_2[0], list_action)
     else: # sg
-        # if len(file_per_2) < 3:
-        #     file_per_2.append(file_per_2[0][0]/file_per_2[0][1])
-            # print(file_per_2[0])
             res_arr = file_per_2[0][2][0][list_action]
             a = np.max(res_arr)
             if a >= 0:
@@ -1188,15 +1183,10 @@ def id_function_an_270922(id, res_mat, Identity_an_270922, BinaryStep_an_270922,
 @njit()
 def Ann_neural_network_an_270922(res_mat:np.ndarray, data, list_action):
     for i in range(len(data)//3):
-        # data3i = data[3*i]
-        # data3i1 = data[3*i+1]
-        # data3i2 = data[3*i+2]
         data3i = data[3*i]
         data3i1 = data[3*i+1].flatten()
         data3i2 = int(data[3*i+2][0][0])
         res_mat = np.dot(res_mat, data3i) + data3i1
-        # res_mat = np.nan_to_num(res_mat)
-        # res_mat = activation_function[data3i2](res_mat)
         res_mat = id_function_an_270922(data3i2, res_mat, Identity_an_270922, BinaryStep_an_270922, Sigmoid_an_270922, SignStep_an_270922, Tanh_an_270922, ReLU_an_270922, LeakyReLU_an_270922, PReLU_an_270922, SoftPlus_an_270922, Gaussian_an_270922)
     
     res_arr = res_mat[list_action]
@@ -1210,6 +1200,7 @@ def Ann_neural_network_an_270922(res_mat:np.ndarray, data, list_action):
 
 @njit()
 def test2_An_270922(p_state, file_per_2):
+    p_state = p_state[:-1]
     list_action = get_list_action(p_state)
     list_action = np.where(list_action == 1)[0]
     if len(file_per_2) == 2: 
@@ -1220,14 +1211,11 @@ def test2_An_270922(p_state, file_per_2):
         action = Ann_neural_network_an_270922(p_state, file_per_2[0], list_action)
         # return action, temp_file,  file_per_2
     else:
-        # if len(file_per_2) < 3:
-        #     file_per_2.append(file_per_2[0][0]/file_per_2[0][1])
-        
+
         res_arr = file_per_2[0][2][0][list_action]
         a = np.max(res_arr)
         arr_max = np.where(res_arr >= 0.99*a)[0]
         action = list_action[np.random.choice(arr_max)]
-        
     return action
 
 
@@ -1237,6 +1225,7 @@ def test2_An_270922(p_state, file_per_2):
 
 @njit()
 def test2_Dat_130922(state,file_per_2):
+    state = state[:-1]
     list_action = get_list_action(state)
     list_action = np.where(list_action == 1)[0]
     hidden1 = np.dot(state, file_per_2[0])
@@ -1245,27 +1234,6 @@ def test2_Dat_130922(state,file_per_2):
     action = list_action[np.argmax(values[list_action])]
     return action
 
-#########################################################
-# @njit()
-# def test2_Dat_200922(state,temp, file_per_2):
-#     list_action = get_list_action(state)
-#     list_action = np.where(list_action == 1)[0]
-#     hidden1 = np.dot(state, file_per_2[0])
-#     hidden2 = hidden1 * (hidden1>0)
-#     values =  np.dot(hidden2, file_per_2[1])
-#     action = list_action[np.argmax(values[list_action])]
-#     return action,temp, file_per_2
-
-# ################################################################
-# @njit()
-# def test2_Dat_270922(state,temp, file_per_2):
-#     list_action = get_list_action(state)
-#     list_action = np.where(list_action == 1)[0]
-#     hidden1 = np.dot(state, file_per_2[0])
-#     hidden2 = hidden1 * (hidden1>0)
-#     values =  np.dot(hidden2, file_per_2[1])
-#     action = list_action[np.argmax(values[list_action])]
-#     return action,temp, file_per_2
 
 ###############################################################
 ###############################################################
@@ -1289,6 +1257,7 @@ def neural_network_hieu_130922(state, file_temp0, file_temp1, file_temp2, list_a
 
 @njit()
 def test2_Hieu_130922(state, file_per_2):
+    state = state[:-1]
     list_action = get_list_action(state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_hieu_130922(state, file_per_2[0], file_per_2[1], file_per_2[2], list_action)
@@ -1301,8 +1270,6 @@ def agent_hieu_270922(state,file_temp,file_per):
     action = np.random.choice(actions)
     file_per = (len(state),amount_action())
     return action,file_temp,file_per
-
-# LEN_STATE_hieu_270922,AMOUNT_ACTION_hieu_270922 = normal_main([agent_hieu_270922]*amount_player(), 1, [0])[1]
 
 @njit()
 def softmax_hieu_270922(X):
@@ -1319,7 +1286,6 @@ def tanh_hieu_270922(X):
 
 @njit()
 def neural_network_hieu_270922(norm_state, file_temp0, file_temp1, file_temp2, list_action):
-    # norm_state = state.copy()
     norm_state = norm_state/np.linalg.norm(norm_state, 1)
     norm_state = softmax_hieu_270922(norm_state)
     norm_action = np.zeros(amount_action())
@@ -1341,6 +1307,7 @@ def neural_network_hieu_270922(norm_state, file_temp0, file_temp1, file_temp2, l
 
 @njit()
 def test2_Hieu_270922(state, file_per_2):
+    state = state[:-1]
     list_action = get_list_action(state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_hieu_270922(state, file_per_2[0], file_per_2[1], file_per_2[2], list_action)
@@ -1352,37 +1319,19 @@ def test2_Hieu_270922(state, file_per_2):
 
 @njit()
 def file_temp_to_action_Phong_130922(state, file_temp):
-    # print(state, file_temp)
     a = get_list_action(state)
     a = np.where(a == 1)[0]
-    # print('action', a)
     RELU = np.ones(len(state))
-    # print('hi')
     matrix_new = np.dot(RELU,file_temp)
     list_val_action = matrix_new[a]
     action = a[np.argmax(list_val_action)]
-    # print('hhhhhhhh', action)
     return action
 
 @njit() 
 def test2_Phong_130922(state,file_per_2):
+    state = state[:-1]
     action = file_temp_to_action_Phong_130922(state, file_per_2)
-    # print(action)
     return action
-
-#######################################################################
-
-# @njit()
-# def test2_Phong_200922(state,file_temp, file_per_2):
-#     action = file_temp_to_action_Phong_130922(state, file_per_2)
-#     return action
-
-# ######################################################################
-
-# @njit()
-# def test2_Phong_270922(state,file_temp, file_per_2):
-#     action = file_temp_to_action_Phong_130922(state, file_per_2)
-#     return action
 
 
 
@@ -1422,10 +1371,14 @@ def one_game_numba(env, lv1, lv2, lv3, p0, list_other, per_player, per0, per1, p
     while env[154] <= 400:
         idx = env[154]%4
         player_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(player_state)
         if list_other[idx] == -1:
             action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13)
+        
+        if list_action[action] != 1:
+            raise Exception('Action không hợp lệ')
         step(action, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
@@ -1434,12 +1387,15 @@ def one_game_numba(env, lv1, lv2, lv3, p0, list_other, per_player, per0, per1, p
     for idx in range(4):
         env[154] = idx
         if list_other[idx] == -1:
-            act, _temp_, per_player = p0(get_player_state(env, lv1, lv2, lv3), _temp_, per_player)
+            p_state = get_player_state(env, lv1, lv2, lv3)
+            p_state[164] = 1
+            act, _temp_, per_player = p0(p_state, _temp_, per_player)
     env[154] = turn
     winner = False
     if np.where(list_other == -1)[0] ==  (close_game(env) - 1): winner = True
     else: winner = False
     return winner,  per_player
+
 
 
 @njit()
@@ -1486,10 +1442,13 @@ def one_game_numba_2(env, lv1, lv2, lv3, p0, list_other, per_player, per0, per1,
     while env[154] <= 400:
         idx = env[154]%4
         player_state = get_player_state(env, lv1, lv2, lv3)
+        list_action = get_list_action(player_state)
         if list_other[idx] == -1:
             action, _temp_, per_player = p0(player_state,_temp_,per_player)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13)
+        if list_action[action] != 1:
+            raise Exception('Action không hợp lệ')
         step(action, env, lv1, lv2, lv3)
         if close_game(env) != 0:
             break
@@ -1498,7 +1457,9 @@ def one_game_numba_2(env, lv1, lv2, lv3, p0, list_other, per_player, per0, per1,
     for idx in range(4):
         env[154] = idx
         if list_other[idx] == -1:
-            act, _temp_, per_player = p0(get_player_state(env, lv1, lv2, lv3), _temp_, per_player)
+            p_state = get_player_state(env, lv1, lv2, lv3)
+            p_state[164] = 1
+            act, _temp_, per_player = p0(p_state, _temp_, per_player)
     env[154] = turn
     winner = False
     if np.where(list_other == -1)[0] ==  (close_game(env) - 1): winner = True
@@ -1519,8 +1480,7 @@ def n_game_numba_2(p0, num_game, per_player, per0, per1, per2, per3, per4, per5,
 
 
 
-def normal_main_2(p0, n_game):
-    per_player = 0
+def normal_main_2(p0, per_player, n_game):
     list_all_players = dict_game_for_player[game_name_]
     list_data = load_data_per2(list_all_players, game_name_)
     per0 = list_data[0]

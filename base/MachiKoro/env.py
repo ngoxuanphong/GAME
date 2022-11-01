@@ -741,53 +741,63 @@ def normal_main(list_player, times, file_per):
             count[shuffle[winner]] += 1
     return list(count.astype(np.int64)), file_per
 
-def action_player_2(env_state,list_player,file_temp, file_per_2):
-    current_player = int(env_state[-2])
-    player_state = state_to_player(env_state)
-    # print(list_player[current_player])
-    played_move,file_temp[current_player], file_per_2[current_player] = list_player[current_player](player_state,file_temp[current_player], file_per_2[current_player])
-    if get_list_action(player_state)[played_move] != 1:
-        raise Exception('bot dua ra action khong hop le')
-    return played_move,file_temp, file_per_2
 
+@njit()
+def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_card_fee, per_file):
+    env_state = reset()
+    count_turn = 0
 
-# def one_game_2(list_player, file_temp,  all_card_fee, file_per_2):
-#     # global all_action_mean
-#     env_state = reset()
-#     count_turn = 0
-#     while system_check_end(env_state) and count_turn < 500:
-#         action, file_temp,  file_per_2 = action_player_2(env_state,list_player,file_temp, file_per_2)
-#         env_state = step(env_state, action, all_card_fee)
-#         count_turn += 1
-#     winner = check_winner(env_state)
-#     for id_player in range(4):
-#         env_state[-1] = 1
-#         id_action = env_state[-2]
-#         action, file_temp,  file_per_2 = action_player_2(env_state,list_player,file_temp, file_per_2)
-#         env_state[-2] = (env_state[-2] + 1)%4
-#     return winner,  file_per_2
+    temp_1_player = List()
+    temp_1_player.append(np.array([[0.]]))
+    temp_file = [temp_1_player]*(amount_player())
 
-# def normal_main_2(list_player, times,  per_file_2):
-#     count = np.zeros(len(list_player)+1)
-#     all_card_fee = np.array([1, 1, 1, 2, 2, 3, 5, 3, 6, 3, 3, 2, 6, 7, 8, 22, 16, 10, 4])
-#     all_id_player = np.arange(len(list_player))
-#     for van in range(times):
-#         shuffle = np.random.choice(all_id_player, 4, replace=False)
-#         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
-#         file_temp = [[0],[0],[0],[0]]
-#         file_per_2_new = [per_file_2[shuffle[i]] for i in range(amount_player())]
-#         winner,  file_per_2_new = one_game_2(shuffle_player, file_temp,  all_card_fee, file_per_2_new)
+    while system_check_end(env_state) and count_turn < 500:
+        p_idx = int(env_state[-2])
+        p_state = state_to_player(env_state)
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+        if get_list_action(p_state)[act] != 1:
+            raise Exception('bot dua ra action khong hop le')
+        env_state = step(env_state, act, all_card_fee)
+        count_turn += 1
 
-#         list_p_id_new = [list(shuffle).index(i) for i in range(amount_player())]
-#         per_file_2 = [file_per_2_new[list_p_id_new[i]] for i in range(amount_player())]
+    winner = check_winner(env_state)
+    for id_player in range(4):
+        env_state[-1] = 1
+        id_action = env_state[-2]
+        p_state = state_to_player(env_state)
+        p_idx = int(env_state[-2])
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+    
+        env_state[-2] = (env_state[-2] + 1)%4
+    return winner, per_file
 
-#         if winner == -1:
-#             count[winner] += 1
-#         else:
-#             count[shuffle[winner]] += 1
-#     return list(count.astype(np.int64)),  per_file_2
-
-
+@njit()
+def numba_main(p0, p1, p2, p3, num_game,per_file):
+    count = np.zeros(amount_player()+1)
+    all_card_fee = np.array([1, 1, 1, 2, 2, 3, 5, 3, 6, 3, 3, 2, 6, 7, 8, 22, 16, 10, 4])
+    p_lst_idx = np.array([0,1,2,3])
+    for _n in range(num_game):
+        np.random.shuffle(p_lst_idx)
+        winner, per_file = numba_one_game(p_lst_idx, p0, p1, p2, p3, all_card_fee, per_file )
+        if winner == -1:
+            count[winner] += 1
+        else:
+            count[p_lst_idx[winner]] += 1
+    return list(count.astype(np.int64)), per_file
 
 
 
@@ -1003,10 +1013,6 @@ def test2_Khanh_200922(play_state,file_per_2):
 
 #############################################################
 
-# @njit()
-# def relu6_khanh_270922(x):
-#     return np.minimum(np.maximum(0, x),6)
-
 @njit()
 def neural_network_khanh_270922(play_state, file_temp0, file_temp1, file_temp2):
     if 55 < len(play_state) < 70 or len(play_state) > 250 : # TLMN , TLMN_v2 , CENTURY
@@ -1142,11 +1148,11 @@ def neural_network_an_130922(res_mat, data, list_action):
     return list_action[action_max_idx]
 
 @njit()
-def test2_An_130922(p_state, temp_file,  file_per_2):
+def test2_An_130922(p_state,file_per_2):
     list_action = get_list_action(p_state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_an_130922(p_state, file_per_2, list_action)
-    return action, temp_file,  file_per_2
+    return action
 
 ############################################################
 @njit()
@@ -1206,8 +1212,6 @@ def Ann_neural_network_an_200922(res_mat:np.ndarray, data, list_action):
         data3i1 = data[3*i+1].flatten()
         data3i2 = int(data[3*i+2][0][0])
         res_mat = np.dot(res_mat, data3i) + data3i1
-        # res_mat = np.nan_to_num(res_mat)
-        # res_mat = activation_function[data3i2](res_mat)
         res_mat = id_function_an_200922(data3i2, res_mat, Identity_an_200922, BinaryStep_an_200922, Sigmoid_an_200922, SignStep_an_200922, Tanh_an_200922, ReLU_an_200922, SoftPlus_an_200922, Gaussian_an_200922)
     
     res_arr = res_mat[list_action]
@@ -1232,9 +1236,6 @@ def test2_An_200922(p_state, file_per_2):
     if type_file_per_2 == 0: # fnn
         action = Ann_neural_network_an_200922(p_state, file_per_2[0], list_action)
     else: # sg
-        # if len(file_per_2) < 3:
-        #     file_per_2.append(file_per_2[0][0]/file_per_2[0][1])
-            # print(file_per_2[0])
             res_arr = file_per_2[0][2][0][list_action]
             a = np.max(res_arr)
             if a >= 0:
@@ -1315,15 +1316,10 @@ def id_function_an_270922(id, res_mat, Identity_an_270922, BinaryStep_an_270922,
 @njit()
 def Ann_neural_network_an_270922(res_mat:np.ndarray, data, list_action):
     for i in range(len(data)//3):
-        # data3i = data[3*i]
-        # data3i1 = data[3*i+1]
-        # data3i2 = data[3*i+2]
         data3i = data[3*i]
         data3i1 = data[3*i+1].flatten()
         data3i2 = int(data[3*i+2][0][0])
         res_mat = np.dot(res_mat, data3i) + data3i1
-        # res_mat = np.nan_to_num(res_mat)
-        # res_mat = activation_function[data3i2](res_mat)
         res_mat = id_function_an_270922(data3i2, res_mat, Identity_an_270922, BinaryStep_an_270922, Sigmoid_an_270922, SignStep_an_270922, Tanh_an_270922, ReLU_an_270922, LeakyReLU_an_270922, PReLU_an_270922, SoftPlus_an_270922, Gaussian_an_270922)
     
     res_arr = res_mat[list_action]
@@ -1345,11 +1341,7 @@ def test2_An_270922(p_state, file_per_2):
         type_file_per_2 = int(file_per_2[0][1][0][0])
     if type_file_per_2 == 0:
         action = Ann_neural_network_an_270922(p_state, file_per_2[0], list_action)
-        # return action, temp_file,  file_per_2
     else:
-        # if len(file_per_2) < 3:
-        #     file_per_2.append(file_per_2[0][0]/file_per_2[0][1])
-        
         res_arr = file_per_2[0][2][0][list_action]
         a = np.max(res_arr)
         arr_max = np.where(res_arr >= 0.99*a)[0]
@@ -1372,27 +1364,6 @@ def test2_Dat_130922(state,file_per_2):
     action = list_action[np.argmax(values[list_action])]
     return action
 
-#########################################################
-# @njit()
-# def test2_Dat_200922(state,temp, file_per_2):
-#     list_action = get_list_action(state)
-#     list_action = np.where(list_action == 1)[0]
-#     hidden1 = np.dot(state, file_per_2[0])
-#     hidden2 = hidden1 * (hidden1>0)
-#     values =  np.dot(hidden2, file_per_2[1])
-#     action = list_action[np.argmax(values[list_action])]
-#     return action,temp, file_per_2
-
-# ################################################################
-# @njit()
-# def test2_Dat_270922(state,temp, file_per_2):
-#     list_action = get_list_action(state)
-#     list_action = np.where(list_action == 1)[0]
-#     hidden1 = np.dot(state, file_per_2[0])
-#     hidden2 = hidden1 * (hidden1>0)
-#     values =  np.dot(hidden2, file_per_2[1])
-#     action = list_action[np.argmax(values[list_action])]
-#     return action,temp, file_per_2
 
 ###############################################################
 ###############################################################
@@ -1492,19 +1463,6 @@ def test2_Phong_130922(state,file_per_2):
     action = file_temp_to_action_Phong_130922(state, file_per_2)
     return action
 
-#######################################################################
-
-# @njit()
-# def test2_Phong_200922(state,file_temp, file_per_2):
-#     action = file_temp_to_action_Phong_130922(state, file_per_2)
-#     return action
-
-# ######################################################################
-
-# @njit()
-# def test2_Phong_270922(state,file_temp, file_per_2):
-#     action = file_temp_to_action_Phong_130922(state, file_per_2)
-#     return action
 
 
 
@@ -1531,6 +1489,7 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
     elif id == 9: return test2_NhatAnh_200922(player_state, per9)
     elif id == 10: return test2_Dat_130922(player_state, per10)
     else: return test2_NhatAnh_130922(player_state, per11)
+
 
 @njit()
 def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11):
@@ -1564,7 +1523,6 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     else: winner = False
     return winner,  per_player
 
-
 @njit()
 def n_game_numba(p0, num_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11):
     win = 0
@@ -1574,8 +1532,6 @@ def n_game_numba(p0, num_game, per_player, per0, per1, per2, per3, per4, per5, p
         winner,per_player  = one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
         win += winner
     return win, per_player
-
-
 
 def numba_main_2(p0, per_player, n_game):
     list_all_players = dict_game_for_player[game_name_]
@@ -1593,6 +1549,8 @@ def numba_main_2(p0, per_player, n_game):
     per10 = list_data[10]
     per11 = list_data[11]
     return n_game_numba(p0, n_game, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
+
+
 
 
 def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11):
@@ -1637,10 +1595,7 @@ def n_game_numba_2(p0, num_game, per_player, per0, per1, per2, per3, per4, per5,
         win += winner
     return win, per_player
 
-
-
-def normal_main_2(p0, n_game):
-    per_player = 0
+def normal_main_2(p0, per_player, n_game):
     list_all_players = dict_game_for_player[game_name_]
     list_data = load_data_per2(list_all_players, game_name_)
     per0 = list_data[0]
