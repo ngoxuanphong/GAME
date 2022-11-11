@@ -7,7 +7,7 @@ import os
 
 
 @njit(fastmath=True, cache=True)
-def reset():
+def initEnv():
     normal_card = np.concatenate((np.full(48, 1), np.full(36, 2), np.full(36, 3),np.full(24, 4), np.full(22, 5), 
                               np.full(21, 6), np.full(12, 7), np.full(5, 8)))
     royal_card = np.concatenate((np.full(2, 9), np.full(2, 10), np.full(2, 11), np.full(2, 12), np.full(2, 13), 
@@ -59,13 +59,13 @@ def state_to_player(env_state):
     return player_state
 
 def player_random(player_state, file_temp, file_per):
-    list_action = get_list_action(player_state)
+    list_action = getValidActions(player_state)
     action = int(np.random.choice(list_action))
-    if check_victory(player_state) == -1:
+    if getReward(player_state) == -1:
         # print('chưa hết game')
         pass
     else:
-        if check_victory(player_state) == 1:
+        if getReward(player_state) == 1:
             # print('win')
             pass
         else:
@@ -171,7 +171,7 @@ def get_list_action_old(player_state_origin):
         return np.array([81, 82])
 
 @njit(fastmath=True, cache=True)
-def get_list_action(player_state_origin):
+def getValidActions(player_state_origin):
     player_state = player_state_origin.copy()
     list_action_return = np.zeros(83)
     phase_env = player_state[-1]
@@ -259,7 +259,7 @@ def get_list_action(player_state_origin):
 
 
 @njit(fastmath=True, cache=True)
-def step(env_state, action, all_penalty):
+def stepEnv(env_state, action, all_penalty):
     phase_env = env_state[-1]
     id_action = int(env_state[-3])
     player_in4 = env_state[96*id_action:96*(id_action+1)]
@@ -522,15 +522,15 @@ def step(env_state, action, all_penalty):
     return env_state
 
 @njit(fastmath=True, cache=True)
-def amount_action():
+def getActionSize():
     return 83
 
 @njit(fastmath=True, cache=True)
-def amount_player():
+def getAgentSize():
     return 4
 
 @njit()
-def amount_state():
+def getStateSize():
     return 203
 
 @njit(fastmath=True, cache=True)  
@@ -544,7 +544,7 @@ def action_player(env_state,list_player,file_temp,file_per):
     current_player = int(env_state[-3])
     player_state = state_to_player(env_state)
     played_move,file_temp[current_player],file_per = list_player[current_player](player_state,file_temp[current_player],file_per)
-    if get_list_action(player_state)[played_move] != 1:
+    if getValidActions(player_state)[played_move] != 1:
         raise Exception('bot dua ra action khong hop le')
     return played_move,file_temp,file_per
 
@@ -624,7 +624,7 @@ def check_winner(env_state):
                 return np.argmax(all_player_coin_last)
     
 @njit(fastmath=True, cache=True)
-def check_victory(player_state):
+def getReward(player_state):
     round = player_state[-2]
     if round < 9:
         return -1
@@ -946,7 +946,7 @@ def step_print_mode(env_state, action, all_penalty):
     return env_state
 
 # def one_game_print_mode(list_player, file_temp, file_per, all_penalty):
-#     env_state = reset()
+#     env_state = initEnv()
 #     count_turn = 0
 #     while not system_check_end(env_state):
 #         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
@@ -975,11 +975,11 @@ def step_print_mode(env_state, action, all_penalty):
 #     return list(count.astype(np.int64)), file_per
 
 def one_game(list_player, file_temp, file_per, all_penalty):
-    env_state = reset()
+    env_state = initEnv()
     while not system_check_end(env_state):
         # player_state = state_to_player(env_state)
         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
-        env_state = step(env_state, action, all_penalty)
+        env_state = stepEnv(env_state, action, all_penalty)
     
     winner = check_winner(env_state)
     for id_player in range(4):
@@ -1005,11 +1005,11 @@ def normal_main(list_player, times, file_per):
 
 @njit()
 def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_penalty, per_file):
-    env_state = reset()
+    env_state = initEnv()
 
     temp_1_player = List()
     temp_1_player.append(np.array([[0.]]))
-    temp_file = [temp_1_player]*(amount_player())
+    temp_file = [temp_1_player]*(getAgentSize())
 
     while not system_check_end(env_state):
         p_idx = int(env_state[-3])
@@ -1022,9 +1022,9 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_penalty, per_file):
             act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
         else:
             act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
-        if get_list_action(p_state)[act] != 1:
+        if getValidActions(p_state)[act] != 1:
             raise Exception('bot dua ra action khong hop le')
-        env_state = step(env_state, act, all_penalty)
+        env_state = stepEnv(env_state, act, all_penalty)
 
     winner = check_winner(env_state)
     for id_player in range(4):
@@ -1046,7 +1046,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_penalty, per_file):
 
 @njit()
 def numba_main(p0, p1, p2, p3, num_game,per_file):
-    count = np.zeros(amount_player())
+    count = np.zeros(getAgentSize())
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
     p_lst_idx = np.array([0,1,2,3])
     for _n in range(num_game):
@@ -1100,11 +1100,11 @@ def data_to_layer_NhatAnh_130922(state,data0, data1):
 
 @njit()
 def test2_NhatAnh_130922(state,file_per_2):
-    layer = np.zeros(amount_action())
+    layer = np.zeros(getActionSize())
     for id in range(len(file_per_2[0])):
         layer += data_to_layer_NhatAnh_130922(state,file_per_2[0][id], file_per_2[1][id])
-    base = np.zeros(amount_action())
-    actions = get_list_action(state)
+    base = np.zeros(getActionSize())
+    actions = getValidActions(state)
     actions = np.where(actions == 1)[0]
     for act in actions:
         base[act] = 1
@@ -1117,7 +1117,7 @@ def test2_NhatAnh_130922(state,file_per_2):
 
 @njit()
 def basic_act_NhatAnh_200922(state,base):
-    actions = get_list_action(state)
+    actions = getValidActions(state)
     actions = np.where(actions == 1)[0]
     for act in base:
         if act in actions:
@@ -1144,7 +1144,7 @@ def advance_act_NhatAnh_270922(state,data):
         else:
             action = basic_act_NhatAnh_200922(state,data[0][id])
             return int(action)
-    return np.random.choice(np.where(get_list_action(state) == 1)[0])
+    return np.random.choice(np.where(getValidActions(state) == 1)[0])
 
 @njit()
 def test2_NhatAnh_270922(state, file_per_2):
@@ -1205,7 +1205,7 @@ def neural_network_khanh_130922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_130922(play_state, file_per_2):
-    a = get_list_action(play_state)
+    a = getValidActions(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
         matran2 = neural_network_khanh_130922(play_state, file_per_2[0], file_per_2[1], file_per_2[2])
@@ -1268,7 +1268,7 @@ def neural_network_khanh_200922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_200922(play_state,file_per_2):
-    a = get_list_action(play_state)
+    a = getValidActions(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
         matran2 = neural_network_khanh_200922(play_state, file_per_2[0], file_per_2[1], file_per_2[2])
@@ -1330,7 +1330,7 @@ def neural_network_khanh_270922_2(play_state, file_temp0, file_temp1):
 
 @njit()
 def test2_Khanh_270922(play_state,file_per_2):
-    a = get_list_action(play_state)
+    a = getValidActions(play_state)
     a = np.where(a == 1)[0]
     if len(file_per_2) == 3:
         matran2 = neural_network_khanh_270922(play_state, file_per_2[0], file_per_2[1], file_per_2[2])
@@ -1424,7 +1424,7 @@ def neural_network_an_130922(res_mat, data, list_action):
 
 @njit()
 def test2_An_130922(p_state, temp_file,  file_per_2):
-    list_action = get_list_action(p_state)
+    list_action = getValidActions(p_state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_an_130922(p_state, file_per_2, list_action)
     return action, temp_file,  file_per_2
@@ -1503,7 +1503,7 @@ def Ann_neural_network_an_200922(res_mat:np.ndarray, data, list_action):
 
 @njit()
 def test2_An_200922(p_state, file_per_2):
-    list_action = get_list_action(p_state)
+    list_action = getValidActions(p_state)
     list_action = np.where(list_action == 1)[0]
     if len(file_per_2) == 2: 
         type_file_per_2 = int(file_per_2[1][0][0][0])
@@ -1618,7 +1618,7 @@ def Ann_neural_network_an_270922(res_mat:np.ndarray, data, list_action):
 
 @njit()
 def test2_An_270922(p_state, file_per_2):
-    list_action = get_list_action(p_state)
+    list_action = getValidActions(p_state)
     list_action = np.where(list_action == 1)[0]
     if len(file_per_2) == 2: 
         type_file_per_2 = int(file_per_2[1][0][0][0])
@@ -1645,7 +1645,7 @@ def test2_An_270922(p_state, file_per_2):
 
 @njit()
 def test2_Dat_130922(state,file_per_2):
-    list_action = get_list_action(state)
+    list_action = getValidActions(state)
     list_action = np.where(list_action == 1)[0]
     hidden1 = np.dot(state, file_per_2[0])
     hidden2 = hidden1 * (hidden1>0)
@@ -1656,7 +1656,7 @@ def test2_Dat_130922(state,file_per_2):
 #########################################################
 # @njit()
 # def test2_Dat_200922(state,temp, file_per_2):
-#     list_action = get_list_action(state)
+#     list_action = getValidActions(state)
 #     list_action = np.where(list_action == 1)[0]
 #     hidden1 = np.dot(state, file_per_2[0])
 #     hidden2 = hidden1 * (hidden1>0)
@@ -1667,7 +1667,7 @@ def test2_Dat_130922(state,file_per_2):
 # ################################################################
 # @njit()
 # def test2_Dat_270922(state,temp, file_per_2):
-#     list_action = get_list_action(state)
+#     list_action = getValidActions(state)
 #     list_action = np.where(list_action == 1)[0]
 #     hidden1 = np.dot(state, file_per_2[0])
 #     hidden2 = hidden1 * (hidden1>0)
@@ -1682,9 +1682,9 @@ def test2_Dat_130922(state,file_per_2):
 def neural_network_hieu_130922(state, file_temp0, file_temp1, file_temp2, list_action):
     norm_state = state/np.linalg.norm(state, 1)
     norm_state = np.tanh(norm_state)                    #dạng tanh
-    norm_action = np.zeros(amount_action())
+    norm_action = np.zeros(getActionSize())
     norm_action[list_action] = 1
-    norm_action = norm_action.reshape(1, amount_action())
+    norm_action = norm_action.reshape(1, getActionSize())
     matrixRL1 = np.dot(norm_state, file_temp0)
     matrixRL1 = matrixRL1*(matrixRL1 > 0)           #activation = relu
     matrixRL2 = np.dot(matrixRL1, file_temp1)
@@ -1697,20 +1697,20 @@ def neural_network_hieu_130922(state, file_temp0, file_temp1, file_temp2, list_a
 
 @njit()
 def test2_Hieu_130922(state, file_per_2):
-    list_action = get_list_action(state)
+    list_action = getValidActions(state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_hieu_130922(state, file_per_2[0], file_per_2[1], file_per_2[2], list_action)
     return action
 #################################################################
 @njit()
 def agent_hieu_270922(state,file_temp,file_per):
-    actions = get_list_action(state)
+    actions = getValidActions(state)
     actions = np.where(actions == 1)[0]
     action = np.random.choice(actions)
-    file_per = (len(state),amount_action())
+    file_per = (len(state),getActionSize())
     return action,file_temp,file_per
 
-# LEN_STATE_hieu_270922,AMOUNT_ACTION_hieu_270922 = normal_main([agent_hieu_270922]*amount_player(), 1, [0])[1]
+# LEN_STATE_hieu_270922,AMOUNT_ACTION_hieu_270922 = normal_main([agent_hieu_270922]*getAgentSize(), 1, [0])[1]
 
 @njit()
 def softmax_hieu_270922(X):
@@ -1730,9 +1730,9 @@ def neural_network_hieu_270922(norm_state, file_temp0, file_temp1, file_temp2, l
     # norm_state = state.copy()
     norm_state = norm_state/np.linalg.norm(norm_state, 1)
     norm_state = softmax_hieu_270922(norm_state)
-    norm_action = np.zeros(amount_action())
+    norm_action = np.zeros(getActionSize())
     norm_action[list_action] = 1
-    norm_action = norm_action.reshape(1, amount_action())
+    norm_action = norm_action.reshape(1, getActionSize())
 
     matrixRL1 = np.dot(norm_state, file_temp0)
     matrixRL1 = sigmoid_hieu_270922(matrixRL1)          
@@ -1749,7 +1749,7 @@ def neural_network_hieu_270922(norm_state, file_temp0, file_temp1, file_temp2, l
 
 @njit()
 def test2_Hieu_270922(state, file_per_2):
-    list_action = get_list_action(state)
+    list_action = getValidActions(state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_hieu_270922(state, file_per_2[0], file_per_2[1], file_per_2[2], list_action)
     return action
@@ -1760,7 +1760,7 @@ def test2_Hieu_270922(state, file_per_2):
 
 @njit()
 def file_temp_to_action_Phong_130922(state, file_temp):
-    a = get_list_action(state)
+    a = getValidActions(state)
     a = np.where(a == 1)[0]
     RELU = np.ones(len(state))
     matrix_new = np.dot(RELU,file_temp)
@@ -1813,7 +1813,7 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
 
 @njit()
 def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
-    env = reset()
+    env = initEnv()
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
     _temp_ = List()
     _temp_.append(np.array([[0]]))
@@ -1826,10 +1826,10 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
 
-        if get_list_action(player_state)[action] != 1:
+        if getValidActions(player_state)[action] != 1:
             raise Exception('bot dua ra action khong hop le')
 
-        env = step(env, action, all_penalty)
+        env = stepEnv(env, action, all_penalty)
 
     win = check_winner(env)
     for p_idx in range(4):
@@ -1876,7 +1876,7 @@ def numba_main_2(p0, per_player, n_game):
 
 # @njit()
 def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
-    env = reset()
+    env = initEnv()
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
     _temp_ = List()
     _temp_.append(np.array([[0]]))
@@ -1889,10 +1889,10 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
 
-        if get_list_action(player_state)[action] != 1:
+        if getValidActions(player_state)[action] != 1:
             raise Exception('bot dua ra action khong hop le')
 
-        env = step(env, action, all_penalty)
+        env = stepEnv(env, action, all_penalty)
 
     for p_idx in range(4):
         env[-1] = 1

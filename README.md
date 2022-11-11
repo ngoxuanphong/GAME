@@ -43,13 +43,13 @@
             per[3][0][0] = choice
         idmt = int(per[3][0][0])
         mt = per[0][idmt]
-        actions = get_list_action(state)
+        actions = getValidActions(state)
         actions *= mt
         action = np.argmax(actions)
-        if check_victory(state) == 1:
+        if getReward(state) == 1:
             per[1][0][idmt] += 1
             per[3][0][0] = 0
-        if check_victory(state) == 0:
+        if getReward(state) == 0:
             per[2][0][idmt] += 1
             per[3][0][0] = 0
         return action,temp,per
@@ -64,18 +64,18 @@
             per[3][0][0] = choice
         idmt = int(per[3][0][0])
         mt = per[0][idmt]
-        actions = get_list_action(state)
+        actions = getValidActions(state)
         actions *= mt
         action = np.argmax(actions)
-        if check_victory(state) == 1:
+        if getReward(state) == 1:
             per[1][0][idmt] += 1
             per[3][0][0] = 0
-        if check_victory(state) == 0:
+        if getReward(state) == 0:
             per[2][0][idmt] += 1
             per[3][0][0] = 0
         return action,temp,per
 
-        perx = [np.array([np.random.rand(amount_action()) for _ in range(100)]),np.zeros((1,100)),np.zeros((1,100)),np.zeros((1,100))]
+        perx = [np.array([np.random.rand(getActionSize()) for _ in range(100)]),np.zeros((1,100)),np.zeros((1,100)),np.zeros((1,100))]
         win1, x = normal_main_2(test2, perx, 1000)
         win, x = numba_main_2(p0, perx , 1000)
         print(win, win1)
@@ -130,7 +130,7 @@
         - **train(n)** n là tham số đầu vào(1 là 10000 ván, ...)
         - **test()** là hàm đọc file để test với random và người chơi khác
       - ***Chú ý:*** 
-        - Trong thuật toán list_player **phải dựa vào amount_player()** tại vì các game thì số lượng người chơi khác nhau
+        - Trong thuật toán list_player **phải dựa vào getAgentSize()** tại vì các game thì số lượng người chơi khác nhau
         - player phải là tên **folder của người chơi**
         - **Thêm đoạn code này trong hàm Test**
           ```

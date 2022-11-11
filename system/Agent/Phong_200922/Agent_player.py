@@ -11,7 +11,7 @@ from env import *
 
 
 def file_temp_to_action_Phong_200922(state, file_temp):
-    a = get_list_action(state)
+    a = getValidActions(state)
     a = np.where(a == 1)[0]
     RELU = np.ones(len(state))
     matrix_new = np.matmul(RELU,file_temp)
