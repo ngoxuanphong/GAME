@@ -212,9 +212,9 @@ def load_data_per2(list_all_players, game_name_):
 
 #         for match in range(number_of_matches):
 #             np.random.shuffle(id_players_all)
-#             lst_player_fight = players_main + [list_all_players[id_players_all[i]] for i in range(game.amount_player()-1)]
-#             data_players = [per_2__] + [list_data[id_players_all[i]] for i in range(game.amount_player()-1)]
-#             list_func = [list_func_player[id_players_all[i]] for i in range(game.amount_player()-1)]
+#             lst_player_fight = players_main + [list_all_players[id_players_all[i]] for i in range(game.getAgentSize()-1)]
+#             data_players = [per_2__] + [list_data[id_players_all[i]] for i in range(game.getAgentSize()-1)]
+#             list_func = [list_func_player[id_players_all[i]] for i in range(game.getAgentSize()-1)]
 
 #             count, per_2__ = fight_test_1_player(game, lst_player_fight, data_players, list_func)
 

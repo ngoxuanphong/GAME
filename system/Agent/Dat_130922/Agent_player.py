@@ -13,7 +13,7 @@ def test(state,temp,per):
         data = np.load(os.path.join(path_save_player,'Best.npz'))
         temp = [data['w1'],data['w2']]
 
-    list_action = get_list_action(state)
+    list_action = getValidActions(state)
     list_action = np.where(list_action == 1)[0]
     hidden1 = state.dot(temp[0])
     hidden2 = hidden1 * (hidden1>0)
@@ -22,7 +22,7 @@ def test(state,temp,per):
     return action,temp,per
 
 def test2(state,temp,per, file_per_2):
-    list_action = get_list_action(state)
+    list_action = getValidActions(state)
     list_action = np.where(list_action == 1)[0]
     hidden1 = state.dot(file_per_2[0])
     hidden2 = hidden1 * (hidden1>0)

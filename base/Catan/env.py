@@ -10,7 +10,7 @@ from base.Catan.basic_action import *
 import random
 
 @njit()
-def get_list_action(player_state_origin):
+def getValidActions(player_state_origin):
     player_state = player_state_origin.copy()
     phase_env = int(player_state[P_PHASE])
     # phase_env = 2
@@ -285,7 +285,7 @@ def get_list_action(player_state_origin):
         return list_action.astype(np.int64)
    
 @njit()
-def step(env_state, action):
+def stepEnv(env_state, action):
     id_action = int(env_state[ID_ACTION])
     turn = int(env_state[TURN])
     phase_env = env_state[PHASE]
@@ -809,14 +809,14 @@ def step(env_state, action):
 
 
 def one_game(list_player_, per_file):
-    env_state = reset()
-    temp_file = [[0] for i in range(amount_player())]
+    env_state = initEnv()
+    temp_file = [[0] for i in range(getAgentSize())]
     count_turn = 0
 
     while count_turn < 15000:
         action, temp_file, per_file = action_player(env_state,list_player_,temp_file,per_file)     
         # print_mode_action(action, env_state)
-        env_state = step(env_state, action)
+        env_state = stepEnv(env_state, action)
         # print_mode_board(action, env_state)
         count_turn += 1
         if check_winner(env_state) != -1:
@@ -830,7 +830,7 @@ def one_game(list_player_, per_file):
     if winner == -1:
         pass
     else:
-        for id_player in range(amount_player()):
+        for id_player in range(getAgentSize()):
             env_state[PHASE] = 1
             action, temp_file, per_file = action_player(env_state,list_player_,temp_file,per_file)
             # print(per_file)
@@ -847,7 +847,7 @@ def normal_main(list_player, times, per_file):
     count = np.zeros(len(list_player)+1)
     all_id_player = np.arange(len(list_player))
     for van in range(times):
-        shuffle = np.random.choice(all_id_player, amount_player(), replace=False)
+        shuffle = np.random.choice(all_id_player, getAgentSize(), replace=False)
         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
         winner, per_file = one_game(shuffle_player, per_file)
         if winner == -1:
@@ -857,7 +857,7 @@ def normal_main(list_player, times, per_file):
     return list(count.astype(np.int64)), per_file
 
 @njit()
-def check_victory(player_state):
+def getReward(player_state):
     all_score = np.array([player_state[P_SCORE], player_state[P_P1_ATTRIBUTE_PLAYER], player_state[P_P2_ATTRIBUTE_PLAYER], player_state[P_P3_ATTRIBUTE_PLAYER]])
     # print(all_score)
     if np.max(all_score) < 10:

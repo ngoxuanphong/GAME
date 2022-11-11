@@ -16,9 +16,9 @@ from env import *
 def neural_network_hieu_130922(state, file_temp, list_action):
     norm_state = (state/np.linalg.norm(state, 1)).reshape(1,len(state))
     norm_state = np.tanh(norm_state)                    #dạng tanh
-    norm_action = np.zeros(amount_action())
+    norm_action = np.zeros(getActionSize())
     norm_action[list_action] = 1
-    norm_action = norm_action.reshape(1, amount_action())
+    norm_action = norm_action.reshape(1, getActionSize())
     matrixRL1 = norm_state@file_temp[0]
     matrixRL1 = matrixRL1*(matrixRL1 > 0)           #activation = relu
     matrixRL2 = matrixRL1@file_temp[1]
@@ -30,7 +30,7 @@ def neural_network_hieu_130922(state, file_temp, list_action):
     return action_max
 
 def test(state, file_temp, file_per):
-    list_action = get_list_action(state)
+    list_action = getValidActions(state)
     list_action = np.where(list_action == 1)[0]
     if len(file_temp) < 2:
         player = 'Hieu_130922'  #Tên folder của người chơi
@@ -42,7 +42,7 @@ def test(state, file_temp, file_per):
     return action, file_temp, file_per
 
 def test2(state, file_temp, file_per, file_per_2):
-    list_action = get_list_action(state)
+    list_action = getValidActions(state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_hieu_130922(state, file_per_2, list_action)
     return action, file_temp, file_per, file_per_2

@@ -63,13 +63,13 @@ def test(p_state, temp_file, per_file):
         path_save_player = f'system/Agent/{player}/Data/{game_name}_{time_run_game}/'
         temp_file = np.load(f'{path_save_player}/Ahih1st.npy', allow_pickle=True)
     
-    list_action = get_list_action(p_state)
+    list_action = getValidActions(p_state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_an_130922(p_state, temp_file, list_action)
     return action, temp_file, per_file
 
 def test2(p_state, temp_file, per_file, file_per_2):
-    list_action = get_list_action(p_state)
+    list_action = getValidActions(p_state)
     list_action = np.where(list_action == 1)[0]
     action = neural_network_an_130922(p_state, file_per_2, list_action)
     return action, temp_file, per_file, file_per_2
