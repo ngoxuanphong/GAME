@@ -5,10 +5,10 @@ getActionSize(
 amount_player(
 getAgentSize(
 
-check_victory(
+getValidActions(
 getReward(
 
-get_list_action(
+getValidActions(
 getValidActions(
 
 

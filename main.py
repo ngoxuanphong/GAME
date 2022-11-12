@@ -114,6 +114,7 @@ def fight_multi_player(game, players):
                     'Sheriff':{},
                     'Splendor':{}, 
                     'Splendor_v2':{},
+                    'Splendor_v3':{},
                     'SushiGo':{}, }
     if len(players) != 0:
         start = time.time()
