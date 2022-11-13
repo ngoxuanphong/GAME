@@ -169,7 +169,7 @@ def fight_test_1_player_2(game, players, data_players, list_func):
 
 if __name__ == '__main__':
     game = setup_game(game_name)
-    print('GAME:',  game_name)
+    print('GAME:',  game_name, players)
     
     if type_run_code == 'Train':
         train()
