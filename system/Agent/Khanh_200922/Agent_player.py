@@ -58,7 +58,7 @@ def neural_network_khanh_200922(play_state, file_temp):
         return matran2
 
 def test(play_state,file_temp,file_per):
-    a = get_list_action(play_state)
+    a = getValidActions(play_state)
     a = np.where(a == 1)[0]
     if len(file_temp) < 2:
         player = 'Khanh_200922'  #Tên folder của người chơi
@@ -77,7 +77,7 @@ def test(play_state,file_temp,file_per):
     return action_max,file_temp,file_per
 
 def test2(play_state,file_temp,file_per, file_per_2):
-    a = get_list_action(play_state)
+    a = getValidActions(play_state)
     a = np.where(a == 1)[0]
     matran2 = neural_network_khanh_200922(play_state, file_per_2)
     max_ = 0

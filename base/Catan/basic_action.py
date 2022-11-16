@@ -329,15 +329,15 @@ def action_player(env_state,list_player,temp_file,per_file):
     return played_move,temp_file,per_file
 
 @njit()
-def amount_player():
+def getAgentSize():
     return 4
 
 @njit()
-def amount_action():
+def getActionSize():
     return 108
 
 @njit()
-def reset():
+def initEnv():
     env_state = np.zeros(INDEX)
     env_state[POINT_INDEX:ROBBER_BLOCK_INDEX] = np.full(POINT_LEN + ROAD_LEN, -1)
     env_state[TOKEN_BLOCK_INDEX : OFFER_MAIN_INDEX] = create_board()

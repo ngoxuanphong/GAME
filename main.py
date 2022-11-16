@@ -50,18 +50,13 @@ def load_module_player(player):
 
 def train_1_player(player):
     p1 = load_module_player(player)
-    a = time.time()
-    print(a)
-    p1.train(10)
-    b = time.time()
-    print(b)
-    print(a-b)
+    p1.train(100000000)
 
-@timeout(time_run_game)
+# @timeout(time_run_game)
 def train_1_player_with_timeout(game, players):
     if len(players) == 1:
         p1 = load_module_player(players[0])
-        p1.train(100000)
+        p1.train(100000000)
     else:
         print_raise('Train_1_player')
 
@@ -98,8 +93,8 @@ def fight(game, players):
         list_player_name.append(player)
         list_player.append(load_module_fight(player, 'Test'))
 
-    if len(list_player) < game.amount_player():
-        player_random_need = game.amount_player() - len(list_player)
+    if len(list_player) < game.getAgentSize():
+        player_random_need = game.getAgentSize() - len(list_player)
         for i in range(player_random_need):
             list_player_name.append('player_random')
             list_player.append(load_module_fight('player_random', 'Test'))
@@ -119,11 +114,12 @@ def fight_multi_player(game, players):
                     'Sheriff':{},
                     'Splendor':{}, 
                     'Splendor_v2':{},
+                    'Splendor_v3':{},
                     'SushiGo':{}, }
     if len(players) != 0:
         start = time.time()
-        if len(players) >= game.amount_player():
-            list_combination = list(itertools.combinations(players, game.amount_player()))
+        if len(players) >= game.getAgentSize():
+            list_combination = list(itertools.combinations(players, game.getAgentSize()))
             for lst_player_play in list_combination:
                 count, lst_player = fight(game, lst_player_play)
                 dict_save_win = create_dict(dict_save_win, count, lst_player)
@@ -173,7 +169,7 @@ def fight_test_1_player_2(game, players, data_players, list_func):
 
 if __name__ == '__main__':
     game = setup_game(game_name)
-    print('GAME:',  game_name)
+    print('GAME:',  game_name, players)
     
     if type_run_code == 'Train':
         train()

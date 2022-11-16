@@ -6,7 +6,7 @@ normal_cards_infor = np.array([[0, 2, 2, 2, 0, 0, 0], [0, 2, 3, 0, 0, 0, 0], [0,
 noble_cards_infor = np.array([[0, 4, 4, 0, 0], [3, 0, 3, 3, 0], [3, 3, 3, 0, 0], [3, 0, 0, 3, 3], [0, 3, 0, 3, 3], [4, 0, 4, 0, 0], [4, 0, 0, 4, 0], [0, 3, 3, 0, 3], [0, 4, 0, 0, 4], [0, 0, 0, 4, 4]])
 
 #@njit()
-def Reset():
+def initEnv():
     env_state = np.full(164, 0)
     env_state[:] = 0
     env_state[101:107] = np.array([7,7,7,7,7,5])
@@ -46,7 +46,7 @@ def get_id_card_normal_in_lv(lv1, lv2, lv3):
     return list_card_normal_on_board
 
 #@njit()
-def get_player_state(env_state, lv1, lv2, lv3):
+def getAgentState(env_state, lv1, lv2, lv3):
     p_id = env_state[100] % 4  #Lấy người đang chơi
     b_infor = env_state[101:107] # Lấy 6 loại nguyên liệu của bàn chơi
     p_infor = env_state[107 + 12*p_id:119 + 12*p_id]  #Lấy thông tin người đang chơi, 6 nguyên liệu trên bàn, 5 nguyên liệu mặc định, điểm
@@ -78,7 +78,7 @@ def get_player_state(env_state, lv1, lv2, lv3):
     p_state = np.append(p_state, (env_state[161:164] != 100)*1) #Lấy thông tin của các thẻ ẩn có thẻ úp, nếu có thể úp thì là 1
     p_state = np.append(p_state, len(np.where(env_state[:90] == 5)[0])) #Số lượng thẻ có thể úp trong bàn
     
-    cls_game = int(close_game(env_state))
+    cls_game = int(checkEnded(env_state))
     if cls_game == 0:
         p_state = np.append(p_state, 0)
     else:
@@ -86,7 +86,7 @@ def get_player_state(env_state, lv1, lv2, lv3):
     return p_state.astype(np.float64)
 
 #@njit()
-def check_victory(p_state):
+def getReward(p_state):
     scores = p_state[153:156]
     owner_score = p_state[17]
 
@@ -119,7 +119,7 @@ def get_remove_card_on_lv_and_add_new_card(env_state, lv,p_id, id_card_hide, typ
     return env_state, lv
 
 #@njit
-def step(action,env_state, lv1, lv2, lv3):
+def stepEnv(action,env_state, lv1, lv2, lv3):
     p_id = env_state[100] % 4
     cur_p = env_state[107 + 12*p_id:119 + 12*p_id]
     b_stocks = env_state[101:107]
@@ -240,7 +240,7 @@ def step(action,env_state, lv1, lv2, lv3):
     return env_state, lv1, lv2, lv3
 
 #@njit
-def close_game(env_state):
+def checkEnded(env_state):
     score_arr = np.array([env_state[118 + 12*p_id] for p_id in range(4)])
     max_score = np.max(score_arr)
     if max_score >= 15 and env_state[100] % 4 == 0:
@@ -280,7 +280,7 @@ def get_id_card(card_id):
     
 
 def one_game_numba_2(p0, list_other, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, print_mode):
-    env, lv1, lv2, lv3 = Reset()
+    env, lv1, lv2, lv3 = initEnv()
     list_color = ['red', 'blue', 'green', 'black', 'white', 'auto_color']
     def _print_():
         print('----------------------------------------------------------------------------------------------------')
@@ -326,13 +326,13 @@ def one_game_numba_2(p0, list_other, per0, per1, per2, per3, per4, per5, per6, p
     _cc = 0
     while env[100] <= 400 and _cc <= 10000:
         idx = env[100]%4
-        player_state = get_player_state(env, lv1, lv2, lv3)
+        player_state = getAgentState(env, lv1, lv2, lv3)
         if list_other[idx] == -1:
             action = p0(player_state)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
 
-        list_action = get_list_action(player_state)
+        list_action = getValidActions(player_state)
         if list_action[action] != 1:
             raise Exception('Action không hợp lệ')
 
@@ -340,8 +340,8 @@ def one_game_numba_2(p0, list_other, per0, per1, per2, per3, per4, per5, per6, p
             _print_()
             print('________')
             _print_action_(action, idx)
-        env, lv1, lv2, lv3 = step(action, env, lv1, lv2, lv3)
-        if close_game(env) != 0:
+        env, lv1, lv2, lv3 = stepEnv(action, env, lv1, lv2, lv3)
+        if checkEnded(env) != 0:
             break
         
         _cc += 1
@@ -350,20 +350,20 @@ def one_game_numba_2(p0, list_other, per0, per1, per2, per3, per4, per5, per6, p
     for idx in range(4):
         env[100] = idx
         if list_other[idx] == -1:
-            p_state = get_player_state(env, lv1, lv2, lv3)
+            p_state = getAgentState(env, lv1, lv2, lv3)
             p_state[160] = 1
             act = p0(p_state)
             if print_mode:
                 print('________Đã kết thúc game__________')
                 _print_()
-                if np.where(list_other == -1)[0] ==  (close_game(env) - 1):
+                if np.where(list_other == -1)[0] ==  (checkEnded(env) - 1):
                     print('Xin chúc mừng bạn là người chiến thắng')
                 else:
                     print('Người chơi đã thua, chúc bạn may mắn lần sau')
 
     env[100] = turn
     winner = False
-    if np.where(list_other == -1)[0] ==  (close_game(env) - 1): winner = True
+    if np.where(list_other == -1)[0] ==  (checkEnded(env) - 1): winner = True
     else: winner = False
     return winner
 

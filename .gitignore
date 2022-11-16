@@ -3,7 +3,7 @@
 *.nbi
 
 
-/Agent/*
+
 /__pycache__/*
 /__pycache__/ 
 !/Agent/player_random/
@@ -13,7 +13,7 @@
 /Agent/NhatAnh_New/*
 **/__pycache__/
 /test
-test.py
-/test2.py
+**/Data
+# /test2.py
 /test_hethong.ipynb
 /test_he_thong.ipynb

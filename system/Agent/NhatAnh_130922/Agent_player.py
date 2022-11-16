@@ -19,11 +19,11 @@ def test(state,temp,per):
         path_save_player = f'system/Agent/{player}/Data/{game_name}_{time_run_game}/'
         best = np.load(f'{path_save_player}best.npy',allow_pickle=True)
         temp = [list(best),0]
-    layer = np.zeros(amount_action())
+    layer = np.zeros(getActionSize())
     for data in temp[0]:
         layer += data_to_layer_NhatAnh130922(state,data)
-    base = np.zeros(amount_action())
-    actions = get_list_action(state)
+    base = np.zeros(getActionSize())
+    actions = getValidActions(state)
     actions = np.where(actions == 1)[0]
     for act in actions:
         base[act] = 1
@@ -33,11 +33,11 @@ def test(state,temp,per):
     return action,temp,per
 
 def test2(state,temp,per, file_per_2):
-    layer = np.zeros(amount_action())
+    layer = np.zeros(getActionSize())
     for data in file_per_2[0]:
         layer += data_to_layer_NhatAnh130922(state,data)
-    base = np.zeros(amount_action())
-    actions = get_list_action(state)
+    base = np.zeros(getActionSize())
+    actions = getValidActions(state)
     actions = np.where(actions == 1)[0]
     for act in actions:
         base[act] = 1
