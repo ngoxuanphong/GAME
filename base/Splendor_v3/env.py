@@ -1,6 +1,7 @@
 import numpy as np
 import random as rd
 from numba import njit
+from numba.typed import List
 from base.other_func import progress_bar
 import warnings
 warnings.filterwarnings('ignore')
