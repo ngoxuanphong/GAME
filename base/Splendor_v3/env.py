@@ -565,7 +565,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
         if list_action[act] != 1:
             raise Exception('Action không hợp lệ')
             
-        env, lv1, lv2, lv3 = stepEnv(act, env, lv1, lv2, lv3)
+        env, lv1, lv2, lv3 = stepEnv(act, env, lv1, lv2, lv3, list_action)
 
         if checkEnded(env) != 0:
             break
@@ -595,6 +595,7 @@ def numba_main(p0, p1, p2, p3, num_game,per_file):
     num_won = [0,0,0,0,0]
     p_lst_idx = np.array([0,1,2,3])
     for _n in range(num_game):
+        # progress_bar(_n, num_game)
         np.random.shuffle(p_lst_idx)
         winner, per_file = numba_one_game(p_lst_idx, p0, p1, p2, p3, per_file )
         if winner != 0: num_won[p_lst_idx[winner-1]] += 1
