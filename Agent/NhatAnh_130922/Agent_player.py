@@ -1,6 +1,6 @@
 from numba import cuda
 from numba import njit
-import tensorflow as tf
+# import tensorflow as tf
 from env import *
 import random as rd
 import numpy as np

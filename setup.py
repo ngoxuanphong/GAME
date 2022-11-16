@@ -18,8 +18,8 @@
 
 
 type_run_code = 'Train_1_player' #Train or Test or Train_1_player or Test_1_player
-players = ['Phong_270922']
-game_name = 'Catan_v2'
+players = ['NhatAnh_130922']
+game_name = 'Splendor_v3'
 
 time_run_game = 1000
  

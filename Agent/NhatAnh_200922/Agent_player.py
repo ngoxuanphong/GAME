@@ -2,7 +2,7 @@ import random as rd
 import numpy as np
 from numba import njit
 from numba import cuda
-import tensorflow as tf
+# import tensorflow as tf
 
 import os
 import sys
