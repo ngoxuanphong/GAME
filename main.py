@@ -52,7 +52,7 @@ def train_1_player(player):
     p1 = load_module_player(player)
     p1.train(100000000)
 
-@timeout(time_run_game)
+# @timeout(time_run_game)
 def train_1_player_with_timeout(game, players):
     if len(players) == 1:
         p1 = load_module_player(players[0])
