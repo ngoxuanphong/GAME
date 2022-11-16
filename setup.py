@@ -17,7 +17,7 @@
 
 
 
-type_run_code = 'Train_1_player' #Train or Test or Train_1_player or Test_1_player
+type_run_code = 'Test' #Train or Test or Train_1_player or Test_1_player
 players = ['NhatAnh_130922']
 game_name = 'Splendor_v3'
 

@@ -1,6 +1,7 @@
 import numpy as np
 import random as rd
 from numba import njit
+from base.other_func import progress_bar
 import warnings
 warnings.filterwarnings('ignore')
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning,NumbaExperimentalFeatureWarning, NumbaWarning
@@ -523,7 +524,7 @@ def normal_main(list_player, num_game,per_file):
     num_won = [0,0,0,0,0]
     p_lst_idx = [0,1,2,3]
     for _n in range(num_game):
-
+        progress_bar(_n, num_game)
         # Shuffle người chơi
         rd.shuffle(p_lst_idx)
         winner, per_file = one_game(
@@ -539,11 +540,63 @@ def normal_main(list_player, num_game,per_file):
 
 
 @njit()
-def test(p_state, temp_file, per_file):
-    arr_action = getValidActions(p_state)
-    arr_action = np.where(arr_action == 1)[0]
-    act_idx = np.random.randint(0, len(arr_action))
-    #  print(arr_action, arr_action[act_idx], p_state[159])
-    return arr_action[act_idx], temp_file, per_file
+def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
+    env, lv1, lv2, lv3 = initEnv()
+    _cc = 0
 
-# print(normal_main([test]*4, 10, [0]))
+    temp_1_player = List()
+    temp_1_player.append(np.array([[0.]]))
+    temp_file = [temp_1_player]*(getAgentSize())
+
+    while env[100] <= 400 and _cc <= 10000:
+        p_idx = env[100]%4
+        p_state = getAgentState(env, lv1, lv2, lv3)
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+
+        list_action = getValidActions(p_state)
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
+            
+        env, lv1, lv2, lv3 = stepEnv(act, env, lv1, lv2, lv3)
+
+        if checkEnded(env) != 0:
+            break
+
+        _cc += 1
+    
+    turn = env[100]
+    for p_idx in range(4):
+        env[100] = p_idx
+        p_state = getAgentState(env, lv1, lv2, lv3)
+        p_state[160] = 1
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+        else:
+            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+    
+    env[100] = turn
+    return checkEnded(env), per_file
+
+
+@njit()
+def numba_main(p0, p1, p2, p3, num_game,per_file):
+    num_won = [0,0,0,0,0]
+    p_lst_idx = np.array([0,1,2,3])
+    for _n in range(num_game):
+        np.random.shuffle(p_lst_idx)
+        winner, per_file = numba_one_game(p_lst_idx, p0, p1, p2, p3, per_file )
+        if winner != 0: num_won[p_lst_idx[winner-1]] += 1
+        else:num_won[4] += 1
+    return num_won, per_file
+
