@@ -1,5 +1,6 @@
 
 from base.Splendor_v3.env import *
+
 # @njit()
 # def test(p_state, temp_file, per_file):
 #     arr_action = getValidActions(p_state)
@@ -8,3 +9,12 @@ from base.Splendor_v3.env import *
 #     return arr_action[act_idx], temp_file, per_file
 
 # numba_main(test, test, test, test, 1000, [0])
+
+from time import sleep
+from tqdm import tqdm
+# @njit()
+def a():
+    for i in tqdm(range(100)):
+        sleep(0.1)
+
+a()
