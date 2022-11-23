@@ -762,7 +762,8 @@ def test2_Phong_130922(state,file_per_2):
 
 
 @njit()
-def random_player(p_state):
+def random_Env(p_state):
+    p_state = p_state[:-1]
     arr_action = getValidActions(p_state)
     arr_action = np.where(arr_action == 1)[0]
     act_idx = np.random.randint(0, len(arr_action))
