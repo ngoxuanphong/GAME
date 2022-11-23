@@ -15,6 +15,6 @@
 
 from system.mainFunc import dict_game_for_player, load_data_per2    
 
-a = dict_game_for_player['SushiGo']
+a = dict_game_for_player['TLMN_v2']
 for i in range(len(a)):
     print(i, a[i])

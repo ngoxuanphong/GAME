@@ -1,5 +1,5 @@
 
-from base.SushiGo.env import *
+from base.TLMN_v2.env import *
 @njit()
 def test(p_state, temp_file, per_file):
     arr_action = getValidActions(p_state)

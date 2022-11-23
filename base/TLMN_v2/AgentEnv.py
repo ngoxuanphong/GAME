@@ -1,5 +1,5 @@
 from system.mainFunc import dict_game_for_player, load_data_per2
-game_name_ = 'SushiGo'
+game_name_ = 'TLMN_v2'
 import random
 import numpy as np
 from setup import game_name,time_run_game
@@ -14,15 +14,128 @@ warnings.simplefilter('ignore', category=NumbaWarning)
 
 @njit
 def getActionSize():
-    return 14
+    return 68
 
 @njit
 def getAgentSize():
-    return 5
+    return 4
 
 @njit()
 def getStateSize():
-    return 57
+    return 62
+
+
+@njit
+def straight_subsequences(arr):
+    arr_return = []
+    n = len(arr)
+    for k in range(3,12):
+        if n < k:
+            break
+        
+        for i in range(0, n-k+1):
+            sub_arr = arr[i:i+k]
+            if np.max(sub_arr) - np.min(sub_arr) == k-1:
+                arr_return.append([k, sub_arr[k-1]])
+        
+    if len(arr_return) == 0:
+        return np.full((0,2),0)
+    else:
+        return np.array(arr_return)
+
+
+@njit
+def hand_of_cards(arr_card):
+    arr_return = []
+
+    arr_return.append([0,0])
+
+    for j in arr_card:
+        arr_return.append([1,j])
+
+    for i in range(13):
+        temp = arr_card[arr_card//4 == i]
+        for n in range(2,5):
+            if len(temp) >= n and (i != 12 or n != 4):
+                for j in temp[n-1:]:
+                    arr_return.append([n,j])
+    
+    temp = np.unique(arr_card//4)
+    arr_score = temp[temp < 12]
+    arr_straight_subsequence = straight_subsequences(arr_score)
+    for straight in arr_straight_subsequence:
+        temp = arr_card[arr_card//4 == straight[1]]
+        for j in temp:
+            arr_return.append([straight[0]+2,j])
+    
+    arr_score = []
+    for i in range(12):
+        temp = arr_card[arr_card//4 == i]
+        if len(temp) >= 2:
+            arr_score.append(i)
+    
+    arr_straight_subsequence = straight_subsequences(np.array(arr_score))
+    for straight in arr_straight_subsequence:
+        if straight[0] <= 4:
+            temp = arr_card[arr_card//4 == straight[1]]
+            for j in temp[1:]:
+                arr_return.append([straight[0]+11,j])
+
+    return np.array(arr_return)
+
+
+@njit
+def getValidActions(player_state_origin:np.int64):
+    list_action_return = np.zeros(68)
+    p_state = player_state_origin.copy()
+    p_state = p_state.astype(np.int64)
+    arr_card = np.where(p_state[0:52] == 0)[0]
+    arr_hand = hand_of_cards(arr_card)
+
+    if len(arr_card) == 0:
+        mask = (arr_hand[:,0] == 0)
+    else:
+        if p_state[58] == 0:
+            mask = (arr_hand[:,0] != 0)
+        else:
+            if (p_state[58] >= 1 and p_state[58] <= 3) or (p_state[58] >= 5 and p_state[58] <= 13):
+                if p_state[59] <= 47:
+                    mask = ((arr_hand[:,0] == p_state[58]) & (arr_hand[:,1] > p_state[59])) | \
+                            (arr_hand[:,0] == 0)
+                else:
+                    if p_state[58] == 1:
+                        mask = ((arr_hand[:,0] == 1) & (arr_hand[:,1] > p_state[59])) | \
+                                (arr_hand[:,0] == 4) | (arr_hand[:,0] == 14) | (arr_hand[:,0] == 15) | \
+                                (arr_hand[:,0] == 0)
+                    elif p_state[58] == 2:
+                        mask = ((arr_hand[:,0] == 2) & (arr_hand[:,1] > p_state[59])) | \
+                                (arr_hand[:,0] == 4) | (arr_hand[:,0] == 15) | \
+                                (arr_hand[:,0] == 0)
+                    else:
+                        mask = (arr_hand[:,0] == 0)
+            elif p_state[58] == 14:
+                mask = ((arr_hand[:,0] == 14) & (arr_hand[:,1] > p_state[59])) | \
+                        (arr_hand[:,0] == 4) | (arr_hand[:,0] == 15) | \
+                        (arr_hand[:,0] == 0)
+            elif p_state[58] == 4:
+                mask = ((arr_hand[:,0] == 4) & (arr_hand[:,1] > p_state[59])) | \
+                        (arr_hand[:,0] == 15) | \
+                        (arr_hand[:,0] == 0)
+            else:
+                mask = ((arr_hand[:,0] == 15) & (arr_hand[:,1] > p_state[59])) | \
+                        (arr_hand[:,0] == 0)
+    
+    possible_hands = arr_hand[mask,:]
+
+    if p_state[60] == 0: # Phase chọn kiểu bộ bài
+        # list_action = np.unique(possible_hands[:,0])
+        list_action_return[np.unique(possible_hands[:,0])] = 1
+        return list_action_return
+    else:
+        mask_1 = possible_hands[:,0] == p_state[61]
+        # list_action = possible_hands[mask_1,:][:,1] + 16
+        list_action_return[possible_hands[mask_1,:][:,1] + 16] = 1
+        return list_action_return
 
 
 @njit()
@@ -32,29 +145,6 @@ def random_Env(p_state):
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx]
 
-
-@njit
-def getValidActions(player_state_origin:np.int64):
-    list_action_return = np.zeros(14)
-    player_state = player_state_origin.copy()
-    player_state = player_state.astype(np.int64)
-    amount = player_state[2]
-    index_between = int((12 - amount) + 3)
-    card = player_state[3:index_between]
-    list_action = card[np.where(card>= 0)[0]]
-    list_card_player= np.where(player_state[index_between+2:index_between+int((12 - amount) + 2)] == 11)[0]
-    if (12-amount)*3 < player_state[1]:
-        list_action = np.array([13])
-
-    if len(list_card_player) != 0 and player_state[-2] != 1 and len(list_action) > 1:
-        list_action = np.append(list_action,np.array([12]))
-
-    if player_state[-2] == 1:
-        index = np.where(list_action == 11)[0][0]
-        # print("INDEXXXXXXXXXXX:",index)
-        list_action = np.delete(list_action, index)
-    list_action_return[np.unique(list_action)] = 1
-    return list_action_return
 
 
 ##########################################################
