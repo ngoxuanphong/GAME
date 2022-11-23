@@ -499,8 +499,8 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
         player_state = getAgentState(env, lv1, lv2, lv3)
         if list_other[idx] == -1:
             action, _temp_, per_player = p0(player_state,_temp_,per_player)
-        if list_other[idx] == 0:
-            action = random_player(player_state)
+        elif list_other[idx] == -2:
+            action = random_Env(player_state)
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
 
@@ -513,7 +513,6 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
             break
         
         _cc += 1
-
     turn = env[100]
     for idx in range(4):
         env[100] = idx
