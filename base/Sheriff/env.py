@@ -1047,7 +1047,7 @@ def numba_main_2(p0, n_game, per_player, level):
     return n_game_numba(p0, n_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
 
 
-@njit()
+# @njit()
 def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
     env = initEnv()
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
@@ -1082,7 +1082,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     return winner,  per_player
 
 
-@njit()
+# @njit()
 def n_game_numba_2(p0, num_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
     win = 0
     for _n in range(num_game):
