@@ -703,7 +703,7 @@ def numba_main_2(p0, n_game, per_player, level):
     return n_game_numba(p0, n_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10)
 
 
-@njit()
+# @njit()
 def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10):
     card_in4 = all_card_in4()
     card_point_in4 = all_card_point_in4()
@@ -740,7 +740,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     return winner,  per_player
 
 
-@njit()
+# @njit()
 def n_game_numba_2(p0, num_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10):
     win = 0
     if level == 0:
