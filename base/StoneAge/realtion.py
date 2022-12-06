@@ -68,12 +68,7 @@ CIV_CARDS = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
                     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],])     #Lúc, 1, lua
 
 
-from itertools import permutations 
-  
-perm1 = permutations([1, 1, 1, 2])
-[list(i) for i in set(list(perm1))]
-
-BUILD_4_2 = [
+BUILD_4_2 = np.array([
     [0, 0, 1, 3],
     [0, 1, 0, 3],
     [2, 0, 0, 2],
@@ -91,9 +86,9 @@ BUILD_4_2 = [
     [1, 3, 0, 0],
     [0, 2, 0, 2],
     [0, 0, 2, 2],
-    [2, 0, 2, 0]]
+    [2, 0, 2, 0]])
 
-BUILD_4_3 = [
+BUILD_4_3 = np.array([
     [0, 1, 1, 2],
     [1, 2, 0, 1],
     [0, 2, 1, 1],
@@ -105,11 +100,11 @@ BUILD_4_3 = [
     [1, 0, 2, 1],
     [2, 0, 1, 1],
     [1, 0, 1, 2],
-    [1, 1, 0, 2]]
+    [1, 1, 0, 2]])
 
-BUILD_4_4 =  [[1, 1, 1, 1]]
+BUILD_4_4 =  np.array([[1, 1, 1, 1]])
 
-BUILD_5_2 = [
+BUILD_5_2 = np.array([
     [0, 3, 2, 0],
     [4, 0, 0, 1],
     [0, 0, 2, 3],
@@ -133,9 +128,9 @@ BUILD_5_2 = [
     [0, 4, 1, 0],
     [3, 0, 2, 0],
     [1, 0, 0, 4],
-    [0, 1, 0, 4]]  
+    [0, 1, 0, 4]])
 
-BUILD_5_3 = [
+BUILD_5_3 = np.array([
     [1, 2, 2, 0],
     [3, 1, 1, 0],
     [1, 3, 0, 1],
@@ -159,14 +154,14 @@ BUILD_5_3 = [
     [0, 2, 1, 2],
     [2, 0, 2, 1],
     [2, 1, 2, 0],
-    [1, 0, 2, 2]]
+    [1, 0, 2, 2]])
 
-BUILD_5_4 =  [[1, 1, 2, 1], [2, 1, 1, 1], [1, 2, 1, 1], [1, 1, 1, 2]]
+BUILD_5_4 =  np.array([[1, 1, 2, 1], [2, 1, 1, 1], [1, 2, 1, 1], [1, 1, 1, 2]])
 
 
-STATE_ENV_SIZE = 415
-STATE_PLAYER_SIZE = 350
-ALL_ACTION_SIZE = 70
+STATE_ENV_SIZE = 413
+STATE_PLAYER_SIZE = 348
+ALL_ACTION_SIZE = 68
 
 P_ID_PLAYER = 142
 ID_START_PEOPLE = 318
@@ -180,7 +175,8 @@ P_PULL_RECENT = 331
 P_ALL_TOOL = 332
 P_START_DICE_FOR_CIV = 333
 P_END_DICE_FOR_CIV = 337
-P_PHASE = 337
+P_TOTAL_DICE = 337
+P_PHASE = 338
 
 E_ID_PLAYER = 211
 TOTAL_INDEX_PLAYER = 44
@@ -193,5 +189,83 @@ E_PULL_RECENT = 396
 E_ALL_TOOL = 397
 E_START_DICE_FOR_CIV = 398
 E_END_DICE_FOR_CIV = 402
-E_PHASE = 402
+E_TOTAL_DICE = 402
+E_PHASE = 403
 
+
+
+def print_act(act):
+    if act == 0:
+        print('Dừng lấy công cụ')
+    if act in np.arange(1,11):
+        print('Đặt', act, 'người')
+    if act == 11:
+        print('Đặt người vào lúa')
+    if act == 12:
+        print('Đặt người vào công cụ')
+    if act == 13:
+        print('Đặt người vào sinh sản')
+    if act == 14:
+        print('Đặt người vào gỗ')
+    if act == 15:
+        print('Đặt người vào gạch')
+    if act == 16:
+        print('Đặt người vào bạc')
+    if act == 17:
+        print('Đặt người vào vàng')
+    if act == 18:
+        print('Đặt người vào lương thực')
+
+    if act in np.arange(19,23):
+        print('Đặt người ô civ', act-19)
+    if act in np.arange(23,27):
+        print('Đặt người ô build', act-23)
+
+    if act == 27:
+        print('Chọn trừ nguyên liệu')
+    if act == 28:
+        print('Chọn trừ điểm')
+
+    if act == 29:
+        print('lấy người từ lúa')
+    if act == 30:
+        print('lấy người từ công cụ')
+    if act == 31:
+        print('lấy người từ sinh sản')
+    if act == 32:
+        print('lấy người từ gỗ')
+    if act == 33:
+        print('lấy người từ gạch')
+    if act == 34:
+        print('lấy người từ bạc')
+    if act == 35:
+        print('lấy người từ vàng')
+    if act == 36:
+        print('lấy người từ lương thực')
+
+    if act in np.arange(37,40):
+        print('Dùng công cụ ở ô:', act - 37)
+
+    if act in np.arange(40,44):
+        print('Trả nguyên liệu', act - 40)
+
+    if act in np.arange(44,47):
+        print('Dùng công cụ 1 lần', act - 44 +2)
+
+    if act == 47:
+        print('Dừng trả công cụ')
+    
+    if act in np.arange(48, 52):
+        print('Lấy người từ thẻ civ', act-48)
+    
+    if act in np.arange(52, 56):
+        print('Lấy người từ thẻ build', act-52)
+    
+    if act in np.arange(56, 63):
+        print('chọn xúc xắc', act-56)
+
+    if act == 63:
+        print('Chọn dùng thẻ lấy thêm 2 nguyên liệu từ thẻ civ')
+
+    if act in np.arange(64, 68):
+        print('Lấy nguyên liệu gỗ gạch, bạc, vàng', 64-68)
