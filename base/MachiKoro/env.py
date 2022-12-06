@@ -737,9 +737,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_card_fee, per_file):
     env_state = initEnv()
     count_turn = 0
 
-    temp_1_player = List()
-    temp_1_player.append(np.array([[0.]]))
-    temp_file = [temp_1_player]*(getAgentSize())
+
 
     while system_check_end(env_state) and count_turn < 500:
         p_idx = int(env_state[-2])

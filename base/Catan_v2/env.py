@@ -1740,8 +1740,8 @@ def one_game(list_player, per_file):
     while env[230] < MAX_TURN_IN_ONE_GAME:
         p_idx = int(env[254])
         p_state = getAgentState(env)
-        action, temp_file[p_idx], per_file = list_player[p_idx](
-            p_state, temp_file[p_idx], per_file)
+        action, per_file = list_player[p_idx](
+            p_state, per_file)
         stepEnv(env, action)
         winner = checkEnded(env)
         if winner != -1:
@@ -1754,8 +1754,8 @@ def one_game(list_player, per_file):
             env[254] = i
             env[229] = 2
             p_state = getAgentState(env)
-            action, temp_file[i], per_file = list_player[i](
-                p_state, temp_file[i], per_file)
+            action, per_file = list_player[i](
+                p_state, per_file)
 
     return winner, per_file
 
@@ -2483,15 +2483,14 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
 @njit()
 def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10):
     env = initEnv()
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
+
 
     winner = -1
     while env[230] < MAX_TURN_IN_ONE_GAME:
         idx = int(env[254])
         player_state = getAgentState(env)
         if list_other[idx] == -1:
-            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+            action, per_player = p0(player_state,per_player)
             # print('ac', action, type(action), 'acc')
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10)
@@ -2511,7 +2510,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
             env[229] = 2
             p_state = getAgentState(env)
             if list_other[i] == -1:
-                act, _temp_, per_player = p0(p_state, _temp_, per_player)
+                act, per_player = p0(p_state, per_player)
 
     winner_ = False
     if np.where(list_other == -1)[0] ==  winner: winner_ = True
@@ -2549,15 +2548,14 @@ def numba_main_2(p0, per_player, n_game):
 @njit()
 def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10):
     env = initEnv()
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
+
 
     winner = -1
     while env[230] < MAX_TURN_IN_ONE_GAME:
         idx = int(env[254])
         player_state = getAgentState(env)
         if list_other[idx] == -1:
-            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+            action, per_player = p0(player_state,per_player)
             # print('ac', action, type(action), 'acc')
         else:
             action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10)
@@ -2577,7 +2575,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
             env[229] = 2
             p_state = getAgentState(env)
             if list_other[i] == -1:
-                act, _temp_, per_player = p0(p_state, _temp_, per_player)
+                act, per_player = p0(p_state, per_player)
 
     winner_ = False
     if np.where(list_other == -1)[0] ==  winner: winner_ = True

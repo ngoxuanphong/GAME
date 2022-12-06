@@ -1,4 +1,4 @@
-from base.Century.env import *
+from base.StoneAge.env import *
 import time
 
 def calculate_time(func):
@@ -24,7 +24,7 @@ def main():
 
     @calculate_time
     def test_numba_main():
-        b, _ = numba_main(test, test, test, test, test, 1000, np.array([0]))
+        b, _ = numba_main(test, test, test, test, 1000, np.array([0]))
         print('Numba_main', b, end = '')
 
     @calculate_time
@@ -39,8 +39,8 @@ def main():
     
     test_normal_main()
     test_numba_main()
-    test_numba_main_2()
     test_normal_main_2()
+    test_numba_main_2()
 
 
 if __name__ == '__main__':

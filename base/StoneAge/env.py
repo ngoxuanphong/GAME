@@ -838,16 +838,12 @@ def stepEnv(action, env, all_build_card, all_civ_card):
     
 def one_game(list_player, per_file):
     env, all_build_card, all_civ_card = initEnv(BUILDING_CARDS, CIV_CARDS)
-    temp_file = np.array([[0],[0],[0],[0]])
     _cc = 0
-    build_card = env[41:69]
-    civ_card = env[5:41]
     while _cc <= 10000:
 
-        phase = np.where(env[E_PHASE:] == 1)[0][0]
         p_idx = np.where(env[0:4] == 1)[0][0]
         p_state = getAgentState(env)
-        act, temp_file[p_idx], per_file = list_player[p_idx](p_state, temp_file[p_idx], per_file)
+        act, per_file = list_player[p_idx](p_state, per_file)
         list_action = getValidActions(p_state)
         
         if list_action[act] != 1:
@@ -858,12 +854,11 @@ def one_game(list_player, per_file):
             break
 
         _cc += 1
-   ##print('Số lượt chơi', _cc)
 
     for i in range(4):
         p_state = getAgentState(env)
-        act, temp_file[i], per_file = list_player[i](p_state, temp_file[i], per_file)
-        e_id_return = int(E_ID_PLAYER + TOTAL_INDEX_PLAYER*i)
+        act, per_file = list_player[i](p_state, per_file)
+
     return checkEnded(env), per_file
 
 def normal_main(list_player, num_game,per_file):
@@ -885,3 +880,174 @@ def normal_main(list_player, num_game,per_file):
             num_won[4] += 1
 
     return num_won, per_file
+
+
+@njit()
+def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
+    env, all_build_card, all_civ_card = initEnv(BUILDING_CARDS, CIV_CARDS)
+    _cc = 0
+    while _cc <= 10000:
+
+        p_idx = np.where(env[0:4] == 1)[0][0]
+        p_state = getAgentState(env)
+        list_action = getValidActions(p_state)
+
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, per_file = p0(p_state, per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, per_file = p1(p_state, per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, per_file = p2(p_state, per_file)
+        else:
+            act, per_file = p3(p_state, per_file)
+
+        if list_action[act] != 1:
+            raise Exception('Action không hợp lệ')
+        env, all_build_card, all_civ_card = stepEnv(act, env, all_build_card, all_civ_card)
+
+        if checkEnded(env) != -1:
+            break
+
+        _cc += 1
+
+    
+    for p_idx in range(4):
+        p_state = getAgentState(env)
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, per_file = p0(p_state, per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, per_file = p1(p_state, per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, per_file = p2(p_state, per_file)
+        else:
+            act, per_file = p3(p_state, per_file)
+    
+    return checkEnded(env), per_file
+
+
+@njit()
+def numba_main(p0, p1, p2, p3, num_game,per_file):
+    num_won = [0,0,0,0,0]
+    p_lst_idx = np.array([0,1,2,3])
+    for _n in range(num_game):
+        np.random.shuffle(p_lst_idx)
+        winner, per_file = numba_one_game(p_lst_idx, p0, p1, p2, p3, per_file )
+        if winner != 0: num_won[p_lst_idx[winner-1]] += 1
+        else:num_won[4] += 1
+    return num_won, per_file
+
+
+
+@njit()
+def random_Env(p_state):
+    arr_action = getValidActions(p_state)
+    arr_action = np.where(arr_action == 1)[0]
+    act_idx = np.random.randint(0, len(arr_action))
+    return arr_action[act_idx]
+
+@njit()
+def one_game_numba(p0, list_other, per_player):
+    env, all_build_card, all_civ_card = initEnv(BUILDING_CARDS, CIV_CARDS)
+    _cc = 0
+    while _cc <= 10000:
+        p_idx = np.where(env[0:4] == 1)[0][0]
+        p_state = getAgentState(env)
+        
+        if list_other[p_idx] == -1:
+            action, per_player = p0(p_state,per_player)
+        elif list_other[p_idx] == -2:
+            action = random_Env(p_state)
+
+
+        list_action = getValidActions(p_state)
+        if list_action[action] != 1:
+            raise Exception('Action không hợp lệ')
+
+        env, all_build_card, all_civ_card = stepEnv(action, env, all_build_card, all_civ_card)
+        if checkEnded(env) != -1:
+            break
+        
+        _cc += 1
+
+    for idx in range(4):
+        if list_other[idx] == -1:
+            p_state = getAgentState(env)
+            act, per_player = p0(p_state, per_player)
+
+    winner = False
+    if np.where(list_other == -1)[0] ==  (checkEnded(env) - 1): winner = True
+    else: winner = False
+    return winner,  per_player
+
+
+@njit()
+def n_game_numba(p0, num_game, per_player, level):
+    win = 0
+    if level == 0:
+        list_other = np.array([-2, -2, -2, -1])
+    else:
+        raise Exception('Hiện tại không có level này')
+    for _n in range(num_game):
+        np.random.shuffle(list_other)
+        winner,per_player  = one_game_numba(p0, list_other, per_player)
+        win += winner
+    return win, per_player
+
+
+
+def numba_main_2(p0, n_game, per_player, level):
+    return n_game_numba(p0, n_game, per_player, level)
+
+
+# @njit()
+def one_game_numba_2(p0, list_other, per_player):
+    env, all_build_card, all_civ_card = initEnv(BUILDING_CARDS, CIV_CARDS)
+    _cc = 0
+    while _cc <= 10000:
+        p_idx = np.where(env[0:4] == 1)[0][0]
+        p_state = getAgentState(env)
+        
+        if list_other[p_idx] == -1:
+            action, per_player = p0(p_state,per_player)
+        elif list_other[p_idx] == -2:
+            action = random_Env(p_state)
+
+
+        list_action = getValidActions(p_state)
+        if list_action[action] != 1:
+            raise Exception('Action không hợp lệ')
+
+        env, all_build_card, all_civ_card = stepEnv(action, env, all_build_card, all_civ_card)
+        if checkEnded(env) != -1:
+            break
+        
+        _cc += 1
+
+    for idx in range(4):
+        if list_other[idx] == -1:
+            p_state = getAgentState(env)
+            act, per_player = p0(p_state, per_player)
+
+    winner = False
+    if np.where(list_other == -1)[0] ==  (checkEnded(env) - 1): winner = True
+    else: winner = False
+    return winner,  per_player
+
+
+# @njit()
+def n_game_numba_2(p0, num_game, per_player, level):
+    win = 0
+    if level == 0:
+        list_other = np.array([-2, -2, -2, -1])
+    else:
+        raise Exception('Hiện tại không có level này')
+    for _n in range(num_game):
+        np.random.shuffle(list_other)
+        winner,per_player  = one_game_numba_2(p0, list_other, per_player)
+        win += winner
+    return win, per_player
+
+
+
+def normal_main_2(p0, n_game, per_player, level):
+    return n_game_numba_2(p0, n_game, per_player, level)
