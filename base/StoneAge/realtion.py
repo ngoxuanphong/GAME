@@ -159,8 +159,8 @@ BUILD_5_3 = np.array([
 BUILD_5_4 =  np.array([[1, 1, 2, 1], [2, 1, 1, 1], [1, 2, 1, 1], [1, 1, 1, 2]])
 
 
-STATE_ENV_SIZE = 413
-STATE_PLAYER_SIZE = 348
+STATE_ENV_SIZE = 414
+STATE_PLAYER_SIZE = 349
 ALL_ACTION_SIZE = 68
 
 P_ID_PLAYER = 142
