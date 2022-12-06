@@ -264,7 +264,7 @@ def one_game(list_player, env, per_file):
     while not check_env(env):
         initEnv(env)
     
-    temp_file = [[0], [0], [0], [0]]
+    
     while True:
         p_state = getAgentState(env)
         list_action = getValidActions(p_state)
@@ -290,7 +290,7 @@ def one_game(list_player, env, per_file):
 #     if print_mode:
 #         print_player_cards(env)
     
-#     temp_file = [[0], [0], [0], [0]]
+#     
 #     while True:
 #         act, per_file = list_player[env[52]](getAgentState(env), per_file)
 #         if print_mode and env[60] == 0:

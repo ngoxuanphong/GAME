@@ -1,4 +1,4 @@
-from base.StoneAge.env import *
+from base.Catan_v2.env import *
 import time
 
 def calculate_time(func):
