@@ -1332,7 +1332,7 @@ def normal_main(list_player, times, per_file):
     return list(count_win.astype(np.int64)), per_file
 
 
-
+@njit()
 def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
     env = initEnv()
 
@@ -1379,7 +1379,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
 
     return winner, per_file
 
-
+@njit()
 def numba_main(p0, p1, p2, p3, times, per_file):
     count_win = np.full(9, 0)
     p_lst_idx = np.arange(4)
@@ -1413,7 +1413,6 @@ def random_Env(p_state):
 def one_game_numba(p0, list_other, per_player):
     env = initEnv()
 
-    _cc = 0
     winner = -1
     while env[230] < 1000:
         p_idx = int(env[244])
@@ -1429,10 +1428,10 @@ def one_game_numba(p0, list_other, per_player):
             raise Exception('Action không hợp lệ')
 
         stepEnv(env, action)
-        if checkEnded(env) != 0:
+        winner = checkEnded(env)
+        if winner != -1:
             break
         
-        _cc += 1
 
     env[np.array([68, 110, 152, 194])] += env[np.array([67, 109, 151, 193])]
 
@@ -1443,7 +1442,7 @@ def one_game_numba(p0, list_other, per_player):
                 env[229] = 2
                 p_state = getAgentState(env)
                 action, per_player = p0(p_state ,per_player)
-    if np.where(list_other == -1)[0] ==  (checkEnded(env)): winner = True
+    if np.where(list_other == -1)[0] == winner: winner = True
     else: winner = False
     return winner,  per_player
 
@@ -1469,7 +1468,6 @@ def numba_main_2(p0, n_game, per_player, level):
 def one_game_numba_2(p0, list_other, per_player):
     env = initEnv()
 
-    _cc = 0
     winner = -1
     while env[230] < 1000:
         p_idx = int(env[244])
@@ -1485,10 +1483,10 @@ def one_game_numba_2(p0, list_other, per_player):
             raise Exception('Action không hợp lệ')
 
         stepEnv(env, action)
-        if checkEnded(env) != 0:
+        winner = checkEnded(env)
+        if winner != -1:
             break
         
-        _cc += 1
 
     env[np.array([68, 110, 152, 194])] += env[np.array([67, 109, 151, 193])]
 
@@ -1498,8 +1496,8 @@ def one_game_numba_2(p0, list_other, per_player):
                 env[244] = p_idx
                 env[229] = 2
                 p_state = getAgentState(env)
-                action, per_player = p0(p_state,per_player)
-    if np.where(list_other == -1)[0] ==  (checkEnded(env)): winner = True
+                action, per_player = p0(p_state ,per_player)
+    if np.where(list_other == -1)[0] == winner: winner = True
     else: winner = False
     return winner,  per_player
 

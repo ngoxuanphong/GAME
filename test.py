@@ -1,43 +1,47 @@
-# from base.CatanNoExchange.env import *
-# import time
+from base.Century.env import *
+import time
 
-# @njit()
-# def random_player(p_state, temp_file, per_file):
-#     arr_action = getValidActions(p_state)
-#     arr_action = np.where(arr_action == 1)[0]
-#     id_act = np.random.randint(0, len(arr_action))
-#     return arr_action[id_act], temp_file, per_file
+def calculate_time(func):
+    def inner1(*args, **kwargs):
+        start = time.time()
+        func(*args, **kwargs)
+        end = time.time()
+        print('| Time to run code', end - start)
+    return inner1
 
-# # @njit()
-# def random_player2(p_state, temp_file, per_file):
-#     arr_action = getValidActions(p_state)
-#     arr_action = np.where(arr_action == 1)[0]
-#     id_act = np.random.randint(0, len(arr_action))
-#     return arr_action[id_act], temp_file, per_file
-
-# a = time.time()
-# numba_main(random_player, random_player, random_player, random_player, 10000, np.array([0]))
-# b = time.time()
-# print(b - a)
-
-# numba_main_2(random_player, 5, np.array([0]), 0)
-# a = time.time()
-# numba_main_2(random_player, 10000, np.array([0]), 0)
-# b = time.time()
-# print(b - a)
-
-# a = time.time()
-# normal_main_2(random_player2, 10000, np.array([0]), 0)
-# b = time.time()
-# print(b - a)
-
-from base.StoneAge.env import *
-
-def test(p_state, temp_file, per_file):
+@njit()
+def test(p_state, per_file):
     arr_action = getValidActions(p_state)
     arr_action = np.where(arr_action == 1)[0]
     act_idx = np.random.randint(0, len(arr_action))
-    return arr_action[act_idx], temp_file, per_file
+    return arr_action[act_idx], per_file
 
-a, _ = normal_main([test, test, test, test], 1000, [0])
-print(a)
+def main():
+    @calculate_time
+    def test_normal_main():
+        a, _ = normal_main([test]*getAgentSize(), 1000, np.array([0]))
+        print('Normal_main', a, end = '')
+
+    @calculate_time
+    def test_numba_main():
+        b, _ = numba_main(test, test, test, test, test, 1000, np.array([0]))
+        print('Numba_main', b, end = '')
+
+    @calculate_time
+    def test_numba_main_2():
+        c, _ = numba_main_2(test, 1000, np.array([0]), 0)
+        print("numba_main_2", c, end = '')
+
+    @calculate_time
+    def test_normal_main_2():
+        d, _ = normal_main_2(test, 1000, np.array([0]), 0)
+        print('normal_main_2', d, end = '')
+    
+    test_normal_main()
+    test_numba_main()
+    test_numba_main_2()
+    test_normal_main_2()
+
+
+if __name__ == '__main__':
+    main()
