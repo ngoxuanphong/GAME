@@ -131,7 +131,7 @@ def getReward(p_state):
     if max(scores) >= 15 and max(scores) > owner_score:
         return 0
     if owner_score < 15 and max(scores) < 15:
-        return -1
+        return 0
 
 
 @njit()

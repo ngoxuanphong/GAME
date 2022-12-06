@@ -99,7 +99,7 @@ def getReward(p_state):
     if max(scores) >= 15 and max(scores) > owner_score:
         return 0
     if owner_score < 15 and max(scores) < 15:
-        return -1
+        return 0
 
 @njit()
 def get_list_action_old(player_state_origin:np.int64):
@@ -381,6 +381,7 @@ def one_game(list_player, per_file):
         act, temp_file[i], per_file = list_player[i](p_state, temp_file[i], per_file)
     
     env[100] = turn
+
     return checkEnded(env), per_file
 
 def normal_main(list_player, num_game,per_file):
