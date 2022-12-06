@@ -46,7 +46,7 @@ import numpy as np
 def load_data_per2(list_all_players, game_name_):
     lst_data = []
     for name in list_all_players:
-        path_data = f'system/Agent/{name}/Data/{game_name_}_79200/'
+        path_data = f'A:/GAME/system/Agent/{name}/Data/{game_name_}_79200/'
         file_name = os.listdir(path_data)[0]
         data_in_file = np.load(f'{path_data}/{file_name}', allow_pickle=True)
         if 'Dat' in name:
