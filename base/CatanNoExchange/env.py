@@ -1475,7 +1475,6 @@ def numba_main_2(p0, n_game, per_player, level):
     return n_game_numba(p0, n_game, per_player, level)
 
 
-# @njit()
 def one_game_numba_2(p0, list_other, per_player):
     env = initEnv()
 
@@ -1517,7 +1516,6 @@ def one_game_numba_2(p0, list_other, per_player):
     return winner,  per_player
 
 
-# @njit()
 def n_game_numba_2(p0, num_game, per_player, level):
     win = 0
     if level == 0:
