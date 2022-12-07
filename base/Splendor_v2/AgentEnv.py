@@ -79,15 +79,14 @@ def getValidActions(player_state_origin:np.int64):
         card = normal_cards[7*id_card: 7+7*id_card]
         if sum(card) > 0:
             card_need = p_st + p_count_st - card[-5:]
-            if -sum(card_need[np.where(card_need < 0)]) <= yellow_count or min(card_need) >= 0: #(x*x>0)
+            if -sum(card_need[np.where(card_need < 0)]) <= yellow_count: #(x*x>0)
                 list_action_return[id_card+1] = 1
     for id_card in range(3):
         card = p_upside_down_card[7*id_card: 7+7*id_card]
         if sum(card) > 0:
             card_need = p_st + p_count_st -card[-5:]
-            if sum(card_need) != 0:
-                if -sum(card_need[np.where(card_need < 0)]) <= yellow_count or min(card_need) >= 0:
-                    list_action_return[id_card+13] = 1
+            if -sum(card_need[np.where(card_need < 0)]) <= yellow_count:
+                list_action_return[id_card+13] = 1
     count_upside_down = 0
     for id_card in range(3):
         card_upside_down = p_upside_down_card[7*id_card:7+7*id_card]
