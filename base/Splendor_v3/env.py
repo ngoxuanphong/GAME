@@ -131,7 +131,7 @@ def getReward(p_state):
     if max(scores) >= 15 and max(scores) > owner_score:
         return 0
     if owner_score < 15 and max(scores) < 15:
-        return -1
+        return 0
 
 
 @njit()
@@ -488,13 +488,12 @@ def _print_(env, lv1, lv2, lv3):
 
 def one_game(list_player, per_file):
     env, lv1, lv2, lv3 = initEnv()
-    temp_file = [[0],[0],[0],[0]]
     _cc = 0
     while env[100] <= 400 and _cc <= 10000:
         p_idx = env[100]%4
         p_state = getAgentState(env, lv1, lv2, lv3)
         #  print('-----------------------------------------------------------------------')
-        act, temp_file[p_idx], per_file = list_player[p_idx](p_state, temp_file[p_idx], per_file)
+        act, per_file = list_player[p_idx](p_state, per_file)
         list_action = getValidActions(p_state)
         if list_action[act] != 1:
             raise Exception('Action không hợp lệ')
@@ -511,7 +510,7 @@ def one_game(list_player, per_file):
         env[100] = i
         p_state = getAgentState(env, lv1, lv2, lv3)
         p_state[160] = 1
-        act, temp_file[i], per_file = list_player[i](p_state, temp_file[i], per_file)
+        act, per_file = list_player[i](p_state, per_file)
     
     env[100] = turn
     return checkEnded(env), per_file
@@ -544,21 +543,19 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
     env, lv1, lv2, lv3 = initEnv()
     _cc = 0
 
-    temp_1_player = List()
-    temp_1_player.append(np.array([[0.]]))
-    temp_file = [temp_1_player]*(getAgentSize())
+
 
     while env[100] <= 400 and _cc <= 10000:
         p_idx = env[100]%4
         p_state = getAgentState(env, lv1, lv2, lv3)
         if p_lst_idx_shuffle[p_idx] == 0:
-            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+            act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
-            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+            act, per_file = p1(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 2:
-            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+            act, per_file = p2(p_state, per_file)
         else:
-            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+            act, per_file = p3(p_state, per_file)
 
         list_action = getValidActions(p_state)
         if list_action[act] != 1:
@@ -577,13 +574,13 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
         p_state = getAgentState(env, lv1, lv2, lv3)
         p_state[160] = 1
         if p_lst_idx_shuffle[p_idx] == 0:
-            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+            act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
-            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+            act, per_file = p1(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 2:
-            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+            act, per_file = p2(p_state, per_file)
         else:
-            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+            act, per_file = p3(p_state, per_file)
     
     env[100] = turn
     return checkEnded(env), per_file
@@ -602,20 +599,6 @@ def numba_main(p0, p1, p2, p3, num_game,per_file):
     return num_won, per_file
 
 
-# @njit()
-# def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11):
-#     if id == 0: return test2_An_270922(player_state, per0)
-#     elif id == 1: return test2_Dat_130922(player_state, per1)
-#     elif id == 2: return test2_Hieu_270922(player_state, per2)
-#     elif id == 3: return test2_Khanh_270922(player_state, per3)
-#     elif id == 4: return test2_Phong_130922(player_state, per4)
-#     elif id == 5: return test2_An_200922(player_state, per5)
-#     elif id == 6: return test2_Phong_130922(player_state, per6)
-#     elif id == 7: return test2_Dat_130922(player_state, per7)
-#     elif id == 8: return test2_Khanh_200922(player_state, per8)
-#     elif id == 9: return test2_Khanh_130922(player_state, per9)
-#     elif id == 10: return test2_Dat_130922(player_state, per10)
-#     else: return test2_Hieu_130922(player_state, per11)
 
 @njit()
 def random_Env(p_state):
@@ -629,19 +612,16 @@ def random_Env(p_state):
 def one_game_numba(p0, list_other, per_player):
     env, lv1, lv2, lv3 = initEnv()
 
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
 
     _cc = 0
     while env[100] <= 400 and _cc <= 10000:
         idx = env[100]%4
         player_state = getAgentState(env, lv1, lv2, lv3)
         if list_other[idx] == -1:
-            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+            action, per_player = p0(player_state,per_player)
         elif list_other[idx] == -2:
             action = random_Env(player_state)
-        # else:
-        #     action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
+
 
         list_action = getValidActions(player_state)
         if list_action[action] != 1:
@@ -658,7 +638,7 @@ def one_game_numba(p0, list_other, per_player):
         if list_other[idx] == -1:
             p_state = getAgentState(env, lv1, lv2, lv3)
             p_state[160] = 1
-            act, _temp_, per_player = p0(p_state, _temp_, per_player)
+            act, per_player = p0(p_state, per_player)
     env[100] = turn
     winner = False
     if np.where(list_other == -1)[0] ==  (checkEnded(env) - 1): winner = True
@@ -682,20 +662,6 @@ def n_game_numba(p0, num_game, per_player, level):
 
 
 def numba_main_2(p0, n_game, per_player, level):
-    # list_all_players = dict_game_for_player[game_name_]
-    # list_data = load_data_per2(list_all_players, game_name_)
-    # per0 = list_data[0]
-    # per1 = list_data[1]
-    # per2 = list_data[2]
-    # per3 = list_data[3]
-    # per4 = list_data[4]
-    # per5 = list_data[5]
-    # per6 = list_data[6]
-    # per7 = list_data[7]
-    # per8 = list_data[8]
-    # per9 = list_data[9]
-    # per10 = list_data[10]
-    # per11 = list_data[11]
     return n_game_numba(p0, n_game, per_player, level)
 
 
@@ -709,22 +675,19 @@ def random_Env(p_state):
     return arr_action[act_idx]
 
 # @njit()
-def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11):
+def one_game_numba_2(p0, list_other, per_player):
     env, lv1, lv2, lv3 = initEnv()
 
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
 
     _cc = 0
     while env[100] <= 400 and _cc <= 10000:
         idx = env[100]%4
         player_state = getAgentState(env, lv1, lv2, lv3)
         if list_other[idx] == -1:
-            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+            action, per_player = p0(player_state,per_player)
         elif list_other[idx] == -2:
             action = random_Env(player_state)
-        # else:
-        #     action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11)
+
 
         list_action = getValidActions(player_state)
         if list_action[action] != 1:
@@ -741,7 +704,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
         if list_other[idx] == -1:
             p_state = getAgentState(env, lv1, lv2, lv3)
             p_state[160] = 1
-            act, _temp_, per_player = p0(p_state, _temp_, per_player)
+            act, per_player = p0(p_state, per_player)
     env[100] = turn
     winner = False
     if np.where(list_other == -1)[0] ==  (checkEnded(env) - 1): winner = True
@@ -765,18 +728,4 @@ def n_game_numba_2(p0, num_game, per_player, level):
 
 
 def normal_main_2(p0, n_game, per_player, level):
-    # list_all_players = dict_game_for_player[game_name_]
-    # list_data = load_data_per2(list_all_players, game_name_)
-    # per0 = list_data[0]
-    # per1 = list_data[1]
-    # per2 = list_data[2]
-    # per3 = list_data[3]
-    # per4 = list_data[4]
-    # per5 = list_data[5]
-    # per6 = list_data[6]
-    # per7 = list_data[7]
-    # per8 = list_data[8]
-    # per9 = list_data[9]
-    # per10 = list_data[10]
-    # per11 = list_data[11]
     return n_game_numba_2(p0, n_game, per_player, level)

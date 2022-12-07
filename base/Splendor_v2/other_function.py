@@ -47,12 +47,11 @@
 #             print(f'Người chơi {p_idx+1} trả nguyên liệu:', list_color[id_action])
 
 
-#     temp_file = [[0],[0],[0],[0]]
-#     _cc = 0
+# #     _cc = 0
 #     while env[100] <= 400 and _cc <= 10000:
 #         p_idx = env[100]%4
 #         p_state = getAgentState(env, lv1, lv2, lv3)
-#         act, temp_file[p_idx], per_file = list_player[p_idx](p_state, temp_file[p_idx], per_file)
+#         act, per_file = list_player[p_idx](p_state, per_file)
 #         print('day la action he thong', act)
 #         list_action = getValidActions(p_state)
 #         if print_mode:
@@ -79,7 +78,7 @@
 #         env[100] = i
 #         p_state = getAgentState(env, lv1, lv2, lv3)
 #         p_state[161] = 1
-#         act, temp_file[i], per_file = list_player[i](p_state, temp_file[i], per_file)
+#         act, per_file = list_player[i](p_state, per_file)
     
 #     env[100] = turn
 #     return checkEnded(env), per_file

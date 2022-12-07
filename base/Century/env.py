@@ -55,13 +55,13 @@ def state_to_player(env_state):
 
 
 
-def action_player(env_state,list_player,file_temp,file_per):
+def action_player(env_state,list_player,file_per):
     current_player = int(env_state[-1])
     player_state = state_to_player(env_state)
-    played_move,file_temp[current_player],file_per = list_player[current_player](player_state,file_temp[current_player],file_per)
+    played_move,file_per = list_player[current_player](player_state,file_per)
     if getValidActions(player_state)[played_move] != 1:
         raise Exception('bot dua ra action khong hop le')
-    return played_move,file_temp,file_per
+    return played_move,file_per
 
 @njit(fastmath=True, cache=True)
 def get_list_action_old(player_state_origin):
@@ -232,11 +232,11 @@ def system_check_end(env_state):
 
 '''
 
-# def one_game_print_mode(list_player, file_temp, file_per, card_in4, card_point_in4):
+# def one_game_print_mode(list_player, file_per, card_in4, card_point_in4):
 #     env_state = initEnv(card_in4, card_point_in4)
 #     count_turn = 0
 #     while system_check_end(env_state) and count_turn < 1000:
-#         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)    
+#         action, file_per = action_player(env_state,list_player,file_per)    
 #         print(f'Turn: {count_turn} player {int(env_state[-1])} action {action} {all_action_mean[action]}  có {np.sum(env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)][2:6])} nguyên liệu và {env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)][:2]} điểm')     #có {env_state[51*int(env_state[-1]):51*int(env_state[-1]+1)]}
 #         env_state = stepEnv(env_state, action, card_in4, card_point_in4)
 #         count_turn += 1
@@ -245,7 +245,7 @@ def system_check_end(env_state):
 #     for id_player in range(5):
 #         env_state[-2] = 1
 #         id_action = env_state[-1]
-#         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+#         action, file_per = action_player(env_state,list_player,file_per)
 #         env_state[-1] = (env_state[-1] + 1)%5
     
 #     return winner, file_per
@@ -492,11 +492,11 @@ def stepEnv(env_state, action, card_in4, card_point_in4):
  
     return env_state
 
-def one_game(list_player, file_temp, file_per, card_in4, card_point_in4):
+def one_game(list_player, file_per, card_in4, card_point_in4):
     env_state = initEnv(card_in4, card_point_in4)
     count_turn = 0
     while system_check_end(env_state) and count_turn < 2000:
-        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)     
+        action, file_per = action_player(env_state,list_player,file_per)     
         env_state = stepEnv(env_state, action, card_in4, card_point_in4)
         count_turn += 1
 
@@ -504,7 +504,7 @@ def one_game(list_player, file_temp, file_per, card_in4, card_point_in4):
     for id_player in range(5):
         env_state[-2] = 1
         id_action = env_state[-1]
-        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+        action, file_per = action_player(env_state,list_player,file_per)
         env_state[-1] = (env_state[-1] + 1)%5
     
     return winner, file_per
@@ -519,7 +519,7 @@ def normal_main(list_player, times, file_per):
         shuffle = np.random.choice(all_id_player, 5, replace=False)
         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]], list_player[shuffle[4]]]
         file_temp = [[0],[0],[0],[0], [0]]
-        winner, file_per = one_game(shuffle_player, file_temp, file_per, card_in4, card_point_in4)
+        winner, file_per = one_game(shuffle_player, file_per, card_in4, card_point_in4)
         if winner == -1:
             count[winner] += 1
         else:
@@ -530,24 +530,21 @@ def normal_main(list_player, times, file_per):
 def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, p4, card_in4, card_point_in4, per_file):
     env_state = initEnv(card_in4, card_point_in4,)
 
-    temp_1_player = List()
-    temp_1_player.append(np.array([[0.]]))
-    temp_file = [temp_1_player]*(getAgentSize())
 
     count_turn = 0
     while system_check_end(env_state) and count_turn < 2000:
         p_idx = int(env_state[-1])
         p_state = state_to_player(env_state)
         if p_lst_idx_shuffle[p_idx] == 0:
-            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+            act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
-            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+            act, per_file = p1(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 2:
-            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+            act, per_file = p2(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 3:
-            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+            act, per_file = p3(p_state, per_file)
         else:
-            act, temp_file[p_idx], per_file = p4(p_state, temp_file[p_idx], per_file)
+            act, per_file = p4(p_state, per_file)
         if getValidActions(p_state)[act] != 1:
             raise Exception('bot dua ra action khong hop le')
         env_state = stepEnv(env_state, act, card_in4, card_point_in4)
@@ -561,15 +558,15 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, p4, card_in4, card_point_i
         p_idx = int(env_state[-1])
 
         if p_lst_idx_shuffle[p_idx] == 0:
-            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+            act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
-            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+            act, per_file = p1(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 2:
-            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+            act, per_file = p2(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 3:
-            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+            act, per_file = p3(p_state, per_file)
         else:
-            act, temp_file[p_idx], per_file = p4(p_state, temp_file[p_idx], per_file)
+            act, per_file = p4(p_state, per_file)
     
         env_state[-1] = (env_state[-1] + 1)%5
     return winner, per_file
@@ -635,15 +632,13 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     card_in4 = all_card_in4()
     card_point_in4 = all_card_point_in4()
     env = initEnv(card_in4, card_point_in4)
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
 
     count_turn = 0 
     while system_check_end(env) and count_turn < 2000:
         idx = int(env[-1])
         player_state = state_to_player(env)
         if list_other[idx] == -1:
-            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+            action, per_player = p0(player_state,per_player)
         elif list_other[idx] == -2:
             action = random_Env(player_state)
         else:
@@ -658,7 +653,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     for p_idx in range(5):
         env[-2] = 1
         if list_other[int(env[-1])] == -1:
-            act, _temp_, per_player = p0(state_to_player(env), _temp_, per_player)
+            act, per_player = p0(state_to_player(env), per_player)
         env[-1] = (env[-1] + 1)%5
 
     winner = False
@@ -703,20 +698,18 @@ def numba_main_2(p0, n_game, per_player, level):
     return n_game_numba(p0, n_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10)
 
 
-@njit()
+# @njit()
 def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10):
     card_in4 = all_card_in4()
     card_point_in4 = all_card_point_in4()
     env = initEnv(card_in4, card_point_in4)
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
 
     count_turn = 0 
     while system_check_end(env) and count_turn < 2000:
         idx = int(env[-1])
         player_state = state_to_player(env)
         if list_other[idx] == -1:
-            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+            action, per_player = p0(player_state,per_player)
         elif list_other[idx] == -2:
             action = random_Env(player_state)
         else:
@@ -731,7 +724,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     for p_idx in range(5):
         env[-2] = 1
         if list_other[int(env[-1])] == -1:
-            act, _temp_, per_player = p0(state_to_player(env), _temp_, per_player)
+            act, per_player = p0(state_to_player(env), per_player)
         env[-1] = (env[-1] + 1)%5
 
     winner = False
@@ -740,7 +733,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     return winner,  per_player
 
 
-@njit()
+# @njit()
 def n_game_numba_2(p0, num_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10):
     win = 0
     if level == 0:

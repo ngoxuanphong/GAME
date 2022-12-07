@@ -58,7 +58,7 @@ def state_to_player(env_state):
     player_state = np.concatenate((player_state, env_state[504:519], env_state[629:644], env_state[-2:]))
     return player_state
 
-def player_random(player_state, file_temp, file_per):
+def player_random(player_state, file_per):
     list_action = getValidActions(player_state)
     action = int(np.random.choice(list_action))
     if getReward(player_state) == -1:
@@ -72,7 +72,7 @@ def player_random(player_state, file_temp, file_per):
             # print('lose')
             pass
 
-    return action, file_temp, file_per
+    return action, file_per
 
 @njit(fastmath=True, cache=True)
 def get_list_action_old(player_state_origin):
@@ -444,13 +444,13 @@ def system_check_end(env_state):
     else:
         return True
 
-def action_player(env_state,list_player,file_temp,file_per):
+def action_player(env_state,list_player,file_per):
     current_player = int(env_state[-3])
     player_state = state_to_player(env_state)
-    played_move,file_temp[current_player],file_per = list_player[current_player](player_state,file_temp[current_player],file_per)
+    played_move,file_per = list_player[current_player](player_state,file_per)
     if getValidActions(player_state)[played_move] != 1:
         raise Exception('bot dua ra action khong hop le')
-    return played_move,file_temp,file_per
+    return played_move,file_per
 
 @njit(fastmath=True, cache=True)  
 def check_winner(env_state):
@@ -849,18 +849,18 @@ def step_print_mode(env_state, action, all_penalty):
     # print(env_state[-4:])
     return env_state
 
-# def one_game_print_mode(list_player, file_temp, file_per, all_penalty):
+# def one_game_print_mode(list_player, file_per, all_penalty):
 #     env_state = initEnv()
 #     count_turn = 0
 #     while not system_check_end(env_state):
-#         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+#         action, file_per = action_player(env_state,list_player,file_per)
 #         print(f'Turn: {count_turn} player {env_state[-3]} {all_action_mean[action]} {env_state[96*int(env_state[-3]):96*int(env_state[-3]+1)]} và {[env_state[0], env_state[96], env_state[192],env_state[288]]}')
 #         env_state = step_print_mode(env_state, action, all_penalty)
 #         count_turn += 1
 #     winner = check_winner(env_state)
 #     for id_player in range(4):
 #         id_action = env_state[-3]
-#         action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+#         action, file_per = action_player(env_state,list_player,file_per)
 #         print(f'Turn: {count_turn} player {env_state[-3]} {all_action_mean[action]} {env_state[96*int(env_state[-3]):96*int(env_state[-3]+1)]} và {[env_state[0], env_state[96], env_state[192],env_state[288]]}')
 #         env_state[-3] = (env_state[-3] + 1)%4
 #     return winner, file_per
@@ -874,22 +874,22 @@ def step_print_mode(env_state, action, all_penalty):
 #         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
 #         file_temp = [[0],[0],[0],[0]]
 #         # try:
-#         winner, file_per = one_game_print_mode(shuffle_player, file_temp, file_per, all_penalty)
+#         winner, file_per = one_game_print_mode(shuffle_player, file_per, all_penalty)
 #         count[shuffle[winner]] += 1
 #     return list(count.astype(np.int64)), file_per
 
-def one_game(list_player, file_temp, file_per, all_penalty):
+def one_game(list_player, file_per, all_penalty):
     env_state = initEnv()
     while not system_check_end(env_state):
         # player_state = state_to_player(env_state)
-        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+        action, file_per = action_player(env_state,list_player,file_per)
         env_state = stepEnv(env_state, action, all_penalty)
     
     winner = check_winner(env_state)
     for id_player in range(4):
         env_state[-1] = 1
         id_action = env_state[-3]
-        action, file_temp, file_per = action_player(env_state,list_player,file_temp,file_per)
+        action, file_per = action_player(env_state,list_player,file_per)
         env_state[-3] = (env_state[-3] + 1)%4
 
     return winner, file_per
@@ -902,7 +902,7 @@ def normal_main(list_player, times, file_per):
         shuffle = np.random.choice(all_id_player, 4, replace=False)
         shuffle_player = [list_player[shuffle[0]], list_player[shuffle[1]], list_player[shuffle[2]], list_player[shuffle[3]]]
         file_temp = [[0],[0],[0],[0]]
-        winner, file_per = one_game(shuffle_player, file_temp, file_per, all_penalty)
+        winner, file_per = one_game(shuffle_player, file_per, all_penalty)
         count[shuffle[winner]] += 1
     return list(count.astype(np.int64)), file_per
 
@@ -911,21 +911,19 @@ def normal_main(list_player, times, file_per):
 def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_penalty, per_file):
     env_state = initEnv()
 
-    temp_1_player = List()
-    temp_1_player.append(np.array([[0.]]))
-    temp_file = [temp_1_player]*(getAgentSize())
+
 
     while not system_check_end(env_state):
         p_idx = int(env_state[-3])
         p_state = state_to_player(env_state)
         if p_lst_idx_shuffle[p_idx] == 0:
-            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+            act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
-            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+            act, per_file = p1(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 2:
-            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+            act, per_file = p2(p_state, per_file)
         else:
-            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+            act, per_file = p3(p_state, per_file)
         if getValidActions(p_state)[act] != 1:
             raise Exception('bot dua ra action khong hop le')
         env_state = stepEnv(env_state, act, all_penalty)
@@ -937,13 +935,13 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_penalty, per_file):
         p_state = state_to_player(env_state)
         p_idx = int(env_state[-3])
         if p_lst_idx_shuffle[p_idx] == 0:
-            act, temp_file[p_idx], per_file = p0(p_state, temp_file[p_idx], per_file)
+            act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
-            act, temp_file[p_idx], per_file = p1(p_state, temp_file[p_idx], per_file)
+            act, per_file = p1(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 2:
-            act, temp_file[p_idx], per_file = p2(p_state, temp_file[p_idx], per_file)
+            act, per_file = p2(p_state, per_file)
         else:
-            act, temp_file[p_idx], per_file = p3(p_state, temp_file[p_idx], per_file)
+            act, per_file = p3(p_state, per_file)
     
         env_state[-3] = (env_state[-3] + 1)%4
     return winner, per_file
@@ -979,14 +977,13 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
 def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
     env = initEnv()
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
+
 
     while not system_check_end(env):
         idx = int(env[-3])
         player_state = state_to_player(env)
         if list_other[idx] == -1:
-            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+            action, per_player = p0(player_state,per_player)
         elif list_other[idx] == -2:
             action = random_Env(player_state)
         else:
@@ -1001,7 +998,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     for p_idx in range(4):
         env[-1] = 1
         if list_other[int(env[-3])] == -1:
-            act, _temp_, per_player = p0(state_to_player(env), _temp_, per_player)
+            act, per_player = p0(state_to_player(env), per_player)
         env[-3] = (env[-3] + 1)%4
 
     winner = False
@@ -1047,18 +1044,17 @@ def numba_main_2(p0, n_game, per_player, level):
     return n_game_numba(p0, n_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
 
 
-@njit()
+# @njit()
 def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
     env = initEnv()
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
+
 
     while not system_check_end(env):
         idx = int(env[-3])
         player_state = state_to_player(env)
         if list_other[idx] == -1:
-            action, _temp_, per_player = p0(player_state,_temp_,per_player)
+            action, per_player = p0(player_state,per_player)
         elif list_other[idx] == -2:
             action = random_Env(player_state)
         else:
@@ -1073,7 +1069,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     for p_idx in range(4):
         env[-1] = 1
         if list_other[int(env[-3])] == -1:
-            act, _temp_, per_player = p0(state_to_player(env), _temp_, per_player)
+            act, per_player = p0(state_to_player(env), per_player)
         env[-3] = (env[-3] + 1)%4
 
     winner = False
@@ -1082,7 +1078,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     return winner,  per_player
 
 
-@njit()
+# @njit()
 def n_game_numba_2(p0, num_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
     win = 0
     for _n in range(num_game):

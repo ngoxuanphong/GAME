@@ -302,7 +302,7 @@ def one_game_print(list_player,per_file):
             count = 0
             while player_state[-1] > 0:
                 print(list_action[id_player])
-                action, temp_file[id_player], per_file = list_player[id_player](player_state,temp_file[id_player],per_file)
+                action, per_file = list_player[id_player](player_state,per_file)
                 list_action[id_player][count] = action
                 count += 1
                 player_state = test_action(player_state,action)
@@ -323,7 +323,7 @@ def one_game_print(list_player,per_file):
         print(state_sys)
     # print(state_sys)
     for id_player in range(len(list_player)):
-        list_action[id_player], temp_file[id_player], per_file = list_player[id_player](getAgentState(state_sys,id_player),temp_file[id_player],per_file)    
+        list_action[id_player], per_file = list_player[id_player](getAgentState(state_sys,id_player),per_file)    
     winner = winner_victory(state_sys)
     return winner,per_file
 
@@ -344,7 +344,7 @@ def one_game(list_player_,per_file):
             count = 0
             while player_state[-1] > 0:
                 # print(list_action[id_player])
-                action, temp_file[id_player], per_file = list_player_[id_player](player_state,temp_file[id_player],per_file)
+                action, per_file = list_player_[id_player](player_state,per_file)
                 list_action[id_player][count] = action
                 count += 1
                 player_state = test_action(player_state,action)
@@ -365,7 +365,7 @@ def one_game(list_player_,per_file):
         # print(state_sys)
     # print(state_sys)
     for id_player in range(len(list_player_)):
-        list_action[id_player], temp_file[id_player], per_file = list_player_[id_player](getAgentState(state_sys,id_player),temp_file[id_player],per_file)    
+        list_action[id_player], per_file = list_player_[id_player](getAgentState(state_sys,id_player),per_file)    
     winner = winner_victory(state_sys)
     return winner,per_file
 
@@ -423,15 +423,15 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, p4,per_file ):
             while player_state[-1] > 0:
                 # print(list_action[id_player])
                 if p_lst_idx_shuffle[id_player] == 0:
-                    act, temp_file[id_player], per_file = p0(player_state, temp_file[id_player], per_file)
+                    act, per_file = p0(player_state, per_file)
                 elif p_lst_idx_shuffle[id_player] == 1:
-                    act, temp_file[id_player], per_file = p1(player_state, temp_file[id_player], per_file)
+                    act, per_file = p1(player_state, per_file)
                 elif p_lst_idx_shuffle[id_player] == 2:
-                    act, temp_file[id_player], per_file = p2(player_state, temp_file[id_player], per_file)
+                    act, per_file = p2(player_state, per_file)
                 elif p_lst_idx_shuffle[id_player] == 3:
-                    act, temp_file[id_player], per_file = p3(player_state, temp_file[id_player], per_file)
+                    act, per_file = p3(player_state, per_file)
                 else:
-                    act, temp_file[id_player], per_file = p4(player_state, temp_file[id_player], per_file)
+                    act, per_file = p4(player_state, per_file)
                 list_action[id_player][count] = act
                 count += 1
                 player_state = test_action(player_state,act)
@@ -454,15 +454,15 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, p4,per_file ):
     for id_player in range(5):
         p_state = getAgentState(state_sys,id_player)
         if p_lst_idx_shuffle[id_player] == 0:
-            act, temp_file[id_player], per_file = p0(p_state, temp_file[id_player], per_file)
+            act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[id_player] == 1:
-            act, temp_file[id_player], per_file = p1(p_state, temp_file[id_player], per_file)
+            act, per_file = p1(p_state, per_file)
         elif p_lst_idx_shuffle[id_player] == 2:
-            act, temp_file[id_player], per_file = p2(p_state, temp_file[id_player], per_file)
+            act, per_file = p2(p_state, per_file)
         elif p_lst_idx_shuffle[id_player] == 3:
-            act, temp_file[id_player], per_file = p3(p_state, temp_file[id_player], per_file)
+            act, per_file = p3(p_state, per_file)
         else:
-            act, temp_file[id_player], per_file = p4(p_state, temp_file[id_player], per_file)    
+            act, per_file = p4(p_state, per_file)    
     winner = winner_victory(state_sys)
     return winner,per_file
 
@@ -515,8 +515,6 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     amount_player = state_sys[2]
     turn = state_sys[1]
 
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
 
 
     while turn<(12-amount_player)*3:
@@ -528,7 +526,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
             count = 0
             while player_state[-1] > 0:
                 if list_other[id_player] == -1:
-                    action, _temp_, per_player = p0(player_state,_temp_,per_player)
+                    action, per_player = p0(player_state,per_player)
                 elif list_other[id_player] == -2:
                     action = random_Env(player_state)
                 else:
@@ -551,7 +549,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
 
     for idx in range(5):
         if list_other[idx] == -1:
-            act, _temp_, per_player = p0(getAgentState(state_sys,idx), _temp_, per_player)
+            act, per_player = p0(getAgentState(state_sys,idx), per_player)
         else:
             action = get_func(getAgentState(state_sys,idx), list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
     winner = False
@@ -611,8 +609,6 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     amount_player = state_sys[2]
     turn = state_sys[1]
 
-    _temp_ = List()
-    _temp_.append(np.array([[0]]))
 
 
     while turn<(12-amount_player)*3:
@@ -624,7 +620,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
             count = 0
             while player_state[-1] > 0:
                 if list_other[id_player] == -1:
-                    action, _temp_, per_player = p0(player_state,_temp_,per_player)
+                    action, per_player = p0(player_state,per_player)
                 elif list_other[id_player] == -2:
                     action = random_Env(player_state)
                 else:
@@ -647,7 +643,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
 
     for idx in range(5):
         if list_other[idx] == -1:
-            act, _temp_, per_player = p0(getAgentState(state_sys,idx), _temp_, per_player)
+            act, per_player = p0(getAgentState(state_sys,idx), per_player)
         else:
             action = get_func(getAgentState(state_sys,idx), list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11, per12, per13, per14, per15)
     winner = False
