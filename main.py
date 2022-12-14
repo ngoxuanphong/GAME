@@ -21,14 +21,8 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
 warnings.simplefilter('ignore', category=NumbaWarning)
 
-from setup import *
-# import pandas as pd
-# path_save_json_test_player = ''
-# type_run_code = 'Train_1_player'
-# game_name = 'TLMN'
-# time_run_game = 60
-# number_of_matches = 1000
 
+from setup import *
 def timeout(max_timeout):
     """Timeout decorator, parameter in seconds."""
     def timeout_decorator(item):
@@ -45,7 +39,7 @@ def timeout(max_timeout):
 
 
 def setup_game(game_name):
-    spec = importlib.util.spec_from_file_location('env', f"A:/GAME/base/{game_name}/env.py")
+    spec = importlib.util.spec_from_file_location('env', f"base/{game_name}/env.py")
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module 
     spec.loader.exec_module(module)
@@ -58,7 +52,7 @@ def train_1_player(player):
     p1 = load_module_player(player)
     p1.train(100000000)
 
-@timeout(time_run_game)
+# @timeout(time_run_game)
 def train_1_player_with_timeout(game, players):
     if len(players) == 1:
         p1 = load_module_player(players[0])
@@ -176,19 +170,10 @@ def fight_test_1_player_2(game, players, data_players, list_func):
 if __name__ == '__main__':
     game = setup_game(game_name)
     print('GAME:',  game_name, players)
+    
     if type_run_code == 'Train':
         train()
     if type_run_code == 'Test':
         fight_multi_player(game, players)
     if type_run_code == 'Train_1_player':
-        try:
-            train_1_player_with_timeout(game, players)
-        except:
-            data_train = pd.read_excel(path)
-            df_copy = data_train.loc[data_train['STATE'] == 'RUNNING']
-            if len(df_copy) > 0:
-                id_train = df_copy['ID'].iloc[0]
-                id_in_file = data_train.loc[data_train['ID'] == id_train].index[0]
-                data_train['STATE'].iloc[id_in_file] = 'SUCCESS'
-                players = [id_train]
-                data_train.to_excel(path, index= False)
+        train_1_player_with_timeout(game, players)

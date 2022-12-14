@@ -33,5 +33,5 @@
 *   [159]: **Số thẻ có thể úp trên bàn**
 
 ## :video_game: Action
-* [0:12]: Chọn 12 thẻ trên bàn
-* [12:15]: Chọn 3 thẻ úp trên tay
+*   [0:12]: Chọn 12 thẻ trên bàn
+*   [12:15]: Chọn 3 thẻ úp trên tay
