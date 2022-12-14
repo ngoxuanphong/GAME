@@ -25,11 +25,11 @@ def DataAgent():
 
 
 @njit()
-def Agent(state,temp,per):
+def Agent(state,per):
     actions = getValidActions(state)
     output = state @ per[0]
     output = (output >= 0) *1.0
     output = output @ per[1]
     output = output * actions + actions
     action = np.argmax(output)
-    return action,temp,per
+    return action,per

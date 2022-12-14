@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, time
 import numpy as np
 import pandas as pd
 import importlib.util
@@ -14,22 +14,8 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
 warnings.simplefilter('ignore', category=NumbaWarning)
 
-from setup import game_name, time_run_game
+from setup import game_name, time_run_game, path
 
-
-def timeout(max_timeout):
-    """Timeout decorator, parameter in seconds."""
-    def timeout_decorator(item):
-        """Wrap the original function."""
-        @functools.wraps(item)
-        def func_wrapper(*args, **kwargs):
-            """Closure for function."""
-            pool = multiprocessing.pool.ThreadPool(processes=1)
-            async_result = pool.apply_async(item, args, kwargs)
-            # raises a TimeoutError if execution exceeds max_timeout
-            return async_result.get(max_timeout)
-        return func_wrapper
-    return timeout_decorator
 
 
 def setup_game(game_name):
@@ -55,76 +41,90 @@ def CreateFolder(players, game_name, time_run_game):
     return path_save_player
 
 
-def train_player(game, p1, PerDataStartTrain, path_save_player, level):
-    for time in range(100):
-        win, PerDataStartTrain = game.numba_main_2(p1.Agent, 10000, PerDataStartTrain, level)
-        print('Lúc train', win, time)
-        np.save(f'{path_save_player}Train.npy',PerDataStartTrain)
-    np.save(f'{path_save_player}Train.npy',PerDataStartTrain)
-
-
 def test_data(game, p1, path_save_player, level):
     PerDataStartTrain = list(np.load(f'{path_save_player}Train.npy',allow_pickle=True))
     win, per = game.numba_main_2(p1.Agent, 1000, PerDataStartTrain, level)
-    print('test', win)
     return win 
 
 
-@timeout(time_run_game)
-def train(game, path_save_player, level, p1):
+def train(game, path_save_player, level, p1, time_loop):
     PerDataStartTrain = p1.DataAgent()
-    train_player(game, p1, PerDataStartTrain, path_save_player, level)
+    for time in range(time_loop):
+        win, PerDataStartTrain = game.numba_main_2(p1.Agent, 10000, PerDataStartTrain, level)
+        np.save(f'{path_save_player}Train.npy',PerDataStartTrain)
+    np.save(f'{path_save_player}Train.npy',PerDataStartTrain)
 
+def check_code(data_train, id_in_file, game, players):
+    p1 = load_module_player(players[0])
+    try:
+        win, PerDataStartTrain = game.numba_main_2(p1.Agent, 100, p1.DataAgent(), 0)
+        
+        start_10000 = time.time()
+        win, PerDataStartTrain = game.numba_main_2(p1.Agent, 10000, p1.DataAgent(), 0)
+        end_10000 = time.time()
+        return True, int(time_run_game/(end_10000 - start_10000))
+    except:
+        print('Người chơi', players, 'Đang bị bug đó')
+        change_excel_by_id(data_train, id_in_file, 'ERROR')
+        return False
 
-def train_and_test(game, players, all_level):
+def train_and_test(game, players, all_level, time_loop):
     print(players)
     p1 = load_module_player(players[0])
     path_save_player = CreateFolder(players, game_name, time_run_game)
-    # try:
-    train(game, path_save_player, 0, p1)
-    # except:
+    train(game, path_save_player, 0, p1, time_loop)
     for level in range(len(all_level)):
+        print(all_level)
         win = test_data(game, p1, path_save_player, level)
         all_level[level] = win//10
     return all_level
 
-path = "C:\AutomaticTrain\State.xlsx"
+def change_excel_by_id(data_train, id_in_file, msg):
+    print(data_train['ID'][id_in_file], msg)
+    data_train['STATE'][id_in_file] = msg
+    data_train.to_excel(path, index= False)
 
-def main(path):
+def calculate_time(func):
+    def inner1(*args, **kwargs):
+        start = time.time()
+        func(*args, **kwargs)
+        end = time.time()
+        print('| Time to run code', end - start)
+    return inner1
+
+@calculate_time
+def main(game_name):
+    print('---------')
     data_train = pd.read_excel(path)
     df_copy = data_train.loc[data_train['STATE'] == 'COPIED']
     game = setup_game(game_name)
 
-    print(game_name)
-    for i in df_copy.index:
-            data_train = pd.read_excel(path)
-            df_copy = data_train.loc[data_train['STATE'] == 'COPIED']
-            id_train = df_copy['ID'].iloc[0]
-            id_in_file = data_train.loc[data_train['ID'] == id_train].index[0]
+    id_train = df_copy['ID'].iloc[0]
+    id_in_file = data_train.loc[data_train['ID'] == id_train].index[0]
 
-            all_level = [int(level) for level in data_train[game_name][id_in_file].strip('][').split(',')]
-            data_train['STATE'][id_in_file] = 'RUNNING'
-
-            data_train.to_excel(path, index= False)
-            all_level = train_and_test(game, [id_train], all_level)
-            
-            data_train[game_name][id_in_file] = all_level
-            data_train['STATE'].iloc[id_in_file] = 'SUCCESS'
-            data_train.to_excel(path, index= False)
-
-
-
-def __TrainManyPlayers__(game_name_, player):
-    # game = setup_game(game_name_)
-    for game_name_ in ['TLMN_v2', 'TLMN', 'MachiKoro' ,'TLMN_v2', 'Splendor']:
-        if len(sys.argv) >= 2:
-            sys.argv = [sys.argv[0]]
-            if 'Agent_player' in sys.modules:
-                del sys.modules['Agent_player']
-        sys.argv.append(game_name_)
-        p1 = load_module_player(player)
+    all_level = [int(level) for level in data_train[game_name][id_in_file].strip('][').split(',')]
+    __TrainManyPlayers__(game_name)
+    change_excel_by_id(data_train, id_in_file, 'CHECKING')
+    check_agent, time_loop = check_code(data_train, id_in_file, game, [id_train])
+    print('Time_loop', time_loop)
+    if check_agent == True:
+        change_excel_by_id(data_train, id_in_file, 'RUNNING')
+        all_level = train_and_test(game, [id_train], all_level, time_loop)
         
-        print(p1.getActionSize())
+        data_train[game_name][id_in_file] = all_level
+        change_excel_by_id(data_train, id_in_file, 'SUCCESS')
 
-__TrainManyPlayers__('TLMN', 'Agent')
+
+
+def __TrainManyPlayers__(game_name_):
+    # game = setup_game(game_name_)
+    if len(sys.argv) >= 2:
+        sys.argv = [sys.argv[0]]
+    sys.argv.append(game_name_)
+
+
+if __name__ == '__main__':
+    for time_ in range(3):
+        main(game_name)
+# __TrainManyPlayers__('TLMN', 'Agent')
 

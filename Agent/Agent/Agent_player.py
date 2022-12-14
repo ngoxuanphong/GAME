@@ -3,7 +3,7 @@ import sys, os
 game_name = sys.argv[1]
 sys.path.append(os.path.abspath(f"base/{sys.argv[1]}"))
 from env import *
-print('game', game_name, getActionSize(), sys.argv)
+# print('game', game_name, getActionSize(), sys.argv)
 
 import numpy as np
 def DataAgent():
@@ -27,11 +27,11 @@ def DataAgent():
 
 
 @njit()
-def Agent(state,temp,per):
+def Agent(state,per):
     actions = getValidActions(state)
     output = state @ per[0]
     output = (output >= 0) *1.0
     output = output @ per[1]
     output = output * actions + actions
     action = np.argmax(output)
-    return action,temp,per
+    return action,per
