@@ -98,7 +98,7 @@ def getReward(p_state):
         return 1
     if max(scores) >= 15 and max(scores) > owner_score:
         return 0
-    if owner_score < 15 and max(scores) < 15:
+    if p_state[160] == 1:
         return 0
 
 @njit()
@@ -581,6 +581,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
 
         list_action = getValidActions(player_state)
         if list_action[action] != 1:
+            print(action, list_other[idx])
             raise Exception('Action không hợp lệ')
 
         env, lv1, lv2, lv3 = stepEnv(action, env, lv1, lv2, lv3)
