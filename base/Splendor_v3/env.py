@@ -130,7 +130,7 @@ def getReward(p_state):
         return -1
     if max(scores) >= 15 and max(scores) > owner_score:
         return 0
-    if owner_score < 15 and max(scores) < 15:
+    if p_state[160] == 1:
         return 0
 
 

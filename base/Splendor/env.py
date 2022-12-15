@@ -324,42 +324,45 @@ def stepEnv(action, e_state, lv1, lv2, lv3):
 def getReward(p_state):
     score_arr = p_state[np.array([117,129,141,153])]
     max_score = np.max(score_arr)
-    if max_score < 15 or p_state[160] != 0 or p_state[164] == 0:
+    if p_state[164] == 0:
         return -1
     
-    lst_p = np.where(score_arr==max_score)[0] + 1
-    if len(lst_p) == 1:
-        if lst_p[0] == 1:
-            return 1
-        else:
-            return 0
-    
-    else:
-        lst_p_c = []
-        for p_id in lst_p:
-            lst_p_c.append(np.count_nonzero(p_state[:90]==p_id))
+    if max_score >= 15:
+        lst_p = np.where(score_arr==max_score)[0] + 1
+        if len(lst_p) == 1:
+            if lst_p[0] == 1:
+                return 1
+            else:
+                return 0
         
-        lst_p_c = np.array(lst_p_c)
-        min_p_c = np.min(lst_p_c)
-        lst_p_win = np.where(lst_p_c==min_p_c)[0]
-        if len(lst_p_win) == 1:
-            if lst_p[lst_p_win[0]] == 1:
-                return 1
-            else:
-                return 0
         else:
-            id_max = -1
-            a = -1
-            for i in lst_p_win:
-                b = max(np.where(p_state[:90]==lst_p[i])[0])
-                if b > a:
-                    id_max = lst_p[i]
-                    a = b
+            lst_p_c = []
+            for p_id in lst_p:
+                lst_p_c.append(np.count_nonzero(p_state[:90]==p_id))
             
-            if id_max == 1:
-                return 1
+            lst_p_c = np.array(lst_p_c)
+            min_p_c = np.min(lst_p_c)
+            lst_p_win = np.where(lst_p_c==min_p_c)[0]
+            if len(lst_p_win) == 1:
+                if lst_p[lst_p_win[0]] == 1:
+                    return 1
+                else:
+                    return 0
             else:
-                return 0
+                id_max = -1
+                a = -1
+                for i in lst_p_win:
+                    b = max(np.where(p_state[:90]==lst_p[i])[0])
+                    if b > a:
+                        id_max = lst_p[i]
+                        a = b
+                
+                if id_max == 1:
+                    return 1
+                else:
+                    return 0
+    else: 
+        return 0
             
 def one_game(list_player, env, lv1, lv2, lv3, per_file):
     initEnv(env, lv1, lv2, lv3)
