@@ -3,7 +3,7 @@ import random
 
 @njit()
 def initEnv() -> np.ndarray:
-    env = np.zeros(279)
+    env = np.zeros(281)
 
     # [0:19]: Tài nguyên trên các ô đất
     temp = np.array([5, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 3, 3, 1, 1, 1, 4, 4, 4])
@@ -98,6 +98,7 @@ def initEnv() -> np.ndarray:
     # [254:259]: Tài nguyên yêu cầu trong trade offer
     # [254:274]: Tài nguyên trong kho dự trữ của các người chơi
     env[254 + resource_turn_0] = 1
+    env[280] = 0
     return env
 
 
@@ -178,6 +179,7 @@ def getAgentState(env: np.ndarray) -> np.ndarray:
     # [205:218]: Các phase, gồm 13 phase 0 -> 12, phase 12 là phase chọn lấy nguyên liệu từ kho
     p_state[205 + phase] = 1 
     p_state[218] = np.argmax(env[249:254]) #Tài nguyên đưa ra trong trade offer để trade với bank
+    p_state[219] = env[280]
     return p_state
 
 
@@ -1249,14 +1251,17 @@ def checkEnded(env: np.ndarray):
 
 @njit()
 def getReward(p_state: np.ndarray):
-    if p_state[64] > 9:  # Hơn 9 điểm => auto thắng
-        return 1
-
-    elif p_state[98] > 9 or p_state[127] > 9 or p_state[156] > 9:
-        return 0
-
+    if p_state[219] == 0:
+        return -1
     else:
-        return -1  # Chưa có trên 9 điểm, chưa kết thúc game
+        if p_state[64] > 9:  # Hơn 9 điểm => auto thắng
+            return 1
+            
+        # elif p_state[98] > 9 or p_state[127] > 9 or p_state[156] > 9:
+        #     return 0
+
+        else:
+            return 0  # Chưa có trên 9 điểm, chưa kết thúc game
 
 
 
@@ -1298,6 +1303,7 @@ def one_game(list_player, per_file):
             break
 
     env[np.array([68, 110, 152, 194])] += env[np.array([67, 109, 151, 193])]
+    env[280] = 1
 
     if winner != -1:
         for i in range(4):

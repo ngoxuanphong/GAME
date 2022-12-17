@@ -1,4 +1,4 @@
-from base.Century.env import *
+from base.CatanNoExchange.env import *
 import time
 
 def calculate_time(func):

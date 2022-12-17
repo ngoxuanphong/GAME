@@ -835,7 +835,18 @@ def stepEnv(action, env, all_build_card, all_civ_card):
 
     return env, all_build_card, all_civ_card
 
-    
+
+@njit()
+def getReward(p_state):
+    if p_state[13] == 0:
+        return -1
+    else:
+        if p_state[P_ID_PLAYER] == np.max(p_state[np.array([142, 186, 230, 274])]):
+            return 1
+        else:
+            return 0
+
+
 def one_game(list_player, per_file):
     env, all_build_card, all_civ_card = initEnv(BUILDING_CARDS, CIV_CARDS)
     _cc = 0
@@ -910,6 +921,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
 
         _cc += 1
 
+    env[82] = 1
     
     for p_idx in range(4):
         p_state = getAgentState(env)

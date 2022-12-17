@@ -309,6 +309,6 @@ SETTLEMENT_PRICE = np.array([1, 1, 1, 1, 0])
 CITY_PRICE = np.array([0, 0, 0, 2, 3])
 DEV_PRICE = np.array([0, 0, 1, 1, 1])
 
-LEN_P_STATE = 219
+LEN_P_STATE = 220
 AMOUNT_ACTION = 95
 MAX_TURN_IN_ONE_GAME = 1200 # Càng cao thì chạy càng lâu, nhưng tỉ lệ không end được game càng thấp
