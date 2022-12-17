@@ -2,8 +2,8 @@
 *.nbc
 *.nbi
 
-
-/Agent/*
+/venv
+/Agent
 # !/Agent/player_random/
 **/__pycache__/
 /test
