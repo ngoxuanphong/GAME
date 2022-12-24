@@ -33,4 +33,4 @@
 #     print('Check tổng số trận thua', a[-1]*getAgentSize() == per[0]) #Có thể có nhiều người thua
     
 # main()
-import numpy
+import gym
