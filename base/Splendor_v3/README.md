@@ -12,6 +12,7 @@
 # 9. Nếu mua được nguyên liệu nào trên bàn thì lấy nguyên liệu đó
 # 10. Lấy thẻ bất kỳ trên bàn với số lượng nguyên liệu bỏ ra ít nhất
 
+<<<<<<< HEAD
 ## :dart: Báo cáo SPLENDOR góc nhìn của mình
 1.   `Tốc độ chạy`
       - **1000 Game**: 7.3s
@@ -23,6 +24,8 @@
 6. `Số ván check_vic > victory_thật`: 10000 ván thì có(thắng thật:2511, check_victory:2565)
 7. `Giá trị state, action:`
 9. `Tối thiểu số lần truyền vào player`: 1000 ván, (212, 382) lần truyền vào player
+=======
+>>>>>>> 094fcadfdfef9710b3ed9328e07b06a956868de1
 
 ## :globe_with_meridians: ENV_state
 *   [0:90] **các thẻ trên bàn**: 5 là đang ở trên bàn, -(p_id) là đang úp, p_id là người chơi đã mua được
@@ -44,6 +47,7 @@
 *   [159]: **Số thẻ có thể úp trên bàn**
 
 ## :video_game: Action
+<<<<<<< HEAD
 * [0]   :Là **action bỏ lượt**
 * [1:13] **lấy 12 thẻ trên bàn**
 * [13:16] Là **mở 3 thẻ đang úp**
@@ -51,3 +55,7 @@
 * [28:31] Úp **3 thẻ ẩn**
 * [31:36] Lấy **5 nguyên liêu**
 * [36:42] Trả **6 nguyên liệu**
+=======
+*   [0:12]: Chọn 12 thẻ trên bàn
+*   [12:15]: Chọn 3 thẻ úp trên tay
+>>>>>>> 094fcadfdfef9710b3ed9328e07b06a956868de1

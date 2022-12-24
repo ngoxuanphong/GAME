@@ -2,20 +2,11 @@
 *.nbc
 *.nbi
 
-
-
-/__pycache__/*
-/__pycache__/ 
-!/Agent/player_random/
-/Agent/Trang/
-/Agent/Numba_KPI/
-/Agent/Trang/Data/
-/Agent/NhatAnh_New/*
+/venv
+/Agent
+# !/Agent/player_random/
 **/__pycache__/
 /test
 **/Data
-# /test2.py
 /test_hethong.ipynb
 /test_he_thong.ipynb
-
-/setupAutorun.py

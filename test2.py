@@ -1,20 +1,35 @@
+# from base.StoneAge.env import *
+# import time
 
-from base.Splendor.env import *
-@njit()
-def test(p_state, temp_file, per_file):
-    arr_action = getValidActions(p_state)
-    arr_action = np.where(arr_action == 1)[0]
-    act_idx = np.random.randint(0, len(arr_action))
-    return arr_action[act_idx], temp_file, per_file
+# def calculate_time(func):
+#     def inner1(*args, **kwargs):
+#         start = time.time()
+#         func(*args, **kwargs)
+#         end = time.time()
+#         print('| Time to run code', end - start)
+#     return inner1
 
-print('lv0', numba_main_2(test, 1000, [0], 0))
-print('lv1', numba_main_2(test, 1000, [0], 1))
-print('lv2', numba_main_2(test, 1000, [0], 2))
-print('lv3', numba_main_2(test, 1000, [0], 3))
-print('lv4', numba_main_2(test, 1000, [0], 4))
+# @njit()
+# def test(p_state, per_file):
+#     arr_action = getValidActions(p_state)
+#     arr_action = np.where(arr_action == 1)[0]
+#     act_idx = np.random.randint(0, len(arr_action))
+#     check = getReward(p_state)
+#     if check == 0:
+#         per_file[0] += 1
+#     if check == 1:
+#         per_file[1] += 1
+#     if check != -1:
+#         per_file[2] += 1
+#     return arr_action[act_idx], per_file
 
-# from system.mainFunc import dict_game_for_player, load_data_per2    
-
-# a = dict_game_for_player['Sheriff']
-# for i in range(len(a)):
-#     print(i, a[i])
+# @calculate_time
+# def main():
+#     a, per = normal_main([test]*getAgentSize(), 100000, np.array([0, 0, 0]))
+#     print(a, per)
+#     print('Check tổng số trận', (per[0] + per[1])/getAgentSize() == 100000)
+#     print('Check số trận kết thúc', per[2] == (100000*getActionSize()))
+#     print('Check tổng số trận thắng', sum(a[:-1]) == per[1]) #Có thể có 2 người thắng
+#     print('Check tổng số trận thua', a[-1]*getAgentSize() == per[0]) #Có thể có nhiều người thua
+    
+# main()

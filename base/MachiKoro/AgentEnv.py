@@ -2,6 +2,7 @@ from system.mainFunc import dict_game_for_player, load_data_per2
 game_name_ = 'MachiKoro'
 import random
 import numpy as np
+from setup import game_name,time_run_game
 from numba import jit, njit, prange
 import warnings
 from numba.typed import List
