@@ -23,6 +23,10 @@ def getActionSize():
     return 198
 
 @njit
+def hamtest():
+    return 'a'
+
+@njit
 def getAgentSize():
     return 4
 

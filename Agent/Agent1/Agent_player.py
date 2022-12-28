@@ -1,7 +1,9 @@
 import sys, os
-from setup import game_name
-sys.path.append(os.path.abspath(f"base/{game_name}"))
+# from setup import game_name
+game_name = sys.argv[1]
+sys.path.append(os.path.abspath(f"base/{sys.argv[1]}"))
 from env import *
+# print('game', game_name, getActionSize(), sys.argv)
 
 import numpy as np
 def DataAgent():

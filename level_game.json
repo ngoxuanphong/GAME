@@ -1,0 +1,258 @@
+{
+ "Splendor_v3": {
+  "Can_Split_Level": "True",
+  "level_max": 4,
+  "id_remove": [
+   10,
+   4,
+   9,
+   5,
+   2,
+   3,
+   8,
+   10,
+   4,
+   9,
+   5,
+   7,
+   2,
+   8
+  ],
+  "1": [
+   [
+    4,
+    9,
+    5
+   ],
+   [
+    5489.0,
+    5501.0,
+    5519.0
+   ],
+   [
+    "AgentBias5",
+    "AgentBias10",
+    "AgentBias6"
+   ]
+  ],
+  "2": [
+   [
+    2,
+    3,
+    8
+   ],
+   [
+    251,
+    275,
+    278
+   ],
+   [
+    "AgentBias3",
+    "AgentBias4",
+    "AgentBias9"
+   ]
+  ],
+  "3": [
+   [
+    4,
+    9,
+    5
+   ],
+   [
+    5489.0,
+    5501.0,
+    5519.0
+   ],
+   [
+    "AgentBias5",
+    "AgentBias10",
+    "AgentBias6"
+   ]
+  ],
+  "4": [
+   [
+    7,
+    2,
+    8
+   ],
+   [
+    274,
+    5598.0,
+    5599.0
+   ],
+   [
+    "AgentBias8",
+    "AgentBias3",
+    "AgentBias9"
+   ]
+  ]
+ },
+ "MachiKoro": {
+  "Can_Split_Level": "True",
+  "level_max": 2,
+  "id_remove": [
+   10,
+   3,
+   4,
+   9,
+   1,
+   7,
+   0
+  ],
+  "1": [
+   [
+    3,
+    4,
+    9
+   ],
+   [
+    7813,
+    7822,
+    8168
+   ],
+   [
+    "AgentBias4",
+    "AgentBias5",
+    "AgentBias10"
+   ]
+  ],
+  "2": [
+   [
+    1,
+    7,
+    0
+   ],
+   [
+    255,
+    368,
+    405
+   ],
+   [
+    "AgentBias2",
+    "AgentBias8",
+    "AgentBias1"
+   ]
+  ]
+ },
+ "TLMN": {
+  "Can_Split_Level": "True",
+  "level_max": 1,
+  "id_remove": [
+   10,
+   2,
+   5,
+   4
+  ],
+  "1": [
+   [
+    2,
+    5,
+    4
+   ],
+   [
+    3613,
+    3641,
+    3709
+   ],
+   [
+    "AgentBias3",
+    "AgentBias6",
+    "AgentBias5"
+   ]
+  ]
+ },
+ "TLMN_v2": {
+  "Can_Split_Level": "True",
+  "level_max": 1,
+  "id_remove": [
+   10,
+   3,
+   0,
+   8
+  ],
+  "1": [
+   [
+    3,
+    0,
+    8
+   ],
+   [
+    3747,
+    3887,
+    3902
+   ],
+   [
+    "AgentBias4",
+    "AgentBias1",
+    "AgentBias9"
+   ]
+  ]
+ },
+ "Splendor_v2": {
+  "Can_Split_Level": "True",
+  "level_max": 3,
+  "id_remove": [
+   10,
+   7,
+   0,
+   1,
+   6,
+   8,
+   3,
+   2,
+   4,
+   9
+  ],
+  "1": [
+   [
+    7,
+    0,
+    1
+   ],
+   [
+    9552,
+    9579,
+    9603
+   ],
+   [
+    "AgentBias8",
+    "AgentBias1",
+    "AgentBias2"
+   ]
+  ],
+  "2": [
+   [
+    6,
+    8,
+    3
+   ],
+   [
+    363,
+    372,
+    381
+   ],
+   [
+    "AgentBias7",
+    "AgentBias9",
+    "AgentBias4"
+   ]
+  ],
+  "3": [
+   [
+    2,
+    4,
+    9
+   ],
+   [
+    260,
+    280,
+    284
+   ],
+   [
+    "AgentBias3",
+    "AgentBias5",
+    "AgentBias10"
+   ]
+  ]
+ }
+}
