@@ -9,7 +9,7 @@ mydb = mysql.connector.connect(
 
 mycursor = mydb.cursor()
 
-# mycursor.execute("SELECT * FROM CodeAgent")
+# mycursor.execute("DELETE FROM HistoryCodeAgent WHERE Name = 'Agent'")
 
 # myresult = mycursor.fetchall()
 

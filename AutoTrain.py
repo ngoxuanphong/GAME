@@ -14,12 +14,13 @@ warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
 warnings.simplefilter('ignore', category=NumbaWarning)
 
 
-df_run = pd.read_excel('A:\State.xlsx')
-df_agent = pd.read_excel('A:\StateAgent.xlsx')
-df_env = pd.read_excel('A:\StateEnv.xlsx')
+df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
+df_agent = pd.read_json(f'{SHOT_PATH}Log/StateAgent.json')
+df_env = pd.read_json(f'{SHOT_PATH}Log/StateEnv.json')
 
 list_tong = list(df_run.index)
-dict_level = json.load(open(f'{SHOT_PATH}level_game.json'))
+dict_agent = json.load(open(f'{SHOT_PATH}Log/agent_all.json'))
+dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
 PASS_LEVEL = 250
 COUNT_PLAYER_TRAIN_NEW_ENV = 10
 
@@ -35,42 +36,46 @@ def load_module_player(player):
     return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
 
 
-def CreateFolder(player, game_name, time_run_game): #Tên folder của người chơi
+def CreateFolder(player, game_name, level): #Tên folder của người chơi
     path_data = f'{SHOT_PATH}Agent/{player}/Data'
     if not os.path.exists(path_data):
         os.mkdir(path_data)
-    path_save_player = f'{SHOT_PATH}Agent/{player}/Data/{game_name}_{time_run_game}/'
+    path_save_player = f'{SHOT_PATH}Agent/{player}/Data/{game_name}_{level}/'
     if not os.path.exists(path_save_player):
         os.mkdir(path_save_player)
     return path_save_player
 
 
-def test_data(game, p1, path_save_player, level):
+def test_data(game, _p1_, path_save_player, level):
     PerDataStartTrain = list(np.load(f'{path_save_player}Train.npy',allow_pickle=True))
-    win, per = game.numba_main_2(p1.Agent, 1000, PerDataStartTrain, level)
+    win, per = game.numba_main_2(_p1_.Agent, 1000, PerDataStartTrain, level)
     return win/10
 
 
-def train(game, path_save_player, level, p1, time_loop):
-    PerDataStartTrain = p1.DataAgent()
+def train(game, path_save_player, level, _p1_, time_loop, *arg): #arg = 1 là train theo mốc, k phải train hệ thống mới
+    PerDataStartTrain = _p1_.DataAgent()
     for time in range(time_loop):
-        win, PerDataStartTrain = game.numba_main_2(p1.Agent, 10000, PerDataStartTrain, level)
+        win, PerDataStartTrain = game.numba_main_2(_p1_.Agent, 10000, PerDataStartTrain, level)
         np.save(f'{path_save_player}Train.npy',PerDataStartTrain)
+
+        if (arg[0] == 1) and (win > 1.1*10000/game.getAgentSize()):
+            print('win', win, 'time loop', time)
+            return win 
     np.save(f'{path_save_player}Train.npy',PerDataStartTrain)
     return win
 
 def check_code(game, player):
-    p1 = load_module_player(player)
-    win, PerDataStartTrain = game.numba_main_2(p1.Agent, 100, p1.DataAgent(), 0)
+    _p1_ = load_module_player(player)
+    win, PerDataStartTrain = game.numba_main_2(_p1_.Agent, 100, _p1_.DataAgent(), 0)
     
     start_10000 = time.time()
-    win, PerDataStartTrain = game.numba_main_2(p1.Agent, 10000, p1.DataAgent(), 0)
+    win, PerDataStartTrain = game.numba_main_2(_p1_.Agent, 10000, _p1_.DataAgent(), 0)
     end_10000 = time.time()
     return True, int(time_run_game/(end_10000 - start_10000))
 
 def save_json(path_save_json, dict_save):
     with open(path_save_json, 'w') as f:
-        json.dump(dict_save, f, indent= 4)
+        json.dump(dict_save, f)
 
 def train_new_env(df_run, dict_level):
     for col in df_run.columns[7:]:
@@ -81,28 +86,29 @@ def train_new_env(df_run, dict_level):
                 if pd.isna(df_run[col][id]):
                     agent_name = df_run['ID'][id]
                     df_run[col][id] = 'RUNNING'
-                    df_run.to_excel('A:\State.xlsx', index=False)
+                    df_run.to_json(f'{SHOT_PATH}Log/State.json')
 
                     if len(sys.argv) >= 2:
                         sys.argv = [sys.argv[0]]
                     sys.argv.append(env_name)
                     
-                    print('Tạo folder', env_name, agent_name, time_run_game)
-                    path_save_player = CreateFolder(agent_name, env_name, time_run_game)
+                    level = 0
+                    print('Tạo folder', env_name, agent_name, 'level', level)
+                    path_save_player = CreateFolder(agent_name, env_name, level)
                     env = setup_game(env_name)
-                    p1 = load_module_player(agent_name)
+                    _p1_ = load_module_player(agent_name)
 
                     check_agent, time_loop = check_code(env, agent_name)
                     print('Check Agent, time_loop', check_agent, time_loop)
                     if check_agent == True:
-                        print('train', env, path_save_player, 0, p1, time_loop)
-                        win = train(env, path_save_player, 0, p1, time_loop)
+                        print('train', env, path_save_player, level, _p1_, time_loop)
+                        win = train(env, path_save_player, level, _p1_, time_loop)
                         print('Tỉ lệ thắng sau khi train', win)
                         df_run[col][id] = win
-                        df_run.to_excel('A:\State.xlsx', index=False)
+                        df_run.to_json(f'{SHOT_PATH}Log/State.json')
 
         dict_level[env_name]['Can_Split_Level'] = 'True'
-        save_json('level_game.json', dict_level)
+        save_json('Log/level_game.json', dict_level)
 
 def get_lv(count_agent, df_run, env_name, dict_level):
     df_run_con_lai = df_run[df_run[env_name] != 'DONE']
@@ -112,7 +118,7 @@ def get_lv(count_agent, df_run, env_name, dict_level):
         print('khong_pass_level', khong_pass_level, df_run['ID'][khong_pass_level])
         df_run[env_name][khong_pass_level] = 'DONE'
 
-    df_run.to_excel('A:\State.xlsx', index=False)
+    df_run.to_json(f'{SHOT_PATH}Log/State.json')
 
     df_run_con_lai = df_run_con_lai[df_run_con_lai[env_name] > PASS_LEVEL]
     infor_level = df_run_con_lai.sort_values(by = env_name)
@@ -133,8 +139,8 @@ def get_lv(count_agent, df_run, env_name, dict_level):
         df_run[env_name][all_id_lv] = 'DONE'
         bool_add_new_level = 'True'
 
-        df_run.to_excel('A:\State.xlsx', index=False)
-        save_json('level_game.json', dict_level)
+        df_run.to_json(f'{SHOT_PATH}Log/State.json')
+        save_json('Log/agent_all.json', dict_level)
     return df_run, dict_level, bool_add_new_level
 
 
@@ -145,7 +151,7 @@ def test_and_add_new_level(df_run, dict_level):
             # df_run[env_name].loc[COUNT_PLAYER_TRAIN_NEW_ENV:] = 'DONE'
             dict_level[env_name]['id_remove'] += list(df_run[env_name].loc[COUNT_PLAYER_TRAIN_NEW_ENV:].index)
 
-            df_run.to_excel('A:\State.xlsx', index=False)
+            df_run.to_json(f'{SHOT_PATH}Log/State.json')
             for id in df_run.index[:COUNT_PLAYER_TRAIN_NEW_ENV]:
                 if df_run[col][id] != 'DONE':
                     env = setup_game(env_name)
@@ -155,9 +161,9 @@ def test_and_add_new_level(df_run, dict_level):
                         id_con_lai = [i for i in list_tong if i not in dict_level[env_name]['id_remove']]
                         for id_train in id_con_lai:
                             agent_name = df_run['ID'][id_train]
-                            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{agent_name}/Data/{env_name}_{time_run_game}/Train.npy',allow_pickle=True))
                             
                             level_max = dict_level[env_name]['level_max']
+                            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{agent_name}/Data/{env_name}_{level_max}/Train.npy',allow_pickle=True))
 
                             if len(sys.argv) >= 2:
                                 sys.argv = [sys.argv[0]]
@@ -167,7 +173,62 @@ def test_and_add_new_level(df_run, dict_level):
                             win, per = env.numba_main_2(p0, 1000, data_agent_env, level_max)
                             print('Train agent:', agent_name, 'win', win)
                             df_run[col][id_train] = win
-                            df_run.to_excel('A:\State.xlsx', index=False)
+                            df_run.to_json(f'{SHOT_PATH}Log/State.json')
 
-train_new_env(df_run, dict_level)
-test_and_add_new_level(df_run, dict_level)
+# train_new_env(df_run, dict_level)
+# test_and_add_new_level(df_run, dict_level)
+
+def choose_game_level_train(dict_agent, dict_level, agent_name):
+    level_train = int((dict_agent[agent_name]['Elo'] - 1200)/10)
+    if dict_agent[agent_name]['Elo'] <= 1180:
+        return False, False
+        
+    for env_name in dict_agent[agent_name]:
+        if env_name != 'Elo':
+            if dict_level['Splendor_v3']['level_max'] < level_train:
+                level_train = dict_level['Splendor_v3']['level_max']
+            # print(dict_agent[agent_name][env_name], str(level_train))
+            if str(level_train) in dict_agent[agent_name][env_name]:
+                if len(dict_agent[agent_name][env_name][str(level_train)]) == 0:
+                    dict_agent[agent_name][env_name][str(level_train)] = [0, 0]
+                    return env_name, level_train
+
+    return False, False
+
+def train_agent(dict_agent, dict_level):
+    for agent_name in dict_agent:
+        env_name, level = choose_game_level_train(dict_agent, dict_level, agent_name)
+        if env_name != False:
+            if len(sys.argv) >= 2:
+                sys.argv = [sys.argv[0]]
+            sys.argv.append(env_name)
+
+            path_save_player = CreateFolder(agent_name, env_name, level)
+            print('Tạo folder', env_name, agent_name, 'level', level)
+            
+            env = setup_game(env_name)
+            _p1_ = load_module_player(agent_name)
+            
+            check_agent, time_loop = check_code(env, agent_name)
+
+            if check_agent == True:
+                print('train', env_name, agent_name, level, 'loop', time_loop)
+                start = time.time()
+                win = train(env, path_save_player, level, _p1_, time_loop, 1)
+                print('Tỉ lệ thắng sau khi train', win)
+                end = time.time()
+
+                if (win > 1.1*10000/env.getAgentSize()):
+                    elo_add = win/(1.1*10000/env.getAgentSize()) + (time_run_game*100*(level+1))/((end-start)*time_run_game)
+                    dict_agent[agent_name]['Elo'] += elo_add
+                else:
+                    dict_agent[agent_name]['Elo'] -= 0.5**level*50
+
+                dict_agent[agent_name][env_name][str(level)] = [win, end - start]
+                print('Elo', dict_agent[agent_name]['Elo'])
+
+while True:
+    print('-------------------')
+    print(dict_agent)
+    print('-----')
+    train_agent(dict_agent, dict_level)
