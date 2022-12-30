@@ -3,7 +3,7 @@ from server.mysql_connector import mydb, mycursor
 import os, time, shutil
 import pandas as pd
 import numpy as np
-
+import zipfile
 
 def copy_agent_bool(agent_name):
     bool_copy_file = False
@@ -21,6 +21,7 @@ def check_sleep_copt_agent(agent_name):
         time.sleep(30) #Thời gian để load lại drive
         bool_copy_file = copy_agent_bool(agent_name)
     return bool_copy_file
+
 
 def copy_new_agent():
     mycursor.execute(f"SELECT * FROM CodeBot WHERE NotificateID = '107'")
@@ -60,7 +61,8 @@ def copy_new_agent():
             df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
 
 
-def get_notifi_server(type_code, msg, name_type, *arg):
+
+def get_notifi_server(type_code, msg, name_type, *args):
     NotifiID = None
     if type_code == 'Agent':
         if msg == 'WAITING': NotifiID = 100
@@ -91,9 +93,69 @@ def get_notifi_server(type_code, msg, name_type, *arg):
         val = (time.strftime('%Y-%m-%d %H:%M:%S'), name_type) 
         mycursor.execute(sql, val)
 
+        if len(args) > 0:
+            sql = f"UPDATE CodeBot SET ScoreElo = %s WHERE CodeID = %s"
+            val = (args[0], name_type)
+            mycursor.execute(sql, val)
+        
         mycursor.execute("SELECT * FROM CodeBot")
         print(mycursor.fetchall())
         mydb.commit()
 
-# copy_new_agent()
+
+def update_notificate_by_id(ID, msg, *args):
+    sql = f"UPDATE HistorySystem SET NotificateID = %s WHERE ID = %s"
+    if msg == 'ERROR FORMAT':val = (120, ID)
+    if msg == 'CANT UNZIP':val = (118, ID)
+    if msg == 'WAITING': val = (110, ID)
+        
+    if msg == 'CHECKING': val = (111, ID)
+    if msg == 'NO BUG': val = (112, ID)
+    if msg == 'BUG': val = (113, ID)
+
+    mycursor.execute(sql, val)
+    mycursor.execute("SELECT * FROM HistorySystem")
+    print(mycursor.fetchall())
+    mydb.commit()
+
+
+def copy_new_env():
+    mycursor.execute(f''' SELECT hs.ID, su.Name
+                    FROM  HistorySystem hs
+                    Left join auth_user au on au.id = hs.UserID
+                    Left join SystemUser su on su.SystemID = hs.SystemID
+                    Left join Notificate n on n.NotificateID = hs.NotificateID
+                    Where hs.NotificateID = 117''')
+
+    data_env_upload = mycursor.fetchall()
+    if len(data_env_upload) > 0:
+        ID = data_env_upload[0][0]
+        env_name = data_env_upload[0][1]
+
+        path_to_zip_file = f'{DRIVE_FOLDER}/System/{env_name}.zip'
+        directory_to_extract_to = f'{SHOT_PATH}Base/{env_name}'
+    
+        def upzip_env(ID):
+            try:
+                if os.path.exists(path_to_zip_file) == False:
+                    time.sleep(30)
+                with zipfile.ZipFile(path_to_zip_file, 'r') as zip_ref:
+                    zip_ref.extractall(directory_to_extract_to)
+                    time.sleep(2)
+                    if os.path.exists(f'{directory_to_extract_to}/env.py') == False or os.path.exists(f'{directory_to_extract_to}/README.md') == False:
+                        print(f'{directory_to_extract_to}/env.py')
+                        print(f'{directory_to_extract_to}/README.md')
+                        update_notificate_by_id(ID, 'ERROR FORMAT')
+            except:
+                update_notificate_by_id(ID, 'CANT UNZIP')
+
+        upzip_env(ID)
+        if os.path.exists(f'{directory_to_extract_to}/env.py'):
+            update_notificate_by_id(ID, 'WAITING')
+
+            df_env = pd.read_json(f'{SHOT_PATH}Log/StateEnv.json')
+            df_env.loc[len(df_env)] = [env_name, np.nan, np.nan, np.nan]
+            df_env.to_json(f'{SHOT_PATH}Log/StateEnv.json')
+    
+# copy_new_env()
 

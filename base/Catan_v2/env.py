@@ -1860,11 +1860,11 @@ def numba_main(p0, p1, p2, p3, times, per_file):
     return list(count_win.astype(np.int64)), per_file
 
 @njit()
-def random_Env(p_state):
+def random_Env(p_state, per):
     arr_action = getValidActions(p_state)
     arr_action = np.where(arr_action == 1)[0]
     act_idx = np.random.randint(0, len(arr_action))
-    return arr_action[act_idx]
+    return arr_action[act_idx], per
 
 @njit()
 def one_game_numba(p0, list_other, per_player):

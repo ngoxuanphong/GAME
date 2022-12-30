@@ -47,7 +47,7 @@ def initEnv():
     return environment
 
 @njit(fastmath=True, cache=True)
-def state_to_player(env_state):
+def getAgentState(env_state):
     player_action = env_state[-3]
     player_state = env_state[96*player_action:96*(player_action+1)]
     for idx in range(1, 4):
@@ -446,7 +446,7 @@ def system_check_end(env_state):
 
 def action_player(env_state,list_player,file_per):
     current_player = int(env_state[-3])
-    player_state = state_to_player(env_state)
+    player_state = getAgentState(env_state)
     played_move,file_per = list_player[current_player](player_state,file_per)
     if getValidActions(player_state)[played_move] != 1:
         raise Exception('bot dua ra action khong hop le')
@@ -849,6 +849,105 @@ def step_print_mode(env_state, action, all_penalty):
     # print(env_state[-4:])
     return env_state
 
+@njit(fastmath=True, cache=True)
+def getValidActions(player_state_origin):
+    player_state = player_state_origin.copy()
+    list_action_return = np.zeros(83)
+    phase_env = player_state[-1]
+    player_state_own = player_state[:96]
+    if phase_env == 1:
+        # list_action = np.array([15])
+        list_action_return[15] = 1
+        player_card = player_state_own[-15:]
+        for id in range(15):
+            if player_card[id] == 0:
+                continue
+            else:
+                list_action_return[id] = 1
+
+    elif phase_env == 2:
+        #lấy thẻ từ các chồng bài: 16-bài rút, 17-lật trái, 18-lật phải
+        list_action_return[16] = 1
+        all_left_right_up = player_state[171:201]
+        if np.sum(all_left_right_up[:15]) > 0:
+            list_action_return[17] = 1
+        if np.sum(all_left_right_up[15:]) > 0:
+            list_action_return[18] = 1
+
+    elif phase_env == 3:
+        #trả thẻ bỏ vào  chồng bài lật: 19: lật trái, 20: lật phải
+        list_action_return[np.array([19, 20])] = 1
+
+    elif phase_env == 4:
+        #lựa chọn bỏ qua thẻ
+        list_action_return[36] = 1
+        player_card = player_state_own[-15:]
+        for id in range(15):
+            if player_card[id] == 0:
+                continue
+            else:
+                list_action_return[id+21] = 1
+        if np.sum(player_state_own[-45:-30]) == 0:
+            list_action_return[36] = 0
+
+    elif phase_env == 5:
+        #chọn 1 trong 4 loại hàng chính ngạch
+        list_action_return[np.array([37, 38, 39, 40])] = 1
+
+    elif phase_env == 6:
+        #41, 42, 43 lần lượt là check người ở vị trí 1,2,3 sau mình, 44 là ko check nữa
+        for id in range(3):
+            #kiểm tra xem đã check hay chưa bằng cách xem mặt hàng khai báo
+            type_bag_other_player = player_state[95+25*id+3]
+            if type_bag_other_player != 0:
+                list_action_return[41+id] = 1
+
+    elif phase_env == 7:
+        #45 là ko hối lộ nữa, 46 là thêm coin
+        if player_state_own[0] > 0:
+            list_action_return[np.array([45, 46])] = 1
+        else:
+            list_action_return[45] = 1
+
+    elif phase_env == 8:
+        list_action_return[62] = 1
+        player_card_done = player_state_own[-75:-60]
+        for id in range(15):
+            if player_card_done[id] == 0:
+                continue
+            else:
+                list_action_return[id+47] = 1
+
+    elif phase_env == 9:
+        list_action_return[78] = 1
+        player_card_bag = player_state_own[-45:-30]
+        for id in range(15):
+            if player_card_bag[id] == 0:
+                continue
+            else:
+                list_action_return[id+63] = 1
+
+    elif phase_env == 10:
+        #79 là có check hàng, 80 là cho thoát
+        list_action_return[np.array([79, 80])] = 1
+
+    elif phase_env == 11:
+        list_action_return[np.array([81, 82])] = 1
+    
+    return list_action_return
+
+@njit(fastmath=True, cache=True)
+def getActionSize():
+    return 83
+
+@njit(fastmath=True, cache=True)
+def getAgentSize():
+    return 4
+
+@njit()
+def getStateSize():
+    return 203
+
 # def one_game_print_mode(list_player, file_per, all_penalty):
 #     env_state = initEnv()
 #     count_turn = 0
@@ -881,7 +980,7 @@ def step_print_mode(env_state, action, all_penalty):
 def one_game(list_player, file_per, all_penalty):
     env_state = initEnv()
     while not system_check_end(env_state):
-        # player_state = state_to_player(env_state)
+        # player_state = getAgentState(env_state)
         action, file_per = action_player(env_state,list_player,file_per)
         env_state = stepEnv(env_state, action, all_penalty)
     
@@ -915,7 +1014,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_penalty, per_file):
 
     while not system_check_end(env_state):
         p_idx = int(env_state[-3])
-        p_state = state_to_player(env_state)
+        p_state = getAgentState(env_state)
         if p_lst_idx_shuffle[p_idx] == 0:
             act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
@@ -932,7 +1031,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, all_penalty, per_file):
     for id_player in range(4):
         env_state[-1] = 1
         id_action = env_state[-3]
-        p_state = state_to_player(env_state)
+        p_state = getAgentState(env_state)
         p_idx = int(env_state[-3])
         if p_lst_idx_shuffle[p_idx] == 0:
             act, per_file = p0(p_state, per_file)
@@ -957,37 +1056,26 @@ def numba_main(p0, p1, p2, p3, num_game,per_file):
         count[p_lst_idx[winner]] += 1
     return list(count.astype(np.int64)), per_file
 
-from numba.typed import List
-from base.Sheriff.AgentEnv import *
+
 
 @njit()
-def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
-    if id == 0: return test2_Phong_130922(player_state, per0)
-    elif id == 1: return test2_Hieu_270922(player_state, per1)
-    elif id == 2: return test2_Khanh_270922(player_state, per2)
-    elif id == 3: return test2_An_200922(player_state, per3)
-    elif id == 4: return test2_Phong_130922(player_state, per4)
-    elif id == 5: return test2_Dat_130922(player_state, per5)
-    elif id == 6: return test2_Khanh_200922(player_state, per6)
-    elif id == 7: return test2_NhatAnh_200922(player_state, per7)
-    elif id == 8: return test2_Dat_130922(player_state, per8)
-    else: return test2_Khanh_130922(player_state, per9)
-
-@njit()
-def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
+def one_game_numba(p0, list_other, per_player, per1, per2, per3, p1, p2, p3):
     env = initEnv()
     all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
 
 
     while not system_check_end(env):
         idx = int(env[-3])
-        player_state = state_to_player(env)
+        player_state = getAgentState(env)
+
         if list_other[idx] == -1:
             action, per_player = p0(player_state,per_player)
-        elif list_other[idx] == -2:
-            action = random_Env(player_state)
-        else:
-            action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
+        elif list_other[idx] == 1:
+            action, per1 = p1(player_state,per1)
+        elif list_other[idx] == 2:
+            action, per2 = p2(player_state,per2)
+        elif list_other[idx] == 3:
+            action, per3 = p3(player_state,per3) 
 
         if getValidActions(player_state)[action] != 1:
             raise Exception('bot dua ra action khong hop le')
@@ -998,7 +1086,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     for p_idx in range(4):
         env[-1] = 1
         if list_other[int(env[-3])] == -1:
-            act, per_player = p0(state_to_player(env), per_player)
+            act, per_player = p0(getAgentState(env), per_player)
         env[-3] = (env[-3] + 1)%4
 
     winner = False
@@ -1008,111 +1096,46 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
 
 
 @njit()
-def n_game_numba(p0, num_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
+def random_Env(p_state, per):
+    arr_action = getValidActions(p_state)
+    arr_action = np.where(arr_action == 1)[0]
+    act_idx = np.random.randint(0, len(arr_action))
+    return arr_action[act_idx], per
+
+@njit()
+def n_game_numba(p0, num_game, per_player, list_other, per1, per2, per3, p1, p2, p3):
     win = 0
     for _n in range(num_game):
-        if level == 0:
-            list_other = np.array([-2, -2, -2, -1])
-        elif level == 1:
-            list_other = np.array([1, 3, 9, -1])
-        elif level == 2:
-            list_other = np.array([2, 5, 8, -1])
-        elif level == 3:
-            list_other = np.array([0, 4, 7, -1])
-        else:
-            raise Exception('Hiện tại không có level này')
         np.random.shuffle(list_other)
-        winner,per_player  = one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
+        winner,per_player  = one_game_numba(p0, list_other, per_player, per1, per2, per3, p1, p2, p3)
         win += winner
     return win, per_player
 
+import importlib.util, json, sys
+from setup import SHOT_PATH
 
+def load_module_player(player):
+    return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
 
 def numba_main_2(p0, n_game, per_player, level):
-    list_all_players = dict_game_for_player[game_name_]
-    list_data = load_data_per2(list_all_players, game_name_)
-    per0 = list_data[0]
-    per1 = list_data[1]
-    per2 = list_data[2]
-    per3 = list_data[3]
-    per4 = list_data[4]
-    per5 = list_data[5]
-    per6 = list_data[6]
-    per7 = list_data[7]
-    per8 = list_data[8]
-    per9 = list_data[9]
-    return n_game_numba(p0, n_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
+    list_other = np.array([1, 2, 3, -1])
+    if level == 0:
+        per_agent_env = np.array([0])
+        return n_game_numba(p0, n_game, per_player, list_other, per_agent_env, per_agent_env, per_agent_env, random_Env, random_Env, random_Env)
+    else:
+        env_name = sys.argv[1]
+        dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
 
+        if str(level) not in dict_level[env_name]:
+            raise Exception('Hiện tại không có level này') 
+        lst_agent_level = dict_level[env_name][str(level)][2]
 
-# @njit()
-def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
-    env = initEnv()
-    all_penalty = np.array([2, 2, 2, 2, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5, 5])
-
-
-    while not system_check_end(env):
-        idx = int(env[-3])
-        player_state = state_to_player(env)
-        if list_other[idx] == -1:
-            action, per_player = p0(player_state,per_player)
-        elif list_other[idx] == -2:
-            action = random_Env(player_state)
-        else:
-            action = get_func(player_state, list_other[idx], per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
-
-        if getValidActions(player_state)[action] != 1:
-            raise Exception('bot dua ra action khong hop le')
-
-        env = stepEnv(env, action, all_penalty)
-
-    win = check_winner(env)
-    for p_idx in range(4):
-        env[-1] = 1
-        if list_other[int(env[-3])] == -1:
-            act, per_player = p0(state_to_player(env), per_player)
-        env[-3] = (env[-3] + 1)%4
-
-    winner = False
-    if np.where(list_other == -1)[0] ==  win: winner = True
-    else: winner = False
-    return winner,  per_player
-
-
-# @njit()
-def n_game_numba_2(p0, num_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9):
-    win = 0
-    for _n in range(num_game):
-        if level == 0:
-            list_other = np.array([-2, -2, -2, -1])
-        elif level == 1:
-            list_other = np.array([1, 3, 9, -1])
-        elif level == 2:
-            list_other = np.array([2, 5, 8, -1])
-        elif level == 3:
-            list_other = np.array([0, 4, 7, -1])
-        else:
-            raise Exception('Hiện tại không có level này')
-        np.random.shuffle(list_other)
-        winner,per_player  = one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
-        win += winner
-    return win, per_player
-
-
-
-def normal_main_2(p0, n_game, per_player, level):
-    list_all_players = dict_game_for_player[game_name_]
-    list_data = load_data_per2(list_all_players, game_name_)
-    per0 = list_data[0]
-    per1 = list_data[1]
-    per2 = list_data[2]
-    per3 = list_data[3]
-    per4 = list_data[4]
-    per5 = list_data[5]
-    per6 = list_data[6]
-    per7 = list_data[7]
-    per8 = list_data[8]
-    per9 = list_data[9]
-    return n_game_numba_2(p0, n_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9)
-
-
-
+        p1 = load_module_player(lst_agent_level[0]).Agent
+        p2 = load_module_player(lst_agent_level[1]).Agent
+        p3 = load_module_player(lst_agent_level[2]).Agent
+        per_level = []
+        for id in range(getAgentSize()):
+            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{lst_agent_level[0]}/Data/{env_name}_{level}/Train.npy',allow_pickle=True))
+            per_level.append(data_agent_env)
+        
+        return n_game_numba(p0, n_game, per_player, list_other, per_level[0], per_level[1], per_level[2], p1, p2, p3)

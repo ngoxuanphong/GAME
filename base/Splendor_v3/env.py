@@ -543,8 +543,6 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
     env, lv1, lv2, lv3 = initEnv()
     _cc = 0
 
-
-
     while env[100] <= 400 and _cc <= 10000:
         p_idx = env[100]%4
         p_state = getAgentState(env, lv1, lv2, lv3)
@@ -600,12 +598,7 @@ def numba_main(p0, p1, p2, p3, num_game,per_file):
 
 
 
-@njit()
-def random_Env(p_state, per):
-    arr_action = getValidActions(p_state)
-    arr_action = np.where(arr_action == 1)[0]
-    act_idx = np.random.randint(0, len(arr_action))
-    return arr_action[act_idx], per
+
 
 @njit()
 def one_game_numba(p0, list_other, per_player, per1, per2, per3, p1, p2, p3):
@@ -648,6 +641,12 @@ def one_game_numba(p0, list_other, per_player, per1, per2, per3, p1, p2, p3):
     else: winner = False
     return winner,  per_player
 
+@njit()
+def random_Env(p_state, per):
+    arr_action = getValidActions(p_state)
+    arr_action = np.where(arr_action == 1)[0]
+    act_idx = np.random.randint(0, len(arr_action))
+    return arr_action[act_idx], per
 
 @njit()
 def n_game_numba(p0, num_game, per_player, list_other, per1, per2, per3, p1, p2, p3):
@@ -659,7 +658,7 @@ def n_game_numba(p0, num_game, per_player, list_other, per1, per2, per3, p1, p2,
     return win, per_player
 
 import importlib.util, json, sys
-from setup import SHOT_PATH, time_run_game
+from setup import SHOT_PATH
 
 def load_module_player(player):
     return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
@@ -682,7 +681,7 @@ def numba_main_2(p0, n_game, per_player, level):
         p3 = load_module_player(lst_agent_level[2]).Agent
         per_level = []
         for id in range(getAgentSize()):
-            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{lst_agent_level[0]}/Data/{env_name}_100/Train.npy',allow_pickle=True))
+            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{lst_agent_level[0]}/Data/{env_name}_{level}/Train.npy',allow_pickle=True))
             per_level.append(data_agent_env)
         
         return n_game_numba(p0, n_game, per_player, list_other, per_level[0], per_level[1], per_level[2], p1, p2, p3)

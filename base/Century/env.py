@@ -39,7 +39,7 @@ def initEnv(card_in4, card_point_in4):
     return env_state
 
 @njit(fastmath=True, cache=True)
-def state_to_player(env_state):
+def getAgentState(env_state):
     player_action = int(env_state[-1])
     player_state = env_state[51*player_action:51*(player_action+1)]
     for idx in range(1, 5):
@@ -57,7 +57,7 @@ def state_to_player(env_state):
 
 def action_player(env_state,list_player,file_per):
     current_player = int(env_state[-1])
-    player_state = state_to_player(env_state)
+    player_state = getAgentState(env_state)
     played_move,file_per = list_player[current_player](player_state,file_per)
     if getValidActions(player_state)[played_move] != 1:
         raise Exception('bot dua ra action khong hop le')
@@ -534,7 +534,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, p4, card_in4, card_point_i
     count_turn = 0
     while system_check_end(env_state) and count_turn < 2000:
         p_idx = int(env_state[-1])
-        p_state = state_to_player(env_state)
+        p_state = getAgentState(env_state)
         if p_lst_idx_shuffle[p_idx] == 0:
             act, per_file = p0(p_state, per_file)
         elif p_lst_idx_shuffle[p_idx] == 1:
@@ -554,7 +554,7 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, p4, card_in4, card_point_i
     for id_player in range(5):
         env_state[-2] = 1
         id_action = env_state[-1]
-        p_state = state_to_player(env_state)
+        p_state = getAgentState(env_state)
         p_idx = int(env_state[-1])
 
         if p_lst_idx_shuffle[p_idx] == 0:
@@ -636,7 +636,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     count_turn = 0 
     while system_check_end(env) and count_turn < 2000:
         idx = int(env[-1])
-        player_state = state_to_player(env)
+        player_state = getAgentState(env)
         if list_other[idx] == -1:
             action, per_player = p0(player_state,per_player)
         elif list_other[idx] == -2:
@@ -653,7 +653,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     for p_idx in range(5):
         env[-2] = 1
         if list_other[int(env[-1])] == -1:
-            act, per_player = p0(state_to_player(env), per_player)
+            act, per_player = p0(getAgentState(env), per_player)
         env[-1] = (env[-1] + 1)%5
 
     winner = False
@@ -707,7 +707,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     count_turn = 0 
     while system_check_end(env) and count_turn < 2000:
         idx = int(env[-1])
-        player_state = state_to_player(env)
+        player_state = getAgentState(env)
         if list_other[idx] == -1:
             action, per_player = p0(player_state,per_player)
         elif list_other[idx] == -2:
@@ -724,7 +724,7 @@ def one_game_numba_2(p0, list_other, per_player, per0, per1, per2, per3, per4, p
     for p_idx in range(5):
         env[-2] = 1
         if list_other[int(env[-1])] == -1:
-            act, per_player = p0(state_to_player(env), per_player)
+            act, per_player = p0(getAgentState(env), per_player)
         env[-1] = (env[-1] + 1)%5
 
     winner = False

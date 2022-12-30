@@ -19,6 +19,9 @@ val = [
     (115, 'Environment, Testing'),
     (116, 'Environment, Finished'),
     (117, 'Environment, Successful upload'),
+    (118, 'Environment, Can not extract zip files'),
+
+    (120, 'Format file error')
 
     (400, 'Agent, Agent have bug'),
     (401, 'Agent, No Agent function'),

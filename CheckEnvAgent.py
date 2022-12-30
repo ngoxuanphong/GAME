@@ -1,7 +1,7 @@
 from CheckEnv import check_env
 from CheckPlayer import check_agent
 from server.mysql_connector import mydb, mycursor
-from getFromServer import get_notifi_server
+from getFromServer import get_notifi_server, update_notificate_by_id, copy_new_agent, copy_new_env
 
 from setup import path
 import pandas as pd
@@ -59,6 +59,19 @@ def fix_player(df_run, df_agent, dict_agent, dict_level):
             update_json(dict_agent, dict_level)
             save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
 
+def sql_get_id_by_systen_name(env_name):
+    sql = f''' SELECT hs.ID, su.Name
+                    FROM  HistorySystem hs
+                    Left join auth_user au on au.id = hs.UserID
+                    Left join SystemUser su on su.SystemID = hs.SystemID
+                    Left join Notificate n on n.NotificateID = hs.NotificateID
+                    Where su.Name = %s'''
+    val = [env_name]
+    mycursor.execute(sql, val)
+    data_env = mycursor.fetchall()
+    if len(data_env) > 0:
+        return data_env[0][0]
+
 
 def fix_env(df_run, df_env, dict_agent, dict_level):
     for id in df_env.index:
@@ -67,13 +80,20 @@ def fix_env(df_run, df_env, dict_agent, dict_level):
             env_name = df_env['ENV'][id]
             df_env.loc[id, 'CHECK'] = 'CHECKING'
             df_env.to_json(f'{SHOT_PATH}Log/StateEnv.json')
-            env = importlib.util.spec_from_file_location('env', f"A:/GAME/base/{env_name}/env.py").loader.load_module()
+
+            ID_env = sql_get_id_by_systen_name(env_name)
+            update_notificate_by_id(ID_env, 'CHECKING')
+
+            env = importlib.util.spec_from_file_location('env', f"{SHOT_PATH}base/{env_name}/env.py").loader.load_module()
             bool_check_env, msg = check_env(env)
             if bool_check_env == True:
                 df_env.loc[id, 'CHECK'] = 'DONE'
                 df_run[env_name] = np.nan
+
+                update_notificate_by_id(ID_env, 'NO BUG')
                 df_run.to_json(f'{SHOT_PATH}Log/State.json')
             else:
+                update_notificate_by_id(ID_env, 'BUG')
                 df_env.loc[id, 'CHECK'] = 'BUG'
                 df_env.loc[id, 'NOTE'] = str(msg)
 
@@ -92,17 +112,20 @@ def __checking_all__():
     df_env = pd.read_json(f'{SHOT_PATH}Log/StateEnv.json')
 
     if os.path.exists(f'{SHOT_PATH}Log/agent_all.json') == False:
+        print('hi')
         save_json(f'{SHOT_PATH}Log/agent_all.json', {})
 
-    if os.path.exists(f'{SHOT_PATH}Log/agent_all.json') == False:
-        save_json(f'{SHOT_PATH}Log/agent_all.json', {})
+    if os.path.exists(f'{SHOT_PATH}Log/level_game.json') == False:
+        save_json(f'{SHOT_PATH}Log/level_game.json', {})
+
+    copy_new_agent()
+    copy_new_env()
 
     dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
     dict_agent = json.load(open(f'{SHOT_PATH}Log/agent_all.json'))
-
     update_json(dict_agent, dict_level)
     fix_player(df_run, df_agent, dict_agent, dict_level)
-    # fix_env(df_run, df_env, dict_agent, dict_level)
+    fix_env(df_run, df_env, dict_agent, dict_level)
 
 __checking_all__()
 
