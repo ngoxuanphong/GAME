@@ -103,8 +103,6 @@ def get_notifi_server(type_code, msg, name_type, *args):
             val = (args[0], name_type)
             mycursor.execute(sql, val)
         
-        mycursor.execute("SELECT * FROM CodeBot")
-        print(mycursor.fetchall())
         mydb.commit()
 
 

@@ -3,7 +3,6 @@ from CheckPlayer import check_agent
 from server.mysql_connector import get_db_cursor
 from getFromServer import get_notifi_server, update_notificate_by_id, copy_new_agent, copy_new_env
 
-from setup import path
 import pandas as pd
 import importlib.util
 import numpy as np

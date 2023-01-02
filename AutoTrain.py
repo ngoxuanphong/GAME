@@ -1,4 +1,4 @@
-from setup import game_name, time_run_game, path, SHOT_PATH
+from setup import time_run_game, SHOT_PATH
 from getFromServer import get_notifi_server
 import sys, os, time, json
 import pandas as pd
@@ -80,7 +80,6 @@ def save_json(path_save_json, dict_save):
 def train_new_env(df_run, dict_level):
     for col in df_run.columns[7:]:
         env_name = col
-        print(dict_level[env_name]['Can_Split_Level'])
         if dict_level[env_name]['Can_Split_Level'] == 'False':
             for id in df_run.index[:COUNT_PLAYER_TRAIN_NEW_ENV]:
                 if pd.isna(df_run[col][id]):
@@ -211,6 +210,7 @@ def choose_game_level_train(dict_agent, dict_level, agent_name):
 def train_agent(dict_agent, dict_level):
     for agent_name in dict_agent:
         env_name, level = choose_game_level_train(dict_agent, dict_level, agent_name)
+        print(env_name, level, agent_name)
         if env_name != False:
             if len(sys.argv) >= 2:
                 sys.argv = [sys.argv[0]]
@@ -227,6 +227,7 @@ def train_agent(dict_agent, dict_level):
 
             if check_agent == True:
                 start = time.time()
+                get_notifi_server('Agent', 'TRAINING', agent_name, dict_agent[agent_name]['Elo'])
                 win = train(env, path_save_player, level, _p1_, time_loop, 1)
                 end = time.time()
                 if (win > 1.1*10000/env.getAgentSize()):
@@ -239,9 +240,8 @@ def train_agent(dict_agent, dict_level):
                 # print('Elo', dict_agent[agent_name]['Elo'])
 
                 save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
-                get_notifi_server('Agent', 'TRAINING', agent_name, dict_agent[agent_name]['Elo'])
 
 while True:
-    train_new_env(df_run, dict_level)
-    test_and_add_new_level(df_run, dict_level)
+    # train_new_env(df_run, dict_level)
+    # test_and_add_new_level(df_run, dict_level)
     train_agent(dict_agent, dict_level)
