@@ -106,6 +106,8 @@ def train_new_env(df_run, dict_level):
                         print('Tỉ lệ thắng sau khi train', win)
                         df_run[col][id] = win
                         df_run.to_json(f'{SHOT_PATH}Log/State.json')
+                    else:
+                        df_run[col][id] = 0
 
         dict_level[env_name]['Can_Split_Level'] = 'True'
         save_json('Log/level_game.json', dict_level)
@@ -117,6 +119,7 @@ def get_lv(count_agent, df_run, env_name, dict_level):
     if len(khong_pass_level) > 0:
         # print('khong_pass_level', khong_pass_level, df_run['ID'][khong_pass_level])
         df_run[env_name][khong_pass_level] = 'DONE'
+        df_run_con_lai = df_run[df_run[env_name] != 'DONE']
 
     df_run.to_json(f'{SHOT_PATH}Log/State.json')
 
@@ -131,7 +134,10 @@ def get_lv(count_agent, df_run, env_name, dict_level):
         name_agents = list(infor_level[:count_agent]['ID'])
 
         # print('Agent pass', name_agents)
-        dict_level[env_name]['id_remove'] += all_id_lv
+        for id_have_id_list in all_id_lv:
+            if id_have_id_list not in dict_level[env_name]['id_remove']:
+                dict_level[env_name]['id_remove'].append(id_have_id_list)
+
         dict_level[env_name]['level_max'] += 1
         lv_max = dict_level[env_name]['level_max']
         # print(lv_max)
@@ -156,8 +162,9 @@ def test_and_add_new_level(df_run, dict_level):
     for col in df_run.columns[7:]:
         env_name = col
         if dict_level[env_name]['Can_Split_Level'] == 'True':
-            # df_run[env_name].loc[COUNT_PLAYER_TRAIN_NEW_ENV:] = 'DONE'
-            dict_level[env_name]['id_remove'] += list(df_run[env_name].loc[COUNT_PLAYER_TRAIN_NEW_ENV:].index)
+            for id_have_id_list in list(df_run[env_name].loc[COUNT_PLAYER_TRAIN_NEW_ENV:].index):
+                if id_have_id_list not in dict_level[env_name]['id_remove']:
+                    dict_level[env_name]['id_remove'].append(id_have_id_list)
 
             for id in df_run.index[:COUNT_PLAYER_TRAIN_NEW_ENV]:
                 if df_run[col][id] != 'DONE':
@@ -191,8 +198,8 @@ def choose_game_level_train(dict_agent, dict_level, agent_name):
         
     for env_name in dict_agent[agent_name]:
         if env_name != 'Elo':
-            if dict_level['Splendor_v3']['level_max'] < level_train:
-                level_train = dict_level['Splendor_v3']['level_max']
+            if dict_level[env_name]['level_max'] < level_train:
+                level_train = dict_level[env_name]['level_max']
 
             if str(level_train) in dict_agent[agent_name][env_name]:
                 if len(dict_agent[agent_name][env_name][str(level_train)]) == 0:
@@ -214,16 +221,16 @@ def train_agent(dict_agent, dict_level):
             _p1_ = load_module_player(agent_name)
             
             check_agent, time_loop = check_code(env, agent_name)
+            if level < 3:
+                time_run = time_run_game//(3-level)
+                time_loop = time_loop//(3-level)
 
             if check_agent == True:
-                # print('train', env_name, agent_name, level, 'loop', time_loop)
                 start = time.time()
                 win = train(env, path_save_player, level, _p1_, time_loop, 1)
-                # print('Tỉ lệ thắng sau khi train', win)
                 end = time.time()
-
                 if (win > 1.1*10000/env.getAgentSize()):
-                    elo_add = win/(1.1*10000/env.getAgentSize()) + (time_run_game*100*(level+1))/((end-start)*time_run_game)
+                    elo_add = win/(1.1*10000/env.getAgentSize()) + (100*(level+1))/((end-start))
                     dict_agent[agent_name]['Elo'] += elo_add
                 else:
                     dict_agent[agent_name]['Elo'] -= 0.5**level*50
@@ -234,10 +241,7 @@ def train_agent(dict_agent, dict_level):
                 save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
                 get_notifi_server('Agent', 'TRAINING', agent_name, dict_agent[agent_name]['Elo'])
 
-# while True:
-# train_new_env(df_run, dict_level)
-test_and_add_new_level(df_run, dict_level)
-    # print('-------------------')
-    # print(dict_agent)
-    # print('-----')
-    # train_agent(dict_agent, dict_level)
+while True:
+    train_new_env(df_run, dict_level)
+    test_and_add_new_level(df_run, dict_level)
+    train_agent(dict_agent, dict_level)

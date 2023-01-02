@@ -1,6 +1,6 @@
 from CheckEnv import check_env
 from CheckPlayer import check_agent
-from server.mysql_connector import mydb, mycursor
+from server.mysql_connector import get_db_cursor
 from getFromServer import get_notifi_server, update_notificate_by_id, copy_new_agent, copy_new_env
 
 from setup import path
@@ -37,29 +37,34 @@ def fix_player(df_run, df_agent, dict_agent, dict_level):
 
             get_notifi_server('Agent', 'CHECKING', agent_name)
 
-            agent_test = importlib.util.spec_from_file_location('Agent_player', f"A:\AutoTrain\GAME\Agent\{agent_name}\Agent_player.py").loader.load_module()
-            bool_check_agent, msg = check_agent(agent_test)
+            try:
+                agent_test = importlib.util.spec_from_file_location('Agent_player', f"A:\AutoTrain\GAME\Agent\{agent_name}\Agent_player.py").loader.load_module()
+                bool_check_agent, msg = check_agent(agent_test)
+                if bool_check_agent == True: #Sửa lại file excel trạng thái
+                    df_agent.loc[id, 'CHECK'] = 'DONE'
+                    id_add_agent = len(df_run)
+                    df_run.loc[id_add_agent] = np.nan
+                    df_run['ID'][id_add_agent] = agent_name
+                    df_run.to_json(f'{SHOT_PATH}Log/State.json')
+                    dict_agent[agent_name] = {'Elo':1200}
 
-            if bool_check_agent == True: #Sửa lại file excel trạng thái
-                df_agent.loc[id, 'CHECK'] = 'DONE'
-                id_add_agent = len(df_run)
-                df_run.loc[id_add_agent] = np.nan
-                df_run['ID'][id_add_agent] = agent_name
-                df_run.to_json(f'{SHOT_PATH}Log/State.json')
-                dict_agent[agent_name] = {'Elo':1200}
+                    get_notifi_server('Agent', 'NOBUG', agent_name)
+                else:
+                    df_agent.loc[id, 'CHECK'] = 'BUG'
+                    df_agent.loc[id, 'NOTE'] = str(msg)
 
-                get_notifi_server('Agent', 'NOBUG', agent_name)
-            else:
+                    get_notifi_server('Agent', 'BUG', agent_name)
+                    
+                df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
+            except:
                 df_agent.loc[id, 'CHECK'] = 'BUG'
-                df_agent.loc[id, 'NOTE'] = str(msg)
+                df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
+                get_notifi_server('Agent', 'BUG', agent_name)
 
-                get_notifi_server('Agent', 'CHECKING', agent_name)
-                
-            df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
             update_json(dict_agent, dict_level)
-            save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
 
 def sql_get_id_by_systen_name(env_name):
+    mycursor, mydb = get_db_cursor()
     sql = f''' SELECT hs.ID, su.Name
                     FROM  HistorySystem hs
                     Left join auth_user au on au.id = hs.UserID
@@ -112,7 +117,6 @@ def __checking_all__():
     df_env = pd.read_json(f'{SHOT_PATH}Log/StateEnv.json')
 
     if os.path.exists(f'{SHOT_PATH}Log/agent_all.json') == False:
-        print('hi')
         save_json(f'{SHOT_PATH}Log/agent_all.json', {})
 
     if os.path.exists(f'{SHOT_PATH}Log/level_game.json') == False:
@@ -127,5 +131,6 @@ def __checking_all__():
     fix_player(df_run, df_agent, dict_agent, dict_level)
     fix_env(df_run, df_env, dict_agent, dict_level)
 
-__checking_all__()
+while True:
+    __checking_all__()
 

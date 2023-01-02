@@ -23,7 +23,6 @@ def CheckRunGame(Agent, BOOL_CHECK_ENV, msg):
     try:
         per = Agent.DataAgent()
         win, per = env.numba_main_2(Agent.Agent, COUNT_TEST, per, 0)
-        # win, per = env.normal_main_2(Agent.Agent, COUNT_TEST, per, 0)
     except:
         logger.warn(f'Agent đang bị lỗi')
         msg.append(f'Agent đang bị lỗi')
@@ -32,10 +31,8 @@ def CheckRunGame(Agent, BOOL_CHECK_ENV, msg):
 
 
 def check_agent(Agent):
-
     BOOL_CHECK_ENV = True
     msg = []
-
     BOOL_CHECK_ENV, msg = CheckAllFunc(Agent, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV, msg = CheckRunGame(Agent, BOOL_CHECK_ENV, msg)
     return BOOL_CHECK_ENV, msg

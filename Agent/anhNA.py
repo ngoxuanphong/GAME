@@ -36,16 +36,13 @@ from base.TLMN.env import *
 #                 per[1].append(np.zeros(1))
 #         per[3][0][0] = 0 
 #     return action, per
-data = np.array([0.])
+data = np.array([0])
+def p0(state, per):
+    actions = getValidActions(state)
+    actions = np.where(actions == 1)
+    id = np.random.randint(0, len(actions))
+    return actions[id]
 
-@njit()
-def random_Env(p_state, per):
-    per = np.concatenate((per, p_state))
-    arr_action = getValidActions(p_state)
-    arr_action = np.where(arr_action == 1)[0]
-    act_idx = np.random.randint(0, len(arr_action))
-    return arr_action[act_idx], per
 
-win, per = numba_main_2(random_Env,100000, data, 0)
+win, per = numba_main_2(p0,10000000, data, 0)
 
-print(sys.getsizeof(per))

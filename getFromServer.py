@@ -1,5 +1,5 @@
 from setup import SHOT_PATH, DRIVE_FOLDER
-from server.mysql_connector import mydb, mycursor
+from server.mysql_connector import get_db_cursor
 import os, time, shutil
 import pandas as pd
 import numpy as np
@@ -24,6 +24,7 @@ def check_sleep_copt_agent(agent_name):
 
 
 def copy_new_agent():
+    mycursor, mydb = get_db_cursor()
     mycursor.execute(f"SELECT * FROM CodeBot WHERE NotificateID = '107'")
     myresult = mycursor.fetchall()
 
@@ -52,17 +53,21 @@ def copy_new_agent():
             mycursor.execute(sql, val)
 
             mycursor.execute("SELECT * FROM CodeBot")
-            print(mycursor.fetchall())
-
-            mydb.commit()
+            # print(mycursor.fetchall())
 
             df_agent = pd.read_json(f'{SHOT_PATH}Log/StateAgent.json')
+            print(df_agent)
             df_agent.loc[len(df_agent)] = [agent_name, np.nan, np.nan, np.nan]
+            print('Agent name', agent_name, len(df_agent))
             df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
+            print(df_agent)
+
+            mydb.commit()
 
 
 
 def get_notifi_server(type_code, msg, name_type, *args):
+    mycursor, mydb = get_db_cursor()
     NotifiID = None
     if type_code == 'Agent':
         if msg == 'WAITING': NotifiID = 100
@@ -104,6 +109,7 @@ def get_notifi_server(type_code, msg, name_type, *args):
 
 
 def update_notificate_by_id(ID, msg, *args):
+    mycursor, mydb = get_db_cursor()
     sql = f"UPDATE HistorySystem SET NotificateID = %s WHERE ID = %s"
     if msg == 'ERROR FORMAT':val = (120, ID)
     if msg == 'CANT UNZIP':val = (118, ID)
@@ -120,6 +126,7 @@ def update_notificate_by_id(ID, msg, *args):
 
 
 def copy_new_env():
+    mycursor, mydb = get_db_cursor()
     mycursor.execute(f''' SELECT hs.ID, su.Name
                     FROM  HistorySystem hs
                     Left join auth_user au on au.id = hs.UserID
