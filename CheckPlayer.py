@@ -8,7 +8,7 @@ if len(sys.argv) >= 2:
 sys.argv.append('Splendor_v3')
 
 COUNT_TEST = 10000
-
+#check hết hệ thống
 def CheckAllFunc(Agent, BOOL_CHECK_ENV, msg):
     for func in ['DataAgent', 'Agent']:
         try:

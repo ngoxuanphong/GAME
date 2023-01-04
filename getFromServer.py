@@ -5,10 +5,39 @@ import pandas as pd
 import numpy as np
 import zipfile
 
+TEXT_ADD = """
+import numpy as np
+from numba import njit
+import sys, os
+from setup import SHOT_PATH
+import importlib.util
+game_name = sys.argv[1]
+
+def setup_game(game_name):
+    spec = importlib.util.spec_from_file_location('env', f"{SHOT_PATH}base/{game_name}/env.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module 
+    spec.loader.exec_module(module)
+    return module
+
+env = setup_game(game_name)
+"""
+
+def add_text_to_file(agent_name):
+    shutil.move(f'{SHOT_PATH}Agent/{agent_name}/Agent_player.py', f'{SHOT_PATH}Agent/{agent_name}/Agent_player.txt')
+    time.sleep(0.5)
+    with open(f'{SHOT_PATH}Agent/{agent_name}/Agent_player.txt', 'r') as original: data = original.read()
+    time.sleep(0.5)
+    with open(f'{SHOT_PATH}Agent/{agent_name}/Agent_player.txt', 'w') as modified: modified.write(f"{TEXT_ADD}\n" + data)
+    time.sleep(0.5)
+    shutil.move(f'{SHOT_PATH}Agent/{agent_name}/Agent_player.txt', f'{SHOT_PATH}Agent/{agent_name}/Agent_player.py')
+    time.sleep(0.5)
+
 def copy_agent_bool(agent_name):
     bool_copy_file = False
     os.mkdir(f'{SHOT_PATH}Agent/{agent_name}')
     shutil.copy2(f'{DRIVE_FOLDER}CodeAgent/{agent_name}.py', f'{SHOT_PATH}Agent/{agent_name}/Agent_player.py')
+    add_text_to_file(agent_name)
     time.sleep(3)
     if os.path.exists(f'{SHOT_PATH}Agent/{agent_name}/Agent_player.py'):
         bool_copy_file = True
@@ -56,11 +85,8 @@ def copy_new_agent():
             # print(mycursor.fetchall())
 
             df_agent = pd.read_json(f'{SHOT_PATH}Log/StateAgent.json')
-            print(df_agent)
             df_agent.loc[len(df_agent)] = [agent_name, np.nan, np.nan, np.nan]
-            print('Agent name', agent_name, len(df_agent))
             df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
-            print(df_agent)
 
             mydb.commit()
 
@@ -118,8 +144,6 @@ def update_notificate_by_id(ID, msg, *args):
     if msg == 'BUG': val = (113, ID)
 
     mycursor.execute(sql, val)
-    mycursor.execute("SELECT * FROM HistorySystem")
-    print(mycursor.fetchall())
     mydb.commit()
 
 
