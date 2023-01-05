@@ -6,8 +6,15 @@ import numpy as np
 import zipfile
 
 TEXT_ADD = """
+import warnings
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning,NumbaExperimentalFeatureWarning, NumbaWarning
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
+warnings.simplefilter('ignore', category=NumbaWarning)
+
 import numpy as np
-from numba import njit
+from numba import njit, jit
 import sys, os
 from setup import SHOT_PATH
 import importlib.util
@@ -197,7 +204,6 @@ def copy_new_env():
             df_env.loc[len(df_env)] = [env_name, np.nan, np.nan, np.nan]
             df_env.to_json(f'{SHOT_PATH}Log/StateEnv.json')
     
-# copy_new_env()
 
 def state_train_server(agent_name, env_train, level):
     dict_agent = json.load(open(f'{SHOT_PATH}Log/agent_all.json'))

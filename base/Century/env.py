@@ -627,7 +627,7 @@ def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, p
     elif id == 9: return test2_Khanh_130922(player_state, per9)
     else: return test2_Dat_130922(player_state, per10)
 
-@njit()
+@jit()
 def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10):
     card_in4 = all_card_in4()
     card_point_in4 = all_card_point_in4()
@@ -662,7 +662,7 @@ def one_game_numba(p0, list_other, per_player, per0, per1, per2, per3, per4, per
     return winner,  per_player
 
 
-@njit()
+@jit()
 def n_game_numba(p0, num_game, per_player, level, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10):
     win = 0
     if level == 0:
@@ -681,7 +681,7 @@ def n_game_numba(p0, num_game, per_player, level, per0, per1, per2, per3, per4, 
 
 
 
-def numba_main_2(p0, n_game, per_player, level):
+def numba_main_2(p0, n_game, per_player, level, *args):
     list_all_players = dict_game_for_player[game_name_]
     list_data = load_data_per2(list_all_players, game_name_)
     per0 = list_data[0]

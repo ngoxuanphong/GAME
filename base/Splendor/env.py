@@ -1,5 +1,5 @@
 import numpy as np
-from numba import njit
+from numba import njit, jit
 import random as rd
 
 
@@ -653,7 +653,7 @@ def numba_main(p0, p1, p2, p3, num_game,per_file):
     return num_won, per_file
 
 
-@njit()
+@jit()
 def one_game_numba(p0, list_other, per_player, per1, per2, per3, p1, p2, p3):
     env, lv1, lv2, lv3 = generate()
     initEnv(env, lv1, lv2, lv3)
@@ -701,7 +701,7 @@ def random_Env(p_state, per):
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx], per
 
-@njit()
+@jit()
 def n_game_numba(p0, num_game, per_player, list_other, per1, per2, per3, p1, p2, p3):
     win = 0
     for _n in range(num_game):
@@ -716,14 +716,17 @@ from setup import SHOT_PATH
 def load_module_player(player):
     return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
 
-def numba_main_2(p0, n_game, per_player, level):
+def numba_main_2(p0, n_game, per_player, level, *args):
     list_other = np.array([1, 2, 3, -1])
     if level == 0:
         per_agent_env = np.array([0])
         return n_game_numba(p0, n_game, per_player, list_other, per_agent_env, per_agent_env, per_agent_env, random_Env, random_Env, random_Env)
     else:
         env_name = sys.argv[1]
-        dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
+        if len(*args) > 0:
+            dict_level = json.load(open(f'{SHOT_PATH}Log/check_system_about_level.json'))
+        else:
+            dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
 
         if str(level) not in dict_level[env_name]:
             raise Exception('Hiện tại không có level này') 

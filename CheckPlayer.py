@@ -3,6 +3,13 @@ from setup import SHOT_PATH
 import sys
 from system import logger
 
+import warnings 
+warnings.filterwarnings('ignore')
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning,NumbaExperimentalFeatureWarning, NumbaWarning
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
+warnings.simplefilter('ignore', category=NumbaWarning)
 
 COUNT_TEST = 1000
 #check hết hệ thống

@@ -1,4 +1,4 @@
-# from numba import njit
+# from numba import njit, jit
 # @njit()
 def progress_bar(progress, total):
     bar_long = 100

@@ -705,7 +705,7 @@ def random_Env(p_state, per):
     arr_action = np.where(arr_action == 1)[0]
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx], per
-@njit()
+@jit()
 def n_game_numba(p0, num_game, per_player, list_other, per1, per2, per3, p1, p2,p3):
     win = 0
     for _n in range(num_game):
@@ -718,7 +718,7 @@ import importlib.util, json, sys
 from setup import SHOT_PATH
 def load_module_player(player):
     return importlib.util.spec_from_file_location('Agent_player',f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
-def numba_main_2(p0, n_game, per_player, level):
+def numba_main_2(p0, n_game, per_player, level, *args):
     list_other = np.array([1, 2, 3, -1])
     per_agent_env = np.array([0])
     if level == 0:

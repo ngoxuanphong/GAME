@@ -1415,7 +1415,7 @@ def random_Env(p_state, per):
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx], per
 
-@njit()
+@jit()
 def one_game_numba(p0, list_other, per_player):
     env = initEnv()
 
@@ -1453,7 +1453,7 @@ def one_game_numba(p0, list_other, per_player):
     return winner,  per_player
 
 
-@njit()
+@jit()
 def n_game_numba(p0, num_game, per_player, level):
     win = 0
     if level == 0:
@@ -1467,7 +1467,7 @@ def n_game_numba(p0, num_game, per_player, level):
     return win, per_player
 
 
-def numba_main_2(p0, n_game, per_player, level):
+def numba_main_2(p0, n_game, per_player, level, *args):
     return n_game_numba(p0, n_game, per_player, level)
 
 

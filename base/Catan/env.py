@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import re
 import numba
-from numba import njit
+from numba import njit, jit
 import os
 import time
 from base.Catan.index import *

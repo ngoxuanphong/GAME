@@ -1,5 +1,5 @@
 import numpy as np
-from numba import njit
+from numba import njit, jit
 import sys, os
 from setup import SHOT_PATH
 import importlib.util

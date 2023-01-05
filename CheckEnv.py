@@ -1,8 +1,15 @@
 import numpy as np
-from numba import njit
+from numba import njit, jit
 from system import logger
 import functools
 import multiprocessing.pool
+
+import warnings 
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning,NumbaExperimentalFeatureWarning, NumbaWarning
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
+warnings.simplefilter('ignore', category=NumbaWarning)
 
 COUNT_TEST = 1000
 
@@ -48,7 +55,15 @@ def CheckReturn(_env_, BOOL_CHECK_ENV, msg):
 @timeout(1000)
 def RunGame(_env_, BOOL_CHECK_ENV, msg):
     @njit()
-    def test(p_state, per_file):
+    def test_numba(p_state, per_file):
+        arr_action = _env_.getValidActions(p_state)
+        arr_action = np.where(arr_action == 1)[0]
+        act_idx = np.random.randint(0, len(arr_action))
+        if _env_.getReward(p_state) != -1:
+            per_file[0] += 1
+        return arr_action[act_idx], per_file
+
+    def test_no_numba(p_state, per_file):
         arr_action = _env_.getValidActions(p_state)
         arr_action = np.where(arr_action == 1)[0]
         act_idx = np.random.randint(0, len(arr_action))
@@ -58,7 +73,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
 
     try:
         per = np.array([0])
-        win, per = _env_.numba_main_2(test, COUNT_TEST, per, 0)
+        win, per = _env_.numba_main_2(test_numba, COUNT_TEST, per, 0)
         if type(win) != int and type(win) != np.int64:
             logger.warn('hàm numba_main_2 trả ra sai đầu ra')
             msg.append('hàm numba_main_2 trả ra sai đầu ra')
@@ -67,6 +82,13 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
             logger.warn(f'Số trận kết thúc khác với số trận test, {per[0]}')
             msg.append(f'Số trận kết thúc khác với số trận test, {per[0]}')
             BOOL_CHECK_ENV = False
+        try:
+            per = np.array([0])
+            win, per = _env_.numba_main_2(test_no_numba, COUNT_TEST, per, 0)
+        except:
+            logger.warn('hàm numba_main_2 không train được với agent không numba, cần đổi n_game_numba với one_game_numba từ njit() thành jit')
+            msg.append('hàm numba_main_2 không train được với agent không numba, cần đổi n_game_numba với one_game_numba từ njit() thành jit')
+            BOOL_CHECK_ENV = False
     except:
         logger.warn(f'hàm numba_main_2 đang bị lỗi')
         msg.append(f'hàm normal_main đang bị lỗi')
@@ -74,7 +96,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
 
     try:
         per = [0]
-        win, per = _env_.normal_main([test]*_env_.getAgentSize(), COUNT_TEST, per)
+        win, per = _env_.normal_main([test_numba]*_env_.getAgentSize(), COUNT_TEST, per)
         if type(win) != list:
             logger.warn('hàm normal_main trả ra sai đầu ra')
             msg.append('hàm normal_main trả ra sai đầu ra')
@@ -87,6 +109,8 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
         logger.warn(f'hàm normal_main đang bị lỗi')
         msg.append(f'hàm normal_main đang bị lỗi')
         BOOL_CHECK_ENV = False
+
+        
     return BOOL_CHECK_ENV
 
 def CheckRunGame(_env_, BOOL_CHECK_ENV, msg):
@@ -98,12 +122,19 @@ def CheckRunGame(_env_, BOOL_CHECK_ENV, msg):
         BOOL_CHECK_ENV = False
     return BOOL_CHECK_ENV
 
+def check_lv1(_env_, BOOL_CHECK_ENV, msg):
+    try:
+        BOOL_CHECK_ENV = RunGame(_env_, BOOL_CHECK_ENV, msg)
+    except:
+        BOOL_CHECK_ENV = False
+    return BOOL_CHECK_ENV
+
 def check_env(_env_):
     BOOL_CHECK_ENV = True
     msg = []
     BOOL_CHECK_ENV = CheckAllFunc(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckReturn(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckRunGame(_env_, BOOL_CHECK_ENV, msg)
+    # BOOL_CHECK_ENV = check_lv1(_env_, BOOL_CHECK_ENV, msg)
     return BOOL_CHECK_ENV, msg
 
-# print(check_env(_env_))
