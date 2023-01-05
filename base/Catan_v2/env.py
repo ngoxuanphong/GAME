@@ -309,7 +309,7 @@ SETTLEMENT_PRICE = np.array([1, 1, 1, 1, 0])
 CITY_PRICE = np.array([0, 0, 0, 2, 3])
 DEV_PRICE = np.array([0, 0, 1, 1, 1])
 
-LEN_P_STATE = 210
+LEN_P_STATE = 211
 AMOUNT_ACTION = 106
 
 # Càng cao thì chạy càng lâu, nhưng tỉ lệ không end được game càng thấp
@@ -318,7 +318,7 @@ MAX_TURN_IN_ONE_GAME = 1200
 
 @njit()
 def initEnv():
-    env = np.zeros(255)
+    env = np.zeros(256)
 
     # [0:19]: Tài nguyên trên các ô đất
     temp = np.array([5, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 3, 3, 1, 1, 1, 4, 4, 4])
@@ -504,6 +504,7 @@ def getAgentState(env: np.ndarray):
         p_state[196:206] = env[240:250]
         p_state[206:209] = env[251:254]
 
+    p_state[210] = env[255]
     return p_state
 
 
@@ -1699,6 +1700,10 @@ def checkEnded(env: np.ndarray):
 
 @njit
 def getReward(p_state: np.ndarray):
+    if p_state[210] == 1.0:
+        if p_state[64] < 10:
+            return 0
+
     main_p_idx = int(p_state[209])
     if main_p_idx == 0:  # Đến lượt của bản thân
         # Thắng hoặc chưa kết thúc game
@@ -1734,7 +1739,7 @@ def getAgentSize():
 
 def one_game(list_player, per_file):
     env = initEnv()
-    
+
 
     winner = -1
     while env[230] < MAX_TURN_IN_ONE_GAME:
@@ -1748,14 +1753,14 @@ def one_game(list_player, per_file):
             break
 
     env[np.array([68, 110, 152, 194])] += env[np.array([67, 109, 151, 193])]
-
-    if winner != -1:
-        for i in range(4):
-            env[254] = i
-            env[229] = 2
-            p_state = getAgentState(env)
-            action, per_file = list_player[i](
-                p_state, per_file)
+    env[255] = -1
+    # if winner != -1:
+    for i in range(4):
+        env[254] = i
+        env[229] = 2
+        p_state = getAgentState(env)
+        action, per_file = list_player[i](
+            p_state, per_file)
 
     return winner, per_file
 
@@ -1819,21 +1824,21 @@ def numba_one_game(p_lst_idx_shuffle, p0, p1, p2, p3, per_file):
             break
 
     env[np.array([68, 110, 152, 194])] += env[np.array([67, 109, 151, 193])]
+    env[255] = 1
+    # if winner != -1:
+    for i in range(4):
+        env[254] = i
+        env[229] = 2
+        p_state = getAgentState(env)
 
-    if winner != -1:
-        for i in range(4):
-            env[254] = i
-            env[229] = 2
-            p_state = getAgentState(env)
-
-            if p_lst_idx_shuffle[p_idx] == 0:
-                act, per_file = p0(p_state, per_file)
-            elif p_lst_idx_shuffle[p_idx] == 1:
-                act, per_file = p1(p_state, per_file)
-            elif p_lst_idx_shuffle[p_idx] == 2:
-                act, per_file = p2(p_state, per_file)
-            else:
-                act, per_file = p3(p_state, per_file)
+        if p_lst_idx_shuffle[p_idx] == 0:
+            act, per_file = p0(p_state, per_file)
+        elif p_lst_idx_shuffle[p_idx] == 1:
+            act, per_file = p1(p_state, per_file)
+        elif p_lst_idx_shuffle[p_idx] == 2:
+            act, per_file = p2(p_state, per_file)
+        else:
+            act, per_file = p3(p_state, per_file)
 
     return winner, per_file
 
@@ -1888,17 +1893,17 @@ def one_game_numba(p0, list_other, per_player):
         winner = checkEnded(env)
         if winner != -1:
             break
-        
+
 
     env[np.array([68, 110, 152, 194])] += env[np.array([67, 109, 151, 193])]
-
-    if winner != -1:
-        for p_idx in range(4):
-            if list_other[p_idx] == -1:
-                env[254] = p_idx
-                env[229] = 2
-                p_state = getAgentState(env)
-                action, per_player = p0(p_state ,per_player)
+    env[255] = 1
+    # if winner != -1:
+    for p_idx in range(4):
+        if list_other[p_idx] == -1:
+            env[254] = p_idx
+            env[229] = 2
+            p_state = getAgentState(env)
+            action, per_player = p0(p_state ,per_player)
     if np.where(list_other == -1)[0] == winner: winner = True
     else: winner = False
     return winner,  per_player
@@ -1942,17 +1947,17 @@ def one_game_numba_2(p0, list_other, per_player):
         winner = checkEnded(env)
         if winner != -1:
             break
-        
+
 
     env[np.array([68, 110, 152, 194])] += env[np.array([67, 109, 151, 193])]
-
-    if winner != -1:
-        for p_idx in range(4):
-            if list_other[p_idx] == -1:
-                env[254] = p_idx
-                env[229] = 2
-                p_state = getAgentState(env)
-                action, per_player = p0(p_state ,per_player)
+    env[255] = 1
+    # if winner != -1:
+    for p_idx in range(4):
+        if list_other[p_idx] == -1:
+            env[254] = p_idx
+            env[229] = 2
+            p_state = getAgentState(env)
+            action, per_player = p0(p_state ,per_player)
     if np.where(list_other == -1)[0] == winner: winner = True
     else: winner = False
     return winner,  per_player
