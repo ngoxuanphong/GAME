@@ -4,7 +4,7 @@ from numba import njit
 import sys, os
 from setup import SHOT_PATH
 import importlib.util
-game_name = sys.argv[1]
+game_name = 'Splendor_v3'
 
 def setup_game(game_name):
     spec = importlib.util.spec_from_file_location('env', f"{SHOT_PATH}base/{game_name}/env.py")
@@ -15,32 +15,26 @@ def setup_game(game_name):
 
 env = setup_game(game_name)
 
-import numpy as np
-from numba import njit
-import sys, os
-from setup import SHOT_PATH
-import importlib.util
-game_name = sys.argv[1]
+getActionSize = env.getActionSize
+getStateSize = env.getStateSize
+getAgentSize = env.getAgentSize
 
-def setup_game(game_name):
-    spec = importlib.util.spec_from_file_location('env', f"{SHOT_PATH}base/{game_name}/env.py")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module 
-    spec.loader.exec_module(module)
-    return module
+getValidActions = env.getValidActions
+getReward = env.getReward
 
-env = setup_game(game_name)
+normal_main = env.normal_main
+numba_main_2 = env.numba_main_2
 
 def DataAgent():
-    return [np.random.choice(np.arange(env.getActionSize()),size=env.getActionSize(),replace=False) * 1.0,
-    np.zeros(env.getActionSize()),
+    return [np.random.choice(np.arange(getActionSize()),size=getActionSize(),replace=False) * 1.0,
+    np.zeros(getActionSize()),
     np.zeros(10) #2: 0 là mode (0 - train, 1 - test, 2 - per) , 1 là số trận đã thắng (data), 2 là tỉ lệ test thắng max, 3 là số lần không vượt max, 4 là số ván chơi test, 5 là số ván win test
     ]
 
 @njit()
 def Train(state,per):
-    actions = env.getValidActions(state)
-    win = env.getReward(state)
+    actions = getValidActions(state)
+    win = getReward(state)
     mode = per[2][0]
     if mode == 0:
         output = actions * per[0] + actions
@@ -50,9 +44,9 @@ def Train(state,per):
             per[2][1] += 1
             if per[2][1] % 1000 == 0:
                 per[2][0] = 1
-            # per[0] = np.random.choice(np.arange(env.getActionSize()),size=env.getActionSize(),replace=False) * 1.0
+            # per[0] = np.random.choice(np.arange(getActionSize()),size=getActionSize(),replace=False) * 1.0
         if win == 0:
-            per[0] = np.random.choice(np.arange(env.getActionSize()),size=env.getActionSize(),replace=False) * 1.0
+            per[0] = np.random.choice(np.arange(getActionSize()),size=getActionSize(),replace=False) * 1.0
     if mode == 1:
         bias = per[1]/np.max(per[1])
         output = actions * bias + actions
@@ -83,8 +77,8 @@ def Train(state,per):
 
 @njit()
 def Test(state,per):
-    actions = env.getValidActions(state)
-    win = env.getReward(state)
+    actions = getValidActions(state)
+    win = getReward(state)
     mode = per[2][0]
     if mode == 0:
         output = actions * per[0] + actions
@@ -94,9 +88,9 @@ def Test(state,per):
             per[2][1] += 1
             if per[2][1] % 1000 == 0:
                 per[2][0] = 1
-            # per[0] = np.random.choice(np.arange(env.getActionSize()),size=env.getActionSize(),replace=False) * 1.0
+            # per[0] = np.random.choice(np.arange(getActionSize()),size=getActionSize(),replace=False) * 1.0
         if win == 0:
-            per[0] = np.random.choice(np.arange(env.getActionSize()),size=env.getActionSize(),replace=False) * 1.0
+            per[0] = np.random.choice(np.arange(getActionSize()),size=getActionSize(),replace=False) * 1.0
     if mode == 1:
         bias = per[1]/np.max(per[1])
         output = actions * bias + actions
@@ -124,4 +118,3 @@ def Test(state,per):
         output = actions * bias + actions
         action = np.argmax(output)
     return action,per
-

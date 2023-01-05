@@ -1,4 +1,3 @@
-import base.Sheriff.env as _env_
 import numpy as np
 from numba import njit
 from system import logger
@@ -46,7 +45,6 @@ def CheckReturn(_env_, BOOL_CHECK_ENV, msg):
     return BOOL_CHECK_ENV
 
 
-
 @timeout(1000)
 def RunGame(_env_, BOOL_CHECK_ENV, msg):
     @njit()
@@ -58,53 +56,37 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
             per_file[0] += 1
         return arr_action[act_idx], per_file
 
-    # try:
-    per = np.array([0])
-    win, per = _env_.numba_main_2(test, COUNT_TEST, per, 0)
-    if type(win) != int and type(win) != np.int64:
-        logger.warn('hàm numba_main_2 trả ra sai đầu ra')
-        msg.append('hàm numba_main_2 trả ra sai đầu ra')
+    try:
+        per = np.array([0])
+        win, per = _env_.numba_main_2(test, COUNT_TEST, per, 0)
+        if type(win) != int and type(win) != np.int64:
+            logger.warn('hàm numba_main_2 trả ra sai đầu ra')
+            msg.append('hàm numba_main_2 trả ra sai đầu ra')
+            BOOL_CHECK_ENV = False
+        if per[0] != COUNT_TEST:
+            logger.warn(f'Số trận kết thúc khác với số trận test, {per[0]}')
+            msg.append(f'Số trận kết thúc khác với số trận test, {per[0]}')
+            BOOL_CHECK_ENV = False
+    except:
+        logger.warn(f'hàm numba_main_2 đang bị lỗi')
+        msg.append(f'hàm normal_main đang bị lỗi')
         BOOL_CHECK_ENV = False
-    if per[0] != COUNT_TEST:
-        logger.warn(f'Số trận kết thúc khác với số trận test, {per[0]}')
-        msg.append(f'Số trận kết thúc khác với số trận test, {per[0]}')
+
+    try:
+        per = [0]
+        win, per = _env_.normal_main([test]*_env_.getAgentSize(), COUNT_TEST, per)
+        if type(win) != list:
+            logger.warn('hàm normal_main trả ra sai đầu ra')
+            msg.append('hàm normal_main trả ra sai đầu ra')
+            BOOL_CHECK_ENV = False
+        if per[0] != COUNT_TEST*_env_.getAgentSize():
+            logger.warn(f'Số trận kết thúc khác với số trận test, {per[0]}')
+            msg.append(f'Số trận kết thúc khác với số trận test, {per[0]}')
+            BOOL_CHECK_ENV = False
+    except:
+        logger.warn(f'hàm normal_main đang bị lỗi')
+        msg.append(f'hàm normal_main đang bị lỗi')
         BOOL_CHECK_ENV = False
-    # except:
-    #     logger.warn(f'hàm numba_main_2 đang bị lỗi')
-    #     msg.append(f'hàm numba_main_2 đang bị lỗi')
-    #     BOOL_CHECK_ENV = False
-
-    # try:
-    #     per = [0]
-    #     win, per = _env_.normal_main_2(test, COUNT_TEST, per, 0)
-    #     if type(win) != int and type(win) != np.int64:
-    #         logger.warn('hàm normal_main_2 trả ra sai đầu ra')
-    #         msg.append('hàm normal_main_2 trả ra sai đầu ra')
-    #         BOOL_CHECK_ENV = False
-    #     if per[0] != COUNT_TEST:
-    #         logger.warn(f'Số trận kết thúc khác với số trận test, {per[0]}')
-    #         msg.append()
-    #         BOOL_CHECK_ENV = False
-    # except:
-    #     logger.warn(f'hàm normal_main_2 đang bị lỗi')
-    #     msg.append(f'hàm normal_main_2 đang bị lỗi')
-    #     BOOL_CHECK_ENV = False
-
-    # try:
-    #     per = [0]
-    #     win, per = _env_.normal_main([test]*_env_.getAgentSize(), COUNT_TEST, per)
-    #     if type(win) != list:
-    #         logger.warn('hàm normal_main trả ra sai đầu ra')
-    #         msg.append('hàm normal_main trả ra sai đầu ra')
-    #         BOOL_CHECK_ENV = False
-    #     if per[0] != COUNT_TEST*_env_.getAgentSize():
-    #         logger.warn(f'Số trận kết thúc khác với số trận test, {per[0]}')
-    #         msg.append(f'Số trận kết thúc khác với số trận test, {per[0]}')
-    #         BOOL_CHECK_ENV = False
-    # except:
-    #     logger.warn(f'hàm normal_main đang bị lỗi')
-    #     msg.append(f'hàm normal_main đang bị lỗi')
-    #     BOOL_CHECK_ENV = False
     return BOOL_CHECK_ENV
 
 def CheckRunGame(_env_, BOOL_CHECK_ENV, msg):

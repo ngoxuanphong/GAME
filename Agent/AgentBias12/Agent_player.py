@@ -21,7 +21,7 @@ def DataAgent():
     ]
 
 @njit()
-def Agent(state,per):
+def Train(state,per):
     actions = env.getValidActions(state)
     win = env.getReward(state)
     mode = per[2][0]
@@ -45,6 +45,50 @@ def Agent(state,per):
             if win == 1:
                 per[2][5] += 1
             if per[2][4] == 100000:
+                win_rate = per[2][5]/per[2][4]
+                per[2][5] = 0
+                per[2][4] = 0
+                if win_rate > per[2][2]:
+                    per[2][2] = win_rate
+                    per[2][3] = 0
+                else:
+                    per[2][3] += 1
+                    # print("1 lần không vượt, tổng là", per[2][3])
+                if per[2][3] == 3:
+                    per[2][0] = 2
+                else:
+                    per[2][0] = 0
+    if mode == 2:
+        bias = per[1]/np.max(per[1])
+        output = actions * bias + actions
+        action = np.argmax(output)
+    return action,per
+
+@njit()
+def Test(state,per):
+    actions = env.getValidActions(state)
+    win = env.getReward(state)
+    mode = per[2][0]
+    if mode == 0:
+        output = actions * per[0] + actions
+        action = np.argmax(output)        
+        if win == 1:
+            per[1] += per[0]
+            per[2][1] += 1
+            if per[2][1] % 1000 == 0:
+                per[2][0] = 1
+            # per[0] = np.random.choice(np.arange(env.getActionSize()),size=env.getActionSize(),replace=False) * 1.0
+        if win == 0:
+            per[0] = np.random.choice(np.arange(env.getActionSize()),size=env.getActionSize(),replace=False) * 1.0
+    if mode == 1:
+        bias = per[1]/np.max(per[1])
+        output = actions * bias + actions
+        action = np.argmax(output)
+        if win != -1:
+            per[2][4] += 1
+            if win == 1:
+                per[2][5] += 1
+            if per[2][4] == 1000000:
                 win_rate = per[2][5]/per[2][4]
                 per[2][5] = 0
                 per[2][4] = 0

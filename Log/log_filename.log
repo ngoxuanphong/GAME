@@ -9,3 +9,6 @@
 2023-01-04 19:20:05,854 - WARNING - [in .\CreateLog.py:16] This is a warning log message.
 2023-01-04 19:20:05,854 - ERROR - [in .\CreateLog.py:17] This is a error log message.
 2023-01-04 19:20:05,854 - CRITICAL - [in .\CreateLog.py:18] This is a critical log message.
+2023-01-05 00:51:30,969 - INFO - [in A:\AutoTrain\GAME\CheckEnvAgent.py:99] Check envsystem0_1672854595
+2023-01-05 00:53:06,200 - INFO - [in A:\AutoTrain\GAME\CheckEnvAgent.py:99] Check envsystem0_1672854616
+2023-01-05 11:13:46,333 - INFO - [in A:\AutoTrain\GAME\CheckEnvAgent.py:100] Check envsystem0_1672891976

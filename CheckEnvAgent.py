@@ -21,11 +21,12 @@ def update_json():
 
     for agent in dict_agent:
         for env_name in dict_level:
-            if env_name not in dict_agent[agent]:
-                dict_agent[agent][env_name] = {'State_level':[0, 0 , dict_level[env_name]['level_max']]}
-            for level in range(dict_level[env_name]['level_max']+1):
-                if str(level) not in dict_agent[agent][env_name]:
-                    dict_agent[agent][env_name][level] = []
+            if dict_level[env_name]['Can_Split_Level'] == 'True':
+                if env_name not in dict_agent[agent]:
+                    dict_agent[agent][env_name] = {'State_level':[0, 0 , 0]}
+                for level in range(dict_level[env_name]['level_max']+1):
+                    if str(level) not in dict_agent[agent][env_name]:
+                        dict_agent[agent][env_name][level] = []
     save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
 
 

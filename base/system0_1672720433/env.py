@@ -634,9 +634,9 @@ def numba_main_2(p0, n_game, per_player, level):
             raise Exception('Hiện tại không có level này') 
         lst_agent_level = dict_level[env_name][str(level)][2]
 
-        p1 = load_module_player(lst_agent_level[0]).Agent
-        p2 = load_module_player(lst_agent_level[1]).Agent
-        p3 = load_module_player(lst_agent_level[2]).Agent
+        p1 = load_module_player(lst_agent_level[0]).Test
+        p2 = load_module_player(lst_agent_level[1]).Test
+        p3 = load_module_player(lst_agent_level[2]).Test
         per_level = []
         for id in range(getAgentSize()):
             data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{lst_agent_level[0]}/Data/{env_name}_{level}/Train.npy',allow_pickle=True))

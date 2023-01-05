@@ -1,16 +1,13 @@
+import importlib.util
+from setup import SHOT_PATH
 import sys
+from system import logger
 
-from  system import logger
-from base.Splendor_v3 import env
 
-if len(sys.argv) >= 2:
-    sys.argv = [sys.argv[0]]
-sys.argv.append('Splendor_v3')
-
-COUNT_TEST = 10000
+COUNT_TEST = 1000
 #check hết hệ thống
 def CheckAllFunc(Agent, BOOL_CHECK_ENV, msg):
-    for func in ['DataAgent', 'Agent']:
+    for func in ['DataAgent', 'Train', 'Test']:
         try:
             getattr(Agent, func)
         except:
@@ -19,14 +16,37 @@ def CheckAllFunc(Agent, BOOL_CHECK_ENV, msg):
             BOOL_CHECK_ENV = False
     return BOOL_CHECK_ENV, msg
 
-def CheckRunGame(Agent, BOOL_CHECK_ENV, msg):
+def setup_game(game_name):
     try:
-        per = Agent.DataAgent()
-        win, per = env.numba_main_2(Agent.Agent, COUNT_TEST, per, 0)
+        spec = importlib.util.spec_from_file_location('env', f"{SHOT_PATH}base/{game_name}/env.py")
     except:
-        logger.warn(f'Agent đang bị lỗi')
-        msg.append(f'Agent đang bị lỗi')
-        BOOL_CHECK_ENV = False
+        spec = importlib.util.spec_from_file_location('env', f"base/{game_name}/env.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module 
+    spec.loader.exec_module(module)
+    return module
+
+def CheckRunGame(Agent, BOOL_CHECK_ENV, msg):
+    for game_name in ['Splendor_v2', 'Splendor_v3', 'MachiKoro', 'SushiGo', 'TLMN', 'TLMN_v2']:
+        env = setup_game(game_name)
+        try:
+            per = Agent.DataAgent()
+            win, per = env.numba_main_2(Agent.Train, COUNT_TEST, per, 0)
+        except:
+            logger.warn(f'Train đang bị lỗi ở game {game_name}')
+            msg.append(f'Train đang bị lỗi {game_name}')
+            BOOL_CHECK_ENV = False
+            break
+
+        try:
+            per = Agent.DataAgent()
+            win, per = env.numba_main_2(Agent.Test, COUNT_TEST, per, 0)
+        except:
+            logger.warn(f'Test đang bị lỗi {game_name}')
+            msg.append(f'Test đang bị lỗi {game_name}')
+            BOOL_CHECK_ENV = False
+            break
+
     return BOOL_CHECK_ENV, msg
 
 

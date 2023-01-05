@@ -1,6 +1,6 @@
 from setup import SHOT_PATH, DRIVE_FOLDER
 from server.mysql_connector import get_db_cursor
-import os, time, shutil
+import os, time, shutil, json
 import pandas as pd
 import numpy as np
 import zipfile
@@ -21,6 +21,16 @@ def setup_game(game_name):
     return module
 
 env = setup_game(game_name)
+
+getActionSize = env.getActionSize
+getStateSize = env.getStateSize
+getAgentSize = env.getAgentSize
+
+getValidActions = env.getValidActions
+getReward = env.getReward
+
+normal_main = env.normal_main
+numba_main_2 = env.numba_main_2
 """
 
 def add_text_to_file(agent_name):
@@ -120,15 +130,16 @@ def get_notifi_server(type_code, msg, name_type, *args):
         val = (NotifiID, name_type) 
         mycursor.execute(sql, val)
 
-        sql = f"UPDATE CodeBot SET CreateOn = %s WHERE CodeID = %s"
-        val = (time.strftime('%Y-%m-%d %H:%M:%S'), name_type) 
-        mycursor.execute(sql, val)
 
         if len(args) > 0:
             sql = f"UPDATE CodeBot SET ScoreElo = %s WHERE CodeID = %s"
             val = (args[0], name_type)
             mycursor.execute(sql, val)
-        
+        else:
+            sql = f"UPDATE CodeBot SET CreateOn = %s WHERE CodeID = %s"
+            val = (time.strftime('%Y-%m-%d %H:%M:%S'), name_type) 
+            mycursor.execute(sql, val)
+
         mydb.commit()
 
 
@@ -188,3 +199,19 @@ def copy_new_env():
     
 # copy_new_env()
 
+def state_train_server(agent_name, env_train, level):
+    dict_agent = json.load(open(f'{SHOT_PATH}Log/agent_all.json'))
+    dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
+    list_env_name = list(dict_agent[agent_name].keys())[4:]
+    if env_train == False:
+        text_to_server = f'WAIT|--|'
+    else:
+        id_env_training = list_env_name.index(env_train)
+        text_to_server = f'{id_env_training}:{level}|--|'
+    for id_env, env_name_save in enumerate(list_env_name):
+        level_env_save = dict_agent[agent_name][env_name_save]['State_level'][2]
+        lv_max = dict_level[env_name_save]['level_max']
+        text_to_server += f'{id_env}:\"{level_env_save}/{lv_max}\";'
+
+    text_to_server = text_to_server[:-1] + '|'
+    get_notifi_server('Agent', 'TRAINING', agent_name, text_to_server)

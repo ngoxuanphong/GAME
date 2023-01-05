@@ -1,7 +1,7 @@
 from setup import time_run_game, SHOT_PATH
 from CreateLog import logger
 
-from getFromServer import get_notifi_server
+from getFromServer import get_notifi_server, state_train_server
 import sys, os, time, json
 import pandas as pd
 import numpy as np
@@ -52,41 +52,33 @@ def CreateFolder(player, game_name, level): #Tên folder của người chơi
     return path_save_player
 
 
-def test_data(game, _p1_, path_save_player, level):
-    PerDataStartTrain = list(np.load(f'{path_save_player}Train.npy',allow_pickle=True))
-    win, per = game.numba_main_2(_p1_.Agent, 1000, PerDataStartTrain, level)
-    return win/10
 
-
-def train(game, path_save_player, level, _p1_, time_loop, *args): #arg = 1 là train theo mốc, k phải train hệ thống mới
+def train_agent_by_level(game, path_save_player, level, _p1_, time_loop, *args): #arg = 1 là train theo mốc, k phải train hệ thống mới
     PerDataStartTrain = _p1_.DataAgent()
     if time_loop == 0: time_loop = 1
     win = 0
     start_train = time.time()
     for _time_ in range(time_loop):
-        win, PerDataStartTrain = game.numba_main_2(_p1_.Agent, 10000, PerDataStartTrain, level)
+        win, PerDataStartTrain = game.numba_main_2(_p1_.Train, 10000, PerDataStartTrain, level)
         np.save(f'{path_save_player}Train.npy',PerDataStartTrain)
-
-        if (len(args) > 0) and (win > 1.1*10000/game.getAgentSize()):
-            return win 
         end_train = time.time()
         if (end_train - start_train) > time_run_game:
+            win, PerDataStartTrain = game.numba_main_2(_p1_.Test, 10000, PerDataStartTrain, level)
             break
-    np.save(f'{path_save_player}Train.npy',PerDataStartTrain)
     return win
 
 def check_code(game, player):
     _p1_ = load_module_player(player)
-    win, PerDataStartTrain = game.numba_main_2(_p1_.Agent, 100, _p1_.DataAgent(), 0)
+    win, PerDataStartTrain = game.numba_main_2(_p1_.Train, 100, _p1_.DataAgent(), 0)
     
     start_10000 = time.time()
-    win, PerDataStartTrain = game.numba_main_2(_p1_.Agent, 10000, _p1_.DataAgent(), 0)
+    win, PerDataStartTrain = game.numba_main_2(_p1_.Train, 10000, _p1_.DataAgent(), 0)
     end_10000 = time.time()
     return True, int(time_run_game/(end_10000 - start_10000))
 
 def save_json(path_save_json, dict_save):
     with open(path_save_json, 'w') as f:
-        json.dump(dict_save, f, indent=4)
+        json.dump(dict_save, f, indent=1)
 
 def read_edit_save_df_level(df_run, col, id, win):
     df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
@@ -102,7 +94,6 @@ def train_new_env():
             for id in df_run.index:
                 if pd.isna(df_run[col][id]):
                     agent_name = df_run['ID'][id]
-                    print(agent_name, col)
                     read_edit_save_df_level(df_run, col, id, 'RUNNING')
                     add_game_to_syspath(env_name)
                     
@@ -112,16 +103,11 @@ def train_new_env():
                     _p1_ = load_module_player(agent_name)
 
                     check_agent, time_loop = check_code(__env__, agent_name)
-                    print('Check Agent, time_loop', check_agent, time_loop)
-
                     if check_agent == True:
-                        print('train', env_name, path_save_player, level, agent_name, time_loop)
-                        win = train(__env__, path_save_player, level, _p1_, time_loop)
-                        print('win', win)
+                        win = train_agent_by_level(__env__, path_save_player, level, _p1_, time_loop*10000)
                         read_edit_save_df_level(df_run, col, id, win)
                     else:
                         read_edit_save_df_level(df_run, col, id, 0)
-
                     break
             else:
                 continue
@@ -168,7 +154,17 @@ def get_lv(count_agent, env_name):
         for agent_name in name_agents:
             folder_name_old = f'{SHOT_PATH}Agent/{agent_name}/Data/{env_name}_0/'
             folder_name_new = f'{SHOT_PATH}Agent/{agent_name}/Data/{env_name}_{lv_max}/'
-            os.rename(folder_name_old, folder_name_new)
+            if os.path.exists(folder_name_old) == True and os.path.exists(folder_name_new) == False:
+                os.rename(folder_name_old, folder_name_new)
+            if os.path.exists(folder_name_new):
+                pass
+            if os.path.exists(folder_name_old) == False and os.path.exists(folder_name_new) == False:
+                logger.debug(f'Split Level:  Agent_name: {agent_name}, Env_name: {env_name}, Level_add: {lv_max}, Folder old: {folder_name_old}:{os.path.exists(folder_name_old)}, Folder new: {folder_name_new}:{os.path.exists(folder_name_new)}')
+                folder_have = os.listdir(f'{SHOT_PATH}Agent/{agent_name}/Data/')
+                if len(folder_have) > 0:
+                    folder_name_change = f'{SHOT_PATH}Agent/{agent_name}/Data/{folder_have[-1]}/'
+                    os.rename(folder_name_change, folder_name_new)
+
         
         if lv_max not in dict_level[env_name]:
             dict_level[env_name][lv_max] = [all_id_lv, win_count, name_agents]
@@ -206,9 +202,7 @@ def test_and_add_new_level():
                     data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{agent_name}/Data/{env_name}_0/Train.npy',allow_pickle=True))
 
                     add_game_to_syspath(env_name)
-
-                    p0 = load_module_player(agent_name).Agent
-
+                    p0 = load_module_player(agent_name).Test
                     win, per = __env__.numba_main_2(p0, 1000, data_agent_env, level_max)
 
                     df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
@@ -218,17 +212,26 @@ def test_and_add_new_level():
             dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
             dict_level[env_name]['Can_Split_Level'] = 'True'
             save_json(f'{SHOT_PATH}Log/level_game.json', dict_level)
+            break
 
 def after_train(current_lv, env_name, agent_name, win, condition_pass_level):
     dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
     dict_agent = json.load(open(f'{SHOT_PATH}Log/agent_all.json'))
 
+    if win > condition_pass_level:
+        dict_agent[agent_name][env_name]['State_level'][2] = current_lv
+    else:
+        dict_agent[agent_name][env_name]['State_level'][2] = current_lv - 1
+
+    state_train_server(agent_name, False, current_lv)
+
     if current_lv == dict_level[env_name]['level_max']:
         dict_agent[agent_name][env_name]['State_level'][0] = -1
-    
+
     elif current_lv < dict_level[env_name]['level_max'] - 2:
         dict_agent[agent_name][env_name]['State_level'][0] = -1
         dict_agent[agent_name]['Agent Save'] = False
+
     else:
         if win <= condition_pass_level:
             if current_lv == dict_level[env_name]['level_max'] -2:
@@ -237,11 +240,10 @@ def after_train(current_lv, env_name, agent_name, win, condition_pass_level):
             else:
                 dict_agent[agent_name][env_name]['State_level'][0] = -1
         else:
-
             __env__ = setup_game(env_name)
             data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{agent_name}/Data/{env_name}_{current_lv}/Train.npy',allow_pickle=True))
             add_game_to_syspath(env_name)
-            p0 = load_module_player(agent_name).Agent
+            p0 = load_module_player(agent_name).Test
             check_new_level = False
 
             for level_test in range(dict_level[env_name]['level_max'], current_lv, -1):
@@ -268,7 +270,6 @@ def choose_game_level_train(agent_name):
     dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
     dict_agent = json.load(open(f'{SHOT_PATH}Log/agent_all.json'))
 
-
     for env_name in dict_agent[agent_name]:
         if env_name not in ['Elo', 'First train', 'Level Train', 'Agent Save']:
             state_train_env = dict_agent[agent_name][env_name]['State_level']
@@ -279,12 +280,17 @@ def choose_game_level_train(agent_name):
                         level_train = dict_level[env_name]['level_max'] - 2
                     else:
                         level_train = state_train_env[1]
+                        if level_train < 1: level_train = 1
+                        if level_train > dict_level[env_name]['level_max']: level_train = 0
+                           
                 else:
                     level_train = dict_level[env_name]['level_max']//2
 
                 if len(dict_agent[agent_name][env_name][str(level_train)]) == 0:
                     dict_agent[agent_name][env_name]['State_level'][0] = 1
                     save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
+
+                    state_train_server(agent_name, env_name, level_train)
                     return env_name, level_train
 
     for env_name in dict_agent[agent_name]:
@@ -296,6 +302,8 @@ def choose_game_level_train(agent_name):
 
                     dict_agent[agent_name][env_name]['State_level'][0] = 1
                     save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
+
+                    state_train_server(agent_name, env_name, level_train)
                     return env_name, level_train
     return False, False
 
@@ -321,7 +329,6 @@ def add_to_strong_agent(env_name, agent_name, level, win, condition_pass_level):
                     check_dk = False
             
         df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
-        print(check_dk, agent_name)
         if check_dk == True: 
             if agent_name not in list(df_run["ID"]):
                 if os.path.exists(f'{SHOT_PATH}Agent/{agent_name}/Data/{env_name}_0/') == False:
@@ -340,8 +347,6 @@ def train_agent():
     dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
     for agent_name in dict_agent:
         env_name, level = choose_game_level_train(agent_name)
-        print(env_name, level, agent_name)
-        # get_notifi_server('Agent', 'TRAINING', agent_name, dict_agent[agent_name]['Elo'])
         if env_name != False:
             add_game_to_syspath(env_name)
             path_save_player = CreateFolder(agent_name, env_name, level)
@@ -351,10 +356,10 @@ def train_agent():
             check_agent, time_loop = check_code(__env__, agent_name)
             if check_agent == True:
                 start = time.time()
-                win = train(__env__, path_save_player, level, _p1_, time_loop, 1)
+                win = train_agent_by_level(__env__, path_save_player, level, _p1_, time_loop*1000, 1)
                 end = time.time()
                 
-                condition_pass_level = 9000
+                condition_pass_level = 10000/__env__.getAgentSize()
                 add_to_strong_agent(env_name, agent_name, level, win, condition_pass_level)
 
                 after_train(level, env_name, agent_name, win, condition_pass_level)
@@ -363,15 +368,14 @@ def train_agent():
 
                 dict_agent[agent_name][env_name][str(level)] = [win, end - start]
                 save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
-                # get_notifi_server('Agent', 'TRAINING', agent_name, dict_agent[agent_name]['Elo'])
                 break
 
 
 def run_autotrain():
-    # test_and_add_new_level()
-    # train_new_env()
+    test_and_add_new_level()
+    train_new_env()
     train_agent()
-    time.sleep(10)
 
-while True:
-    run_autotrain()
+# run_autotrain()
+
+# state_train_server('system0_1672838310', False, 2)
