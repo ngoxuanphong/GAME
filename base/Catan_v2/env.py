@@ -1,5 +1,5 @@
 import numpy as np
-from numba import njit
+from numba import njit, jit
 from numba.typed import List
 
 TILE_TILE = np.array(
@@ -1866,7 +1866,7 @@ def random_Env(p_state):
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx]
 
-@njit()
+@jit()
 def one_game_numba(p0, list_other, per_player):
     env = initEnv()
 
@@ -1904,7 +1904,7 @@ def one_game_numba(p0, list_other, per_player):
     return winner,  per_player
 
 
-@njit()
+@jit()
 def n_game_numba(p0, num_game, per_player, level):
     win = 0
     if level == 0:
