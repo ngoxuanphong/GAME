@@ -25,3 +25,4 @@ time_run_game = 1000
  
 number_of_matches = 1000 #Số trận test khi dùng khi test và test_1_player
 path_save_json_test_player = '' #Nơi lưu file json data test các người chơi
+SHOT_PATH = 'GAME/'

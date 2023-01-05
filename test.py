@@ -1,5 +1,11 @@
 from base.Catan_v2.env import *
 import time
+import warnings
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning,NumbaExperimentalFeatureWarning, NumbaWarning
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaExperimentalFeatureWarning)
+warnings.simplefilter('ignore', category=NumbaWarning)
 
 def calculate_time(func):
     def inner1(*args, **kwargs):
@@ -9,7 +15,7 @@ def calculate_time(func):
         print('| Time to run code', end - start)
     return inner1
 
-@njit()
+# @jit()
 def test(p_state, per_file):
     arr_action = getValidActions(p_state)
     arr_action = np.where(arr_action == 1)[0]
@@ -37,11 +43,13 @@ def main():
         d, _ = normal_main_2(test, 1000, np.array([0]), 0)
         print('normal_main_2', d, end = '')
     
-    test_normal_main()
-    test_numba_main()
-    test_normal_main_2()
+    # test_normal_main()
+    # test_numba_main()
+    c, _ = numba_main_2(test, 1000, np.array([0]), 0)
     test_numba_main_2()
+    test_normal_main_2()
 
 
 if __name__ == '__main__':
     main()
+
