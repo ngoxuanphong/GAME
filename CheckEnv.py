@@ -91,7 +91,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
             BOOL_CHECK_ENV = False
     except:
         logger.warn(f'hàm numba_main_2 đang bị lỗi')
-        msg.append(f'hàm normal_main đang bị lỗi')
+        msg.append(f'hàm numba_main_2 đang bị lỗi')
         BOOL_CHECK_ENV = False
 
     try:
