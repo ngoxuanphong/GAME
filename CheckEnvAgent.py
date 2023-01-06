@@ -1,8 +1,10 @@
+import sys
 import time
 from CheckEnv import check_env
 from CheckPlayer import check_agent
 from server.mysql_connector import get_db_cursor
 from getFromServer import get_notifi_server, update_notificate_by_id, copy_new_agent, copy_new_env
+from numba import njit
 
 import pandas as pd
 import importlib.util
@@ -11,9 +13,33 @@ import json, os
 from setup import SHOT_PATH
 from CreateLog import logger
 
+def setup_game(game_name):
+    spec = importlib.util.spec_from_file_location('env', f"{SHOT_PATH}base/{game_name}/env.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module 
+    spec.loader.exec_module(module)
+    return module
+    
+def load_module_player(player):
+    return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
+
+def add_game_to_syspath(env_name):
+    if len(sys.argv) >= 2:
+        sys.argv = [sys.argv[0]]
+    sys.argv.append(env_name)
+
 def save_json(path_save_json, dict_save):
     with open(path_save_json, 'w') as f:
-        json.dump(dict_save, f, indent=2)
+        json.dump(dict_save, f, indent=1)
+
+def CreateFolder(player, game_name, level): #Tên folder của người chơi
+    path_data = f'{SHOT_PATH}Agent/{player}/Data'
+    if not os.path.exists(path_data):
+        os.mkdir(path_data)
+    path_save_player = f'{SHOT_PATH}Agent/{player}/Data/{game_name}_{level}/'
+    if not os.path.exists(path_save_player):
+        os.mkdir(path_save_player)
+    return path_save_player
 
 def update_json():
     dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
@@ -90,6 +116,40 @@ def read_edit_save_df_env(id, col, msg):
     df_env.loc[id, col] = msg
     df_env.to_json(f'{SHOT_PATH}Log/StateEnv.json')
 
+
+def check_env_level_1(env_name_test):
+    @njit()
+    def test_numba(p_state, per_file):
+        arr_action = env_test.getValidActions(p_state)
+        arr_action = np.where(arr_action == 1)[0]
+        act_idx = np.random.randint(0, len(arr_action))
+        return arr_action[act_idx], per_file
+    agent_name_test = 'train_to_check_level_env'
+
+    if os.path.exists(f'{SHOT_PATH}Log/check_system_about_level.json') == False:
+        save_json(f'{SHOT_PATH}Log/check_system_about_level.json', {})
+
+    dict_env_test_level = json.load(open(f'{SHOT_PATH}Log/check_system_about_level.json'))
+    if env_name_test not in dict_env_test_level:
+        dict_env_test_level[env_name_test] = {'1': [0, 0, [agent_name_test, agent_name_test, agent_name_test]]}
+    
+    save_json(f'{SHOT_PATH}Log/check_system_about_level.json', dict_env_test_level)
+    add_game_to_syspath(env_name_test)
+    env_test = setup_game(env_name_test)
+    agent_test = load_module_player(agent_name_test)
+
+    path_save_test = CreateFolder(agent_name_test, env_name_test, 1)
+    perSaveToChecking = agent_test.DataAgent()
+    np.save(f'{path_save_test}Train.npy',perSaveToChecking)
+
+    time.sleep(2)
+    try:
+        win , per = env_test.numba_main_2(test_numba, 1000, np.array([0]), 1, 1)
+        print(win)
+        return True
+    except:
+        return False
+
 def fix_env():
     df_env = pd.read_json(f'{SHOT_PATH}Log/StateEnv.json')
 
@@ -107,12 +167,19 @@ def fix_env():
                 env = importlib.util.spec_from_file_location('env', f"{SHOT_PATH}base/{env_name}/env.py").loader.load_module()
                 bool_check_env, msg = check_env(env)
                 if bool_check_env == True:
-                    read_edit_save_df_env(id, 'CHECK', 'DONE')
-                    update_notificate_by_id(ID_env, 'NO BUG')
+                    bool_check_level = check_env_level_1(env_name)
+                    print('check lv 1', bool_check_level)
+                    if bool_check_level == True:
+                        read_edit_save_df_env(id, 'CHECK', 'DONE')
+                        update_notificate_by_id(ID_env, 'NO BUG')
 
-                    df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
-                    df_run[env_name] = np.nan
-                    df_run.to_json(f'{SHOT_PATH}Log/State.json')
+                        df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
+                        df_run[env_name] = np.nan
+                        df_run.to_json(f'{SHOT_PATH}Log/State.json')
+                    else:
+                        update_notificate_by_id(ID_env, 'BUG')
+                        read_edit_save_df_env(id, 'CHECK', 'BUG')
+                        read_edit_save_df_env(id, 'NOTE', 'Bug level 1')
                 else:
                     update_notificate_by_id(ID_env, 'BUG')
                     read_edit_save_df_env(id, 'CHECK', 'BUG')
@@ -131,7 +198,6 @@ def fix_env():
             update_json()
             break
 
-
 def __checking_all__():
     if os.path.exists(f'{SHOT_PATH}Log/agent_all.json') == False:
         save_json(f'{SHOT_PATH}Log/agent_all.json', {})
@@ -148,4 +214,7 @@ def __checking_all__():
     update_json()
 
 __checking_all__()
+
+
+
 

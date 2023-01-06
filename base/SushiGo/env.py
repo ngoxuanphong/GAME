@@ -601,7 +601,7 @@ def numba_main_2(p0, n_game, per_player, level, *args):
         return n_game_numba(p0, n_game, per_player, list_other, per_agent_env, per_agent_env, per_agent_env, per_agent_env, random_Env, random_Env, random_Env, random_Env)
     else:
         env_name = sys.argv[1]
-        if len(*args) > 0:
+        if len(args) > 0:
             dict_level = json.load(open(f'{SHOT_PATH}Log/check_system_about_level.json'))
         else:
             dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))

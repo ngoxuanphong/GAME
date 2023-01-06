@@ -6,7 +6,7 @@ import sys, os, time, json
 import pandas as pd
 import numpy as np
 import importlib.util
-
+from CheckEnvAgent import CreateFolder, update_json, setup_game, load_module_player, add_game_to_syspath
 import warnings 
 warnings.filterwarnings('ignore')
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning,NumbaExperimentalFeatureWarning, NumbaWarning
@@ -25,32 +25,6 @@ warnings.simplefilter('ignore', category=NumbaWarning)
 # dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
 PASS_LEVEL = 1000
 COUNT_PLAYER_TRAIN_NEW_ENV = 10
-
-def setup_game(game_name):
-    spec = importlib.util.spec_from_file_location('env', f"{SHOT_PATH}base/{game_name}/env.py")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module 
-    spec.loader.exec_module(module)
-    return module
-
-def add_game_to_syspath(env_name):
-    if len(sys.argv) >= 2:
-        sys.argv = [sys.argv[0]]
-    sys.argv.append(env_name)
-
-def load_module_player(player):
-    return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
-
-
-def CreateFolder(player, game_name, level): #Tên folder của người chơi
-    path_data = f'{SHOT_PATH}Agent/{player}/Data'
-    if not os.path.exists(path_data):
-        os.mkdir(path_data)
-    path_save_player = f'{SHOT_PATH}Agent/{player}/Data/{game_name}_{level}/'
-    if not os.path.exists(path_save_player):
-        os.mkdir(path_save_player)
-    return path_save_player
-
 
 
 def train_agent_by_level(game, path_save_player, level, _p1_, time_loop, *args): #arg = 1 là train theo mốc, k phải train hệ thống mới
@@ -89,8 +63,8 @@ def train_new_env():
     df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
     dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
     for col in df_run.columns[7:]:
-        env_name = col
-        if dict_level[env_name]['Can_Split_Level'] == 'False':
+            env_name = col
+        # if dict_level[env_name]['Can_Split_Level'] == 'False': #6/1/2023
             for id in df_run.index:
                 if pd.isna(df_run[col][id]):
                     agent_name = df_run['ID'][id]
@@ -113,11 +87,11 @@ def train_new_env():
                 continue
             break
 
-    for col in df_run.columns[7:]:
-        if pd.isna(df_run[col]).any() == False:
-            dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
-            dict_level[col]['Can_Split_Level'] = 'True'
-            save_json(f'{SHOT_PATH}Log/level_game.json', dict_level)
+    # for col in df_run.columns[7:]: #6/1/2023
+    #     if pd.isna(df_run[col]).any() == False:
+    #         dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
+    #         dict_level[col]['Can_Split_Level'] = 'True'
+    #         save_json(f'{SHOT_PATH}Log/level_game.json', dict_level)
 
 def get_lv(count_agent, env_name):
     df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
@@ -372,9 +346,9 @@ def train_agent():
 
 
 def run_autotrain():
-    test_and_add_new_level()
+    # test_and_add_new_level()
     train_new_env()
-    train_agent()
+    # train_agent()
 
 # run_autotrain()
 

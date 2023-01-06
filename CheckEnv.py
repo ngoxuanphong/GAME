@@ -61,6 +61,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
         act_idx = np.random.randint(0, len(arr_action))
         if _env_.getReward(p_state) != -1:
             per_file[0] += 1
+            
         return arr_action[act_idx], per_file
 
     def test_no_numba(p_state, per_file):
@@ -91,7 +92,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
             BOOL_CHECK_ENV = False
     except:
         logger.warn(f'hàm numba_main_2 đang bị lỗi')
-        msg.append(f'hàm normal_main đang bị lỗi')
+        msg.append(f'hàm numba_main_2 đang bị lỗi')
         BOOL_CHECK_ENV = False
 
     try:
@@ -122,12 +123,7 @@ def CheckRunGame(_env_, BOOL_CHECK_ENV, msg):
         BOOL_CHECK_ENV = False
     return BOOL_CHECK_ENV
 
-def check_lv1(_env_, BOOL_CHECK_ENV, msg):
-    try:
-        BOOL_CHECK_ENV = RunGame(_env_, BOOL_CHECK_ENV, msg)
-    except:
-        BOOL_CHECK_ENV = False
-    return BOOL_CHECK_ENV
+
 
 def check_env(_env_):
     BOOL_CHECK_ENV = True
@@ -135,6 +131,5 @@ def check_env(_env_):
     BOOL_CHECK_ENV = CheckAllFunc(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckReturn(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckRunGame(_env_, BOOL_CHECK_ENV, msg)
-    # BOOL_CHECK_ENV = check_lv1(_env_, BOOL_CHECK_ENV, msg)
     return BOOL_CHECK_ENV, msg
 

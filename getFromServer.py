@@ -52,12 +52,17 @@ def add_text_to_file(agent_name):
 
 def copy_agent_bool(agent_name):
     bool_copy_file = False
-    os.mkdir(f'{SHOT_PATH}Agent/{agent_name}')
-    shutil.copy2(f'{DRIVE_FOLDER}CodeAgent/{agent_name}.py', f'{SHOT_PATH}Agent/{agent_name}/Agent_player.py')
-    add_text_to_file(agent_name)
-    time.sleep(3)
-    if os.path.exists(f'{SHOT_PATH}Agent/{agent_name}/Agent_player.py'):
-        bool_copy_file = True
+    if os.path.exists(f'{DRIVE_FOLDER}CodeAgent/{agent_name}.py') == False:
+        return False
+    try:
+        os.mkdir(f'{SHOT_PATH}Agent/{agent_name}')
+        shutil.copy2(f'{DRIVE_FOLDER}CodeAgent/{agent_name}.py', f'{SHOT_PATH}Agent/{agent_name}/Agent_player.py')
+        add_text_to_file(agent_name)
+        time.sleep(3)
+        if os.path.exists(f'{SHOT_PATH}Agent/{agent_name}/Agent_player.py'):
+            bool_copy_file = True
+    except:
+        pass
     return bool_copy_file
 
 def check_sleep_copt_agent(agent_name):
@@ -106,6 +111,8 @@ def copy_new_agent():
             df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
 
             mydb.commit()
+        else:
+            get_notifi_server('Agent', 'BUG', agent_name)
 
 
 

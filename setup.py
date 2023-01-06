@@ -1,5 +1,5 @@
 game_name = 'Splendor'
-time_run_game = 500
+time_run_game = 21600
 
 
 # path = "C:\AutomaticTrain\State.xlsx"
