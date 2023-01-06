@@ -21,7 +21,20 @@ from CheckEnv import check_env
 # print(env4, check_env(env4))
 # print(env5, check_env(env5))
 # print(env6, check_env(env6))
-print(env7, check_env(env7))
-print(env8, check_env(env8))
-print(env9, check_env(env9))
-print(env10, check_env(env10))
+# print(env7, check_env(env7))
+# print(env8, check_env(env8))
+# print(env9, check_env(env9))
+# print(env10, check_env(env10))
+from numba import njit
+import numpy as np
+@njit()
+def test_numba(p_state, per_file):
+    arr_action = env7.getValidActions(p_state)
+    arr_action = np.where(arr_action == 1)[0]
+    act_idx = np.random.randint(0, len(arr_action))
+    if env7.getReward(p_state) != -1:
+        per_file[0] += 1
+    if env7.getReward(p_state) == 1:
+        per_file[1] += 1
+    return arr_action[act_idx], per_file
+
