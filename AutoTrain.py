@@ -62,10 +62,10 @@ def read_edit_save_df_level(df_run, col, id, win):
 def train_new_env():
     df_run = pd.read_json(f'{SHOT_PATH}Log/State.json')
     dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
-    for col in df_run.columns[7:]:
-            env_name = col
+    for id in df_run.index:
+        for col in df_run.columns[7:]:
+                env_name = col
         # if dict_level[env_name]['Can_Split_Level'] == 'False': #6/1/2023
-            for id in df_run.index:
                 if pd.isna(df_run[col][id]):
                     agent_name = df_run['ID'][id]
                     read_edit_save_df_level(df_run, col, id, 'RUNNING')
@@ -83,9 +83,9 @@ def train_new_env():
                     else:
                         read_edit_save_df_level(df_run, col, id, 0)
                     break
-            else:
-                continue
-            break
+        else:
+            continue
+        break
 
     # for col in df_run.columns[7:]: #6/1/2023
     #     if pd.isna(df_run[col]).any() == False:
