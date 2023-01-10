@@ -201,6 +201,10 @@ def after_train(current_lv, env_name, agent_name, win, condition_pass_level):
 
     if current_lv == dict_level[env_name]['level_max']:
         dict_agent[agent_name][env_name]['State_level'][0] = -1
+        if current_lv == 1:
+            if win <= condition_pass_level: #Sua 7/1/2023
+                dict_agent[agent_name]['Agent Save'] = False
+                dict_agent[agent_name][env_name]['State_level'][0] = -1
 
     elif current_lv < dict_level[env_name]['level_max'] - 2:
         dict_agent[agent_name][env_name]['State_level'][0] = -1
@@ -211,6 +215,7 @@ def after_train(current_lv, env_name, agent_name, win, condition_pass_level):
             if current_lv == dict_level[env_name]['level_max'] -2:
                 dict_agent[agent_name][env_name]['State_level'][0] = 0
                 dict_agent[agent_name]['Agent Save'] = False
+                
             else:
                 dict_agent[agent_name][env_name]['State_level'][0] = -1
         else:

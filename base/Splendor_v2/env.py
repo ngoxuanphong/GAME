@@ -631,7 +631,7 @@ def numba_main_2(p0, n_game, per_player, level, *args):
         if len(args) > 0:
             dict_level = json.load(open(f'{SHOT_PATH}Log/check_system_about_level.json'))
         else:
-            dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
+            dict_level = json.load(open(f'{SHOT_PATH}Log/level_game{env_name}.json')) #sua tai day
 
         if str(level) not in dict_level[env_name]:
             raise Exception('Hiện tại không có level này') 
@@ -642,7 +642,7 @@ def numba_main_2(p0, n_game, per_player, level, *args):
         p3 = load_module_player(lst_agent_level[2]).Test
         per_level = []
         for id in range(getAgentSize()-1):
-            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{lst_agent_level[id]}/Data/{env_name}_{level}/Train.npy',allow_pickle=True))
+            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{lst_agent_level[id]}/Data/{env_name}_0/Train.npy',allow_pickle=True)) #sua tai day
             per_level.append(data_agent_env)
         
         return n_game_numba(p0, n_game, per_player, list_other, per_level[0], per_level[1], per_level[2], p1, p2, p3)

@@ -492,13 +492,11 @@ def one_game(list_player, per_file):
     while env[100] <= 400 and _cc <= 10000:
         p_idx = env[100]%4
         p_state = getAgentState(env, lv1, lv2, lv3)
-        #  print('-----------------------------------------------------------------------')
         act, per_file = list_player[p_idx](p_state, per_file)
         list_action = getValidActions(p_state)
         if list_action[act] != 1:
             raise Exception('Action không hợp lệ')
         env, lv1, lv2, lv3 = stepEnv(act, env, lv1, lv2, lv3, list_action)
-        #  print('-----')
         _print_(env, lv1, lv2, lv3)
         if checkEnded(env) != 0:
             break
