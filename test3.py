@@ -1,4 +1,4 @@
-from base.Century.test_century import *
+from base.Century.test_century_1 import *
 import time
 
 def calculate_time(func):
@@ -9,11 +9,14 @@ def calculate_time(func):
         print('| Time to run code', end - start)
     return inner1
 
-@njit()
-def test(p_state, per_file):
+# @njit()
+def test(p_state, temp, per_file):
     arr_action = getValidActions(p_state)
     arr_action = np.where(arr_action == 1)[0]
-    act_idx = np.random.randint(0, len(arr_action))
+    try:
+        act_idx = np.random.randint(0, len(arr_action))
+    except:
+        print(arr_action)
     check = getReward(p_state)
     if check == 0:
         per_file[0] += 1
@@ -21,7 +24,7 @@ def test(p_state, per_file):
         per_file[1] += 1
     if check != -1:
         per_file[2] += 1
-    return arr_action[act_idx], per_file
+    return arr_action[act_idx], temp, per_file
 
 @calculate_time
 def main():
