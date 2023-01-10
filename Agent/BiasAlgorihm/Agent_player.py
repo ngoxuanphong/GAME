@@ -4,6 +4,7 @@ from numba import njit, jit
 import sys, os
 from setup import SHOT_PATH
 import importlib.util
+
 game_name = sys.argv[1]
 
 def setup_game(game_name):
@@ -48,4 +49,6 @@ def Test(state,per):
     actions = getValidActions(state)
     output = per[1]/np.max(per[1]) * actions + actions
     action = np.argmax(output)
+    if actions[action] != 1:
+        print('bug ow day', action)
     return action, per

@@ -1,39 +1,45 @@
 {
  "Splendor_v2": {
+  "Can_Split_Level": "False",
+  "level_max": 1,
   "1": [
-   0,
-   0,
    [
-    "An",
-    "FusionwideNNAlgorithm",
-    "Trang"
-   ]
-  ],
-  "2": [
-   0,
-   0,
+    1,
+    1,
+    1
+   ],
    [
-    "An",
-    "FusionwideNNAlgorithm",
-    "Chain3Algorithm"
-   ]
-  ],
-  "3": [
-   0,
-   0,
+    9140,
+    5224,
+    8316,
+    6157
+   ],
    [
     "An",
     "Trang",
-    "Chain3Algorithm"
+    "BiasAlgorihm"
    ]
-  ],
-  "4": [
-   0,
-   0,
+  ]
+ },
+ "MachiKoro": {
+  "Can_Split_Level": "False",
+  "level_max": 1,
+  "1": [
    [
-    "FusionwideNNAlgorithm",
+    1,
+    1,
+    1
+   ],
+   [
+    9140,
+    5224,
+    8316,
+    6157
+   ],
+   [
+    "An",
     "Trang",
-    "Chain3Algorithm"
+    "BiasAlgorihm"
    ]
   ]
  }

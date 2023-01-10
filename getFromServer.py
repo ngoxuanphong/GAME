@@ -138,6 +138,7 @@ def get_notifi_server(type_code, msg, name_type, *args):
         if msg == 'TESTING': NotifiID = 205
         if msg == 'FINISHED': NotifiID = 206  
         if msg == 'UPLOAD SUCCESSFUL': NotifiID = 207
+        if msg == 'BUGLV1': NotifiID = 426
 
     if NotifiID != None:
         sql = f"UPDATE CodeBot SET NotificateID = %s WHERE CodeID = %s"

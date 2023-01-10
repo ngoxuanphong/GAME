@@ -21,7 +21,11 @@ def setup_game(game_name):
     return module
     
 def load_module_player(player):
-    return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
+    spec = importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module 
+    spec.loader.exec_module(module)
+    return module
 
 def add_game_to_syspath(env_name):
     if len(sys.argv) >= 2:
@@ -47,12 +51,11 @@ def update_json():
 
     for agent in dict_agent:
         for env_name in dict_level:
-            if dict_level[env_name]['Can_Split_Level'] == 'True':
-                if env_name not in dict_agent[agent]:
-                    dict_agent[agent][env_name] = {'State_level':[0, 0 , 0]}
-                for level in range(dict_level[env_name]['level_max']+1):
-                    if str(level) not in dict_agent[agent][env_name]:
-                        dict_agent[agent][env_name][level] = []
+            if env_name not in dict_agent[agent]:
+                dict_agent[agent][env_name] = {'State_level':[0, 0 , 0]}
+            for level in range(dict_level[env_name]['level_max']+1):
+                if str(level) not in dict_agent[agent][env_name]:
+                    dict_agent[agent][env_name][level] = []
     save_json(f'{SHOT_PATH}Log/agent_all.json', dict_agent)
 
 
@@ -63,13 +66,13 @@ def fix_player():
         state_agent = df_agent.loc[id, 'CHECK']
         if pd.isna(state_agent):
 
-            agent_name = df_agent['AGENT'][id]
-            df_agent.loc[id, 'CHECK'] = 'CHECKING'
-            df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
+                agent_name = df_agent['AGENT'][id]
+                df_agent.loc[id, 'CHECK'] = 'CHECKING'
+                df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
 
-            get_notifi_server('Agent', 'CHECKING', agent_name)
-            print(agent_name)
-            try:
+                get_notifi_server('Agent', 'CHECKING', agent_name)
+                print(agent_name)
+            # try:
                 agent_test = importlib.util.spec_from_file_location('Agent_player', f"A:\AutoTrain\GAME\Agent\{agent_name}\Agent_player.py").loader.load_module()
                 bool_check_agent, msg = check_agent(agent_test)
                 df_agent = pd.read_json(f'{SHOT_PATH}Log/StateAgent.json')
@@ -90,12 +93,12 @@ def fix_player():
                     get_notifi_server('Agent', 'BUG', agent_name)
                     
                 df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
-            except:
-                df_agent.loc[id, 'CHECK'] = 'BUG2'
-                df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
-                get_notifi_server('Agent', 'BUG', agent_name)
+            # except:
+            #     df_agent.loc[id, 'CHECK'] = 'BUG2'
+            #     df_agent.to_json(f'{SHOT_PATH}Log/StateAgent.json')
+            #     get_notifi_server('Agent', 'BUG', agent_name)
 
-            break
+                break
 
 def sql_get_id_by_systen_name(env_name):
     mycursor, mydb = get_db_cursor()
@@ -168,7 +171,6 @@ def fix_env():
                 bool_check_env, msg = check_env(env)
                 if bool_check_env == True:
                     bool_check_level = check_env_level_1(env_name)
-                    print('check lv 1', bool_check_level)
                     if bool_check_level == True:
                         read_edit_save_df_env(id, 'CHECK', 'DONE')
                         update_notificate_by_id(ID_env, 'NO BUG')
@@ -177,7 +179,7 @@ def fix_env():
                         df_run[env_name] = np.nan
                         df_run.to_json(f'{SHOT_PATH}Log/State.json')
                     else:
-                        update_notificate_by_id(ID_env, 'BUG')
+                        update_notificate_by_id(ID_env, 'BUGLV1')
                         read_edit_save_df_env(id, 'CHECK', 'BUG')
                         read_edit_save_df_env(id, 'NOTE', 'Bug level 1')
                 else:
@@ -186,9 +188,13 @@ def fix_env():
                     read_edit_save_df_env(id, 'NOTE', str(msg))
 
                 dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
+                dict_level_all = json.load(open(f'{SHOT_PATH}Log/level_game_all.json'))
+                state_train_agent = [0 for i in range(len(dict_level_all["1"]["Agents Name"]))]
+                score_train_agent = [0 for i in range(len(dict_level_all["1"]["Agents Name"]))]
+                agent_name_train = dict_level_all["1"]["Agents Name"]
                 dict_level[env_name] = {"Can_Split_Level": 'False',
                                         "level_max": 0,
-                                        "id_remove":[]}
+                                        "1": [state_train_agent, score_train_agent, agent_name_train]}
             except:
                 update_notificate_by_id(ID_env, 'BUG')
                 read_edit_save_df_env(id, 'CHECK', 'BUG')

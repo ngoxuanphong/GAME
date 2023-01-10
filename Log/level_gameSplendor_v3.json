@@ -1,10 +1,10 @@
 {
- "Splendor_v2": {
+ "Splendor_v3": {
   "1": [
    0,
    0,
    [
-    "TimeBasedAlgorithm",
+    "An",
     "BiasAlgorihm",
     "MultiDimensionAlgorithm"
    ]
@@ -13,7 +13,7 @@
    0,
    0,
    [
-    "TimeBasedAlgorithm",
+    "An",
     "BiasAlgorihm",
     "StateBasedAlgorithm"
    ]
@@ -22,16 +22,16 @@
    0,
    0,
    [
-    "TimeBasedAlgorithm",
+    "An",
     "BiasAlgorihm",
-    "Trang"
+    "TimeBasedAlgorithm"
    ]
   ],
   "4": [
    0,
    0,
    [
-    "TimeBasedAlgorithm",
+    "An",
     "MultiDimensionAlgorithm",
     "StateBasedAlgorithm"
    ]
@@ -40,18 +40,18 @@
    0,
    0,
    [
-    "TimeBasedAlgorithm",
+    "An",
     "MultiDimensionAlgorithm",
-    "Trang"
+    "TimeBasedAlgorithm"
    ]
   ],
   "6": [
    0,
    0,
    [
-    "TimeBasedAlgorithm",
+    "An",
     "StateBasedAlgorithm",
-    "Trang"
+    "TimeBasedAlgorithm"
    ]
   ],
   "7": [
@@ -69,7 +69,7 @@
    [
     "BiasAlgorihm",
     "MultiDimensionAlgorithm",
-    "Trang"
+    "TimeBasedAlgorithm"
    ]
   ],
   "9": [
@@ -78,7 +78,7 @@
    [
     "BiasAlgorihm",
     "StateBasedAlgorithm",
-    "Trang"
+    "TimeBasedAlgorithm"
    ]
   ],
   "10": [
@@ -87,7 +87,7 @@
    [
     "MultiDimensionAlgorithm",
     "StateBasedAlgorithm",
-    "Trang"
+    "TimeBasedAlgorithm"
    ]
   ]
  }

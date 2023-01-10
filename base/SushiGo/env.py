@@ -579,7 +579,7 @@ def random_Env(p_state, per):
     act_idx = np.random.randint(0, len(arr_action))
     return arr_action[act_idx], per
 
-@jit()
+# @jit()
 def n_game_numba(p0, num_game, per_player, list_other, per1, per2, per3, per4, p1, p2, p3, p4):
     win = 0
     for _n in range(num_game):
@@ -592,8 +592,12 @@ import importlib.util, json, sys
 from setup import SHOT_PATH
 
 def load_module_player(player):
-    return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
-
+    spec = importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module 
+    spec.loader.exec_module(module)
+    return module
+    
 def numba_main_2(p0, n_game, per_player, level, *args):
     list_other = np.array([1, 2, 3, 4, -1])
     if level == 0:
@@ -604,7 +608,7 @@ def numba_main_2(p0, n_game, per_player, level, *args):
         if len(args) > 0:
             dict_level = json.load(open(f'{SHOT_PATH}Log/check_system_about_level.json'))
         else:
-            dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
+            dict_level = json.load(open(f'{SHOT_PATH}Log/level_game{env_name}.json'))
 
         if str(level) not in dict_level[env_name]:
             raise Exception('Hiện tại không có level này') 
@@ -616,7 +620,7 @@ def numba_main_2(p0, n_game, per_player, level, *args):
         p4 = load_module_player(lst_agent_level[3]).Test
         per_level = []
         for id in range(getAgentSize()-1):
-            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{lst_agent_level[id]}/Data/{env_name}_{level}/Train.npy',allow_pickle=True))
+            data_agent_env = list(np.load(f'{SHOT_PATH}Agent/{lst_agent_level[id]}/Data/{env_name}_0/Train.npy',allow_pickle=True))
             per_level.append(data_agent_env)
         
         return n_game_numba(p0, n_game, per_player, list_other, per_level[0], per_level[1], per_level[2], per_level[3], p1, p2, p3, p4)

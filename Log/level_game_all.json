@@ -1,7 +1,28 @@
 {
- "Level max": 1,
+ "Level max": 3,
  "1": {
-  "Can Train": false,
+  "Can Train": "True",
+  "Agents Name": [
+   "TimeBasedAlgorithm",
+   "An",
+   "BiasAlgorihm",
+   "MultiDimensionAlgorithm",
+   "StateBasedAlgorithm",
+   "Trang"
+  ]
+ },
+ "2": {
+  "Can Train": "True",
+  "Agents Name": [
+   "TimeBasedAlgorithm",
+   "An",
+   "BiasAlgorihm",
+   "MultiDimensionAlgorithm",
+   "system0_1673337627"
+  ]
+ },
+ "3": {
+  "Can Train": "False",
   "Agents Name": []
  }
 }

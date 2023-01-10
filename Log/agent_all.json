@@ -1,1 +1,32 @@
-{}
+{
+ "system0_1673337627": {
+  "Elo": 1200,
+  "First train": false,
+  "Level Train": 0,
+  "Agent Save": true,
+  "Splendor_v2": {
+   "State_level": [
+    -1,
+    0,
+    1
+   ],
+   "0": [],
+   "1": [
+    24,
+    162.76397323608398
+   ]
+  },
+  "MachiKoro": {
+   "State_level": [
+    -1,
+    0,
+    1
+   ],
+   "0": [],
+   "1": [
+    310,
+    125.22000050544739
+   ]
+  }
+ }
+}

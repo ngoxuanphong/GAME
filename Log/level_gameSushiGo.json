@@ -1,0 +1,54 @@
+{
+ "SushiGo": {
+  "1": [
+   0,
+   0,
+   [
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "StateBasedAlgorithm",
+    "TimeBasedAlgorithm"
+   ]
+  ],
+  "2": [
+   0,
+   0,
+   [
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "StateBasedAlgorithm",
+    "Trang"
+   ]
+  ],
+  "3": [
+   0,
+   0,
+   [
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "TimeBasedAlgorithm",
+    "Trang"
+   ]
+  ],
+  "4": [
+   0,
+   0,
+   [
+    "BiasAlgorihm",
+    "StateBasedAlgorithm",
+    "TimeBasedAlgorithm",
+    "Trang"
+   ]
+  ],
+  "5": [
+   0,
+   0,
+   [
+    "MultiDimensionAlgorithm",
+    "StateBasedAlgorithm",
+    "TimeBasedAlgorithm",
+    "Trang"
+   ]
+  ]
+ }
+}

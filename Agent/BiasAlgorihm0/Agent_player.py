@@ -1,4 +1,3 @@
-#@title Code tìm Bias
 import numpy as np
 import random as rd
 from numba import njit, jit
@@ -49,4 +48,6 @@ def Test(state,per):
     actions = getValidActions(state)
     output = per[1]/np.max(per[1]) * actions + actions
     action = np.argmax(output)
+    if actions[action] != 1:
+        print('bug ow day', action)
     return action, per
