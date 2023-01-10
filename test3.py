@@ -1,38 +1,42 @@
-from base.Century.test_century_1 import *
-import time
+import base.TLMN.env as env
+import base.TLMN_v2.env as env0
+import base.MachiKoro.env as env1
+import base.Splendor.env as env2
+import base.Splendor_v2.env as env3
+import base.Splendor_v3.env as env4
+import base.Sheriff.env as env5
+import base.SushiGo.env as env6
 
-def calculate_time(func):
-    def inner1(*args, **kwargs):
-        start = time.time()
-        func(*args, **kwargs)
-        end = time.time()
-        print('| Time to run code', end - start)
-    return inner1
+import base.StoneAge.env as env7
+import base.Catan_v2.env as env8
+import base.CatanNoExchange.env as env9
+import base.Century.env as env10
+from CheckEnv import check_env
 
+# print(env, check_env(env))
+# print(env0, check_env(env0))
+# print(env1, check_env(env1))
+# print(env2, check_env(env2))
+# print(env3, check_env(env3))
+# print(env4, check_env(env4))
+# print(env5, check_env(env5))
+# print(env6, check_env(env6))
+# print(env7, check_env(env7))
+print(env8, check_env(env8))
+# print(env9, check_env(env9))
+# print(env10, check_env(env10))
+# from numba import njit
+# import numpy as np
 # @njit()
-def test(p_state, temp, per_file):
-    arr_action = getValidActions(p_state)
-    arr_action = np.where(arr_action == 1)[0]
-    try:
-        act_idx = np.random.randint(0, len(arr_action))
-    except:
-        print(arr_action)
-    check = getReward(p_state)
-    if check == 0:
-        per_file[0] += 1
-    if check == 1:
-        per_file[1] += 1
-    if check != -1:
-        per_file[2] += 1
-    return arr_action[act_idx], temp, per_file
+# def test_numba(p_state, per_file):
+#     arr_action = env7.getValidActions(p_state)
+#     arr_action = np.where(arr_action == 1)[0]
+#     act_idx = np.random.randint(0, len(arr_action))
+#     if env7.getReward(p_state) != -1:
+#         per_file[0] += 1
+#     if env7.getReward(p_state) == 1:
+#         per_file[1] += 1
+#     return arr_action[act_idx], per_file
 
-@calculate_time
-def main():
-    a, per = normal_main([test]*getAgentSize(), 100000, np.array([0, 0, 0]))
-    print(a, per)
-    print('Check tổng số trận', (per[0] + per[1])/getAgentSize() == 100000)
-    print('Check số trận kết thúc', per[2] == (100000*getActionSize()))
-    print('Check tổng số trận thắng', sum(a[:-1]) == per[1]) #Có thể có 2 người thắng
-    print('Check tổng số trận thua', a[-1]*getAgentSize() == per[0]) #Có thể có nhiều người thua
-    
-main()
+# win , per = env7.numba_main_2(test_numba, 10000, np.array([0, 0]), 0)
+# print(win, per)
