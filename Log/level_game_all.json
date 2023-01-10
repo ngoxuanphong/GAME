@@ -1,7 +1,37 @@
 {
- "Level max": 1,
+ "Level max": 4,
  "1": {
-  "Can Train": false,
+  "Can Train": "True",
+  "Agents Name": [
+   "An",
+   "BiasAlgorihm",
+   "Chain3Algorithm",
+   "FusiondeepNNAlgorithm",
+   "GreedyAlgorithm"
+  ]
+ },
+ "2": {
+  "Can Train": "True",
+  "Agents Name": [
+   "An",
+   "An0",
+   "FusionwideNNAlgorithm",
+   "FusionwideNNAlgorithm0",
+   "BiasAlgorihm"
+  ]
+ },
+ "3": {
+  "Can Train": "True",
+  "Agents Name": [
+   "An",
+   "BiasAlgorihm",
+   "Chain3Algorithm",
+   "FusiondeepNNAlgorithm",
+   "GreedyAlgorithm"
+  ]
+ },
+ "4": {
+  "Can Train": "False",
   "Agents Name": []
  }
 }

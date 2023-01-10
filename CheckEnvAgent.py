@@ -21,7 +21,11 @@ def setup_game(game_name):
     return module
     
 def load_module_player(player):
-    return  importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py").loader.load_module()
+    spec = importlib.util.spec_from_file_location('Agent_player', f"{SHOT_PATH}Agent/{player}/Agent_player.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module 
+    spec.loader.exec_module(module)
+    return module
 
 def add_game_to_syspath(env_name):
     if len(sys.argv) >= 2:
@@ -168,7 +172,6 @@ def fix_env():
                 bool_check_env, msg = check_env(env)
                 if bool_check_env == True:
                     bool_check_level = check_env_level_1(env_name)
-                    print('check lv 1', bool_check_level)
                     if bool_check_level == True:
                         read_edit_save_df_env(id, 'CHECK', 'DONE')
                         update_notificate_by_id(ID_env, 'NO BUG')
@@ -177,7 +180,7 @@ def fix_env():
                         df_run[env_name] = np.nan
                         df_run.to_json(f'{SHOT_PATH}Log/State.json')
                     else:
-                        update_notificate_by_id(ID_env, 'BUG')
+                        update_notificate_by_id(ID_env, 'BUGLV1')
                         read_edit_save_df_env(id, 'CHECK', 'BUG')
                         read_edit_save_df_env(id, 'NOTE', 'Bug level 1')
                 else:
@@ -186,9 +189,13 @@ def fix_env():
                     read_edit_save_df_env(id, 'NOTE', str(msg))
 
                 dict_level = json.load(open(f'{SHOT_PATH}Log/level_game.json'))
+                dict_level_all = json.load(open(f'{SHOT_PATH}Log/level_game_all.json'))
+                state_train_agent = [0 for i in range(len(dict_level_all["1"]["Agents Name"]))]
+                score_train_agent = [0 for i in range(len(dict_level_all["1"]["Agents Name"]))]
+                agent_name_train = dict_level_all["1"]["Agents Name"]
                 dict_level[env_name] = {"Can_Split_Level": 'False',
                                         "level_max": 0,
-                                        "id_remove":[]}
+                                        "1": [state_train_agent, score_train_agent, agent_name_train]}
             except:
                 update_notificate_by_id(ID_env, 'BUG')
                 read_edit_save_df_env(id, 'CHECK', 'BUG')

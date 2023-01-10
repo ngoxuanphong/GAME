@@ -1,5 +1,5 @@
-from mysql_connector import mydb, mycursor
-
+from mysql_connector import get_db_cursor
+mycursor, mydb = get_db_cursor()
 sql = 'INSERT INTO  Notificate (NotificateID, Description) VALUES (%s, %s)'
 val = [
     (100, 'Agent, Waiting'),
@@ -55,6 +55,7 @@ val = [
 
     (424, 'Agent, Upload failed'),
     (425, 'Environment, Upload failed'),
+    (426, 'Environment, False level 1 train test, need to read the documentation again')
 ]
 mycursor.executemany(sql, val)
 

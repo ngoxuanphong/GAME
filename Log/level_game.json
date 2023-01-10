@@ -1,39 +1,151 @@
 {
- "Splendor_v2": {
+ "SushiGo": {
+  "Can_Split_Level": "False",
+  "level_max": 2,
+  "id_remove": [],
   "1": [
-   0,
+   [
+    1,
+    1,
+    1,
+    1
+   ],
    0,
    [
     "An",
     "FusionwideNNAlgorithm",
-    "Trang"
+    "An0",
+    "FusionwideNNAlgorithm0"
    ]
   ],
   "2": [
-   0,
-   0,
+   [
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    9793,
+    9175,
+    8484,
+    9861
+   ],
+   [
+    "An",
+    "BiasAlgorihm",
+    "An0",
+    "BiasAlgorihm0"
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    9793,
+    8175,
+    6410,
+    6577,
+    9175
+   ],
+   [
+    "An",
+    "An0",
+    "FusionwideNNAlgorithm",
+    "FusionwideNNAlgorithm0",
+    "BiasAlgorihm"
+   ]
+  ]
+ },
+ "Splendor_v2": {
+  "Can_Split_Level": "False",
+  "level_max": 2,
+  "id_remove": [],
+  "1": [
+   [
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    9140,
+    5224,
+    8316,
+    6157
+   ],
    [
     "An",
     "FusionwideNNAlgorithm",
-    "Chain3Algorithm"
+    "An0",
+    "FusionwideNNAlgorithm0"
+   ]
+  ],
+  "2": [
+   [
+    1,
+    1,
+    1
+   ],
+   [
+    5867,
+    3478,
+    5707
+   ],
+   [
+    "BiasAlgorihm",
+    "An0",
+    "BiasAlgorihm0"
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1507,
+    3478,
+    202,
+    199,
+    5867
+   ],
+   [
+    "An",
+    "An0",
+    "FusionwideNNAlgorithm",
+    "FusionwideNNAlgorithm0",
+    "BiasAlgorihm"
    ]
   ],
   "3": [
-   0,
-   0,
+   [],
+   [],
+   [],
+   [
+    1,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    1306,
+    0,
+    0,
+    0,
+    0
+   ],
    [
     "An",
-    "Trang",
-    "Chain3Algorithm"
-   ]
-  ],
-  "4": [
-   0,
-   0,
-   [
-    "FusionwideNNAlgorithm",
-    "Trang",
-    "Chain3Algorithm"
+    "BiasAlgorihm",
+    "Chain3Algorithm",
+    "FusiondeepNNAlgorithm",
+    "GreedyAlgorithm"
    ]
   ]
  }
