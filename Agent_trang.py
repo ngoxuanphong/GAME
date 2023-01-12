@@ -26,7 +26,7 @@ getReward = env.getReward
 normal_main = env.normal_main
 numba_main_2 = env.numba_main_2
 
-from base.TLMN.env import *
+# from base.TLMN.env import *
 
 
 @njit
