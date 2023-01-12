@@ -408,7 +408,7 @@ def train_all_agent_of_level(): #Train test các agent của level đó
 
 # run_autotrain()
 
-train_agent()
-get_level()
-get_new_level_for_env()
-train_all_agent_of_level()
+# train_agent()
+# get_level()
+# get_new_level_for_env()
+# train_all_agent_of_level()

@@ -164,6 +164,7 @@ def update_notificate_by_id(ID, msg, *args):
     if msg == 'ERROR FORMAT':val = (120, ID)
     if msg == 'CANT UNZIP':val = (118, ID)
     if msg == 'WAITING': val = (110, ID)
+    if msg == 'BUGLV1': val = (426, ID)
         
     if msg == 'CHECKING': val = (111, ID)
     if msg == 'NO BUG': val = (112, ID)

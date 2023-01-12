@@ -19,6 +19,36 @@
     "Trang",
     "BiasAlgorihm"
    ]
+  ],
+  "2": [
+   [],
+   [],
+   [],
+   [
+    -1,
+    -1,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    "TimeBasedAlgorithm",
+    "An",
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "system0_1673337627"
+   ],
+   [
+    0,
+    0
+   ]
   ]
  },
  "MachiKoro": {
@@ -40,6 +70,156 @@
     "An",
     "Trang",
     "BiasAlgorihm"
+   ]
+  ],
+  "2": [
+   [],
+   [],
+   [],
+   [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    "TimeBasedAlgorithm",
+    "An",
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "system0_1673337627"
+   ],
+   [
+    0,
+    0
+   ]
+  ]
+ },
+ "0987145288_1673434484": {
+  "Can_Split_Level": "False",
+  "level_max": 0,
+  "1": [
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    "TimeBasedAlgorithm",
+    "An",
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "StateBasedAlgorithm",
+    "Trang"
+   ]
+  ]
+ },
+ "0987145288_1673437280": {
+  "Can_Split_Level": "False",
+  "level_max": 0,
+  "1": [
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    "TimeBasedAlgorithm",
+    "An",
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "StateBasedAlgorithm",
+    "Trang"
+   ]
+  ]
+ },
+ "0987145288_1673440267": {
+  "Can_Split_Level": "False",
+  "level_max": 0,
+  "1": [
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    "TimeBasedAlgorithm",
+    "An",
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "StateBasedAlgorithm",
+    "Trang"
+   ]
+  ]
+ },
+ "0987145288_1673503738": {
+  "Can_Split_Level": "False",
+  "level_max": 0,
+  "1": [
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    "TimeBasedAlgorithm",
+    "An",
+    "BiasAlgorihm",
+    "MultiDimensionAlgorithm",
+    "StateBasedAlgorithm",
+    "Trang"
    ]
   ]
  }

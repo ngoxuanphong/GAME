@@ -52,7 +52,7 @@ def CheckReturn(_env_, BOOL_CHECK_ENV, msg):
     return BOOL_CHECK_ENV
 
 
-@timeout(1000)
+# @timeout(1000)
 def RunGame(_env_, BOOL_CHECK_ENV, msg):
     @njit()
     def test_numba(p_state, per_file):
@@ -61,19 +61,18 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
         act_idx = np.random.randint(0, len(arr_action))
         if _env_.getReward(p_state) != -1:
             per_file[0] += 1
-            
+        if _env_.getReward(p_state) == 1:
+            per_file[1] += 1
         return arr_action[act_idx], per_file
 
     def test_no_numba(p_state, per_file):
         arr_action = _env_.getValidActions(p_state)
         arr_action = np.where(arr_action == 1)[0]
         act_idx = np.random.randint(0, len(arr_action))
-        if _env_.getReward(p_state) != -1:
-            per_file[0] += 1
         return arr_action[act_idx], per_file
 
     try:
-        per = np.array([0])
+        per = np.array([0, 0])
         win, per = _env_.numba_main_2(test_numba, COUNT_TEST, per, 0)
         if type(win) != int and type(win) != np.int64:
             logger.warn('hàm numba_main_2 trả ra sai đầu ra')
@@ -82,6 +81,10 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
         if per[0] != COUNT_TEST:
             logger.warn(f'Số trận kết thúc khác với số trận test, {per[0]}')
             msg.append(f'Số trận kết thúc khác với số trận test, {per[0]}')
+            BOOL_CHECK_ENV = False
+        if per[1] != win:
+            logger.warn(f'Số trận thắng khi kết thúc khác với sô trận check. Thắng khi dùng getReward: {per[1]}, win: {win}')
+            msg.append(f'Số trận thắng khi kết thúc khác với sô trận check. Thắng khi dùng getReward: {per[1]}, win: {win}')
             BOOL_CHECK_ENV = False
         try:
             per = np.array([0])
@@ -96,7 +99,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
         BOOL_CHECK_ENV = False
 
     try:
-        per = [0]
+        per = [0, 0]
         win, per = _env_.normal_main([test_numba]*_env_.getAgentSize(), COUNT_TEST, per)
         if type(win) != list:
             logger.warn('hàm normal_main trả ra sai đầu ra')
@@ -106,6 +109,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
             logger.warn(f'Số trận kết thúc khác với số trận test, {per[0]}')
             msg.append(f'Số trận kết thúc khác với số trận test, {per[0]}')
             BOOL_CHECK_ENV = False
+
     except:
         logger.warn(f'hàm normal_main đang bị lỗi')
         msg.append(f'hàm normal_main đang bị lỗi')
@@ -131,5 +135,5 @@ def check_env(_env_):
     BOOL_CHECK_ENV = CheckAllFunc(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckReturn(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckRunGame(_env_, BOOL_CHECK_ENV, msg)
+    # BOOL_CHECK_ENV = check_lv1(_env_, BOOL_CHECK_ENV, msg)
     return BOOL_CHECK_ENV, msg
-
