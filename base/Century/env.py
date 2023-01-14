@@ -692,7 +692,7 @@ def one_game_numba(p0, list_other, per_player, per1, per2, per3, per4, p1, p2, p
         elif list_other[idx] == 3:
             action, per3 = p3(player_state,per3)
         elif list_other[idx] == 4:
-            action, per4 = p3(player_state,per4) 
+            action, per4 = p4(player_state,per4) 
 
         if getValidActions(player_state)[action] != 1:
             raise Exception('bot dua ra action khong hop le')
