@@ -1,36 +1,45 @@
-# from base.StoneAge.env import *
-# import time
+import numpy as np
+from base.Splendor_v2.env import *
+per_find_value = [np.zeros(3),np.zeros(getStateSize()),
+                np.zeros(getStateSize()),
+                np.zeros(getStateSize())]
 
-# def calculate_time(func):
-#     def inner1(*args, **kwargs):
-#         start = time.time()
-#         func(*args, **kwargs)
-#         end = time.time()
-#         print('| Time to run code', end - start)
-#     return inner1
+@njit()
+def agent_find_value(state,per):
+    actions = getValidActions(state)
+    output = np.random.rand(getActionSize()) * actions + actions
+    action = np.argmax(output)
+    win = getReward(state)
+    if per[0][0] < 1000:
+        if win == 1:
+            per[1] = np.minimum(per[1],state)
+            per[2] = np.maximum(per[2],state)
+            per[3] = state
+            per[0][0] += 1
+    else:
+        value = np.zeros(getStateSize())
+        for id in range(getStateSize()):
+            sample = np.zeros(getStateSize()) + per[3]
+            ifmin, ifmax = 0,0
+            sample[id] = per[1][id]
+            if getReward(sample) == 1:
+                ifmin = 1
+            sample[id] = per[2][id]
+            if getReward(sample) == 1:
+                ifmax = 1
+            if ifmax > ifmin:
+                value[id] = 1
+            if ifmin > ifmax:
+                value[id] = -1
+        per[1] = value
+    per[0][1] += 1
+    if win != -1:
+        if per[0][2] == 0:
+            per[0][2] = per[0][1]
+        else:
+            per[0][2] = np.maximum(per[0][1],per[0][2])
+        per[0][1] = 0
+    return action, per
 
-# @njit()
-# def test(p_state, per_file):
-#     arr_action = getValidActions(p_state)
-#     arr_action = np.where(arr_action == 1)[0]
-#     act_idx = np.random.randint(0, len(arr_action))
-#     check = getReward(p_state)
-#     if check == 0:
-#         per_file[0] += 1
-#     if check == 1:
-#         per_file[1] += 1
-#     if check != -1:
-#         per_file[2] += 1
-#     return arr_action[act_idx], per_file
-
-# @calculate_time
-# def main():
-#     a, per = normal_main([test]*getAgentSize(), 100000, np.array([0, 0, 0]))
-#     print(a, per)
-#     print('Check tổng số trận', (per[0] + per[1])/getAgentSize() == 100000)
-#     print('Check số trận kết thúc', per[2] == (100000*getActionSize()))
-#     print('Check tổng số trận thắng', sum(a[:-1]) == per[1]) #Có thể có 2 người thắng
-#     print('Check tổng số trận thua', a[-1]*getAgentSize() == per[0]) #Có thể có nhiều người thua
-    
-# main()
-# from gym.utils.env_checker
+a, per_find_value = numba_main_2(agent_find_value,200000,per_find_value,0)
+a

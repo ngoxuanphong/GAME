@@ -18,7 +18,7 @@ def CheckAllFunc(Agent, BOOL_CHECK_ENV, msg):
         try:
             getattr(Agent, func)
         except:
-            logger.warn(f'Không có hàm: {func}')
+            #logger.warn(f'Không có hàm: {func}')
             msg.append(f'Không có hàm: {func}')
             BOOL_CHECK_ENV = False
     return BOOL_CHECK_ENV, msg
@@ -40,7 +40,7 @@ def CheckRunGame(Agent, BOOL_CHECK_ENV, msg):
             per = Agent.DataAgent()
             win, per = env.numba_main_2(Agent.Train, COUNT_TEST, per, 0)
         except:
-            logger.warn(f'Train đang bị lỗi ở game {game_name}')
+            #logger.warn(f'Train đang bị lỗi ở game {game_name}')
             msg.append(f'Train đang bị lỗi {game_name}')
             BOOL_CHECK_ENV = False
             break
@@ -49,7 +49,7 @@ def CheckRunGame(Agent, BOOL_CHECK_ENV, msg):
             per = Agent.DataAgent()
             win, per = env.numba_main_2(Agent.Test, COUNT_TEST, per, 0)
         except:
-            logger.warn(f'Test đang bị lỗi {game_name}')
+            #logger.warn(f'Test đang bị lỗi {game_name}')
             msg.append(f'Test đang bị lỗi {game_name}')
             BOOL_CHECK_ENV = False
             break
