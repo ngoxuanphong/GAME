@@ -787,7 +787,25 @@ def numba_main(p0, p1, p2, p3, num_game,per_file):
             count[p_lst_idx[winner]] += 1
     return list(count.astype(np.int64)), per_file
 
+from numba.typed import List
+from base.MachiKoro.AgentEnv import *
 
+
+
+@njit()
+def get_func(player_state, id, per0, per1, per2, per3, per4, per5, per6, per7, per8, per9, per10, per11):
+    if id == 0: return test2_An_270922(player_state, per0)
+    elif id == 1: return test2_Dat_130922(player_state, per1)
+    elif id == 2: return test2_Hieu_270922(player_state, per2)
+    elif id == 3: return test2_Khanh_270922(player_state, per3)
+    elif id == 4: return test2_Phong_130922(player_state, per4)
+    elif id == 5: return test2_An_200922(player_state, per5)
+    elif id == 6: return test2_Phong_130922(player_state, per6)
+    elif id == 7: return test2_Dat_130922(player_state, per7)
+    elif id == 8: return test2_Khanh_200922(player_state, per8)
+    elif id == 9: return test2_NhatAnh_200922(player_state, per9)
+    elif id == 10: return test2_Dat_130922(player_state, per10)
+    else: return test2_NhatAnh_130922(player_state, per11)
 
 
 
