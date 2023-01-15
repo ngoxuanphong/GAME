@@ -26,7 +26,7 @@ normal_main = env.normal_main
 numba_main_2 = env.numba_main_2
 
 from numba.typed import List
-@njit
+@njit()
 def Train(state, per):
 
     if per[4][0][0] < 10000:
@@ -171,7 +171,7 @@ def Train(state, per):
 
         return action, per
 
-@njit
+@njit()
 def Test(state, per):
 
     if per[4][0][0] < 10000:

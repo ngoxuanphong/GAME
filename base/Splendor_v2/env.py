@@ -182,7 +182,7 @@ def get_list_action_old(player_state_origin:np.int64):
     return list_action
 
 
-@njit
+@njit()
 def get_remove_card_on_lv_and_add_new_card(env_state, lv,p_id, id_card_hide, type_action, card_id):
     if type_action == 2:
         env_state[lv[4]] = -(p_id+1)
@@ -201,7 +201,7 @@ def get_remove_card_on_lv_and_add_new_card(env_state, lv,p_id, id_card_hide, typ
         env_state[id_card_hide] = 100
     return env_state, lv
 
-@njit
+@njit()
 def stepEnv(action,env_state, lv1, lv2, lv3):
     p_id = env_state[100] % 4
     cur_p = env_state[107 + 12*p_id:119 + 12*p_id]
@@ -413,7 +413,7 @@ def getValidActions(player_state_origin:np.int64):
 
     return list_action_return
 
-@njit
+@njit()
 def checkEnded(env_state):
     score_arr = np.array([env_state[118 + 12*p_id] for p_id in range(4)])
     max_score = np.max(score_arr)

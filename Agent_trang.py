@@ -29,7 +29,7 @@ numba_main_2 = env.numba_main_2
 # from base.TLMN.env import *
 
 
-@njit
+@njit()
 def Train(state, per):
 
     if per[4][0][0] < 10000:
@@ -174,7 +174,7 @@ def Train(state, per):
 
         return action, per
 
-@njit
+@njit()
 def Test(state, per):
 
     if per[4][0][0] < 10000:

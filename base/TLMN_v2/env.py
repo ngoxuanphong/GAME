@@ -9,7 +9,7 @@ import random
 # from colorama import Fore, Style
 
 # -------------------- NOPYTHON FUNCTIONS --------------------
-@njit
+@njit()
 def initEnv(e_state):
     temp = np.arange(52)
     np.random.shuffle(temp)
@@ -26,7 +26,7 @@ def initEnv(e_state):
     # 53 -> 56 Tình trạng bỏ vòng
     e_state[53:57] = 1
 
-@njit
+@njit()
 def getAgentState(e_state):
     p_state = np.full(62,0)
     # 0 -> 51: Index các lá bài. 0 Là trên tay, -1 là đã đánh, 1 là của người chơi khác
@@ -54,7 +54,7 @@ def getAgentState(e_state):
 
     return p_state.astype(np.float64)
 
-@njit
+@njit()
 def get_list_action_old(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
     p_state = p_state.astype(np.int64)
@@ -102,7 +102,7 @@ def get_list_action_old(player_state_origin:np.int64):
         mask_1 = possible_hands[:,0] == p_state[61]
         return possible_hands[mask_1,:][:,1] + 16
 
-@njit
+@njit()
 def checkEnded(e_state):
     for i in range(4):
         if np.count_nonzero(e_state[0:52] == i) == 0:
@@ -112,7 +112,7 @@ def checkEnded(e_state):
 
 
 
-@njit
+@njit()
 def getReward(p_state):
     a = np.count_nonzero(p_state[0:52]==0)
     b = np.min(p_state[55:58])
@@ -124,7 +124,7 @@ def getReward(p_state):
     else:
         return -1
 
-@njit
+@njit()
 def stepEnv(action, e_state):
     # p_state = getAgentState(e_state)
     # list_action = getValidActions(p_state)
@@ -192,11 +192,11 @@ def stepEnv(action, e_state):
         
         return np.array(arr_card_in_hand)
 
-@njit
+@njit()
 def getActionSize():
     return 68
 
-@njit
+@njit()
 def getAgentSize():
     return 4
 
@@ -205,7 +205,7 @@ def getStateSize():
     return 62
 
 
-@njit
+@njit()
 def straight_subsequences(arr):
     arr_return = []
     n = len(arr)
@@ -224,7 +224,7 @@ def straight_subsequences(arr):
         return np.array(arr_return)
 
 
-@njit
+@njit()
 def hand_of_cards(arr_card):
     arr_return = []
 
@@ -264,7 +264,7 @@ def hand_of_cards(arr_card):
     return np.array(arr_return)
 
 
-@njit
+@njit()
 def getValidActions(player_state_origin:np.int64):
     list_action_return = np.zeros(68)
     p_state = player_state_origin.copy()
@@ -319,7 +319,7 @@ def getValidActions(player_state_origin:np.int64):
 
 
 
-@njit
+@njit()
 def check_env(e_state):
     for i in range(4):
         arr_card = np.where(e_state[0:52] == i)[0]

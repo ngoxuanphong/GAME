@@ -414,7 +414,7 @@ def initEnv():
     return env
 
 
-@njit
+@njit()
 def getAgentState(env: np.ndarray):
     p_state = np.zeros(LEN_P_STATE)
 
@@ -508,7 +508,7 @@ def getAgentState(env: np.ndarray):
     return p_state
 
 
-@njit
+@njit()
 def get_p_point_n_all_road(p_state: np.ndarray):
     p_point = np.zeros(54)
     all_road = np.zeros(72)
@@ -548,7 +548,7 @@ def get_p_point_n_all_road(p_state: np.ndarray):
     return p_point, all_road
 
 
-@njit
+@njit()
 def check_firstPoint(p_state: np.ndarray):
     p_point, all_road = get_p_point_n_all_road(p_state)
     list_point = np.where(p_point == 1)[0]
@@ -560,7 +560,7 @@ def check_firstPoint(p_state: np.ndarray):
     return False
 
 
-@njit
+@njit()
 def check_useDev(p_state: np.ndarray, list_action: np.ndarray):
     # Knight: Có là được dùng
     if p_state[191] == 1:
@@ -579,7 +579,7 @@ def check_useDev(p_state: np.ndarray, list_action: np.ndarray):
         list_action[58] = 1
 
 
-@njit
+@njit()
 def get_p_point_n_all_stm_city(p_state: np.ndarray):
     p_point = np.zeros(54)
     all_stm_and_city = np.zeros(54)
@@ -629,7 +629,7 @@ def get_p_point_n_all_stm_city(p_state: np.ndarray):
     return p_point, all_stm_and_city
 
 
-@njit
+@njit()
 def getValidActions(p_state: np.ndarray):
     phase = p_state[186]
     list_action = np.full(AMOUNT_ACTION, 0)
@@ -888,7 +888,7 @@ def getValidActions(p_state: np.ndarray):
     return list_action
 
 
-@njit
+@njit()
 def find_max_road(len_: int, diemXP: int, duongDaDi: np.ndarray, p_road: np.ndarray, p_point: np.ndarray):
     duongCanCheck = np.zeros(72)
     for road in POINT_ROAD[diemXP]:
@@ -918,7 +918,7 @@ def find_max_road(len_: int, diemXP: int, duongDaDi: np.ndarray, p_road: np.ndar
     return max_len
 
 
-@njit
+@njit()
 def get_p_longest_road(env: np.ndarray, p_idx: int):
     s_ = 58 + 42*p_idx
     p_road = np.zeros(72)
@@ -948,7 +948,7 @@ def get_p_longest_road(env: np.ndarray, p_idx: int):
     return max_len
 
 
-@njit
+@njit()
 def roll_xx(env: np.ndarray):
     p_idx = int(env[254])
     dice1 = np.random.randint(1, 7)
@@ -1009,7 +1009,7 @@ def roll_xx(env: np.ndarray):
         env[229] = 6
 
 
-@njit
+@njit()
 def update_new_stm(env: np.ndarray, new_stm_pos: int, s_: int):
     # Cập nhật tập nhà
     r_ = np.count_nonzero(env[s_+26:s_+31] != -1)
@@ -1029,7 +1029,7 @@ def update_new_stm(env: np.ndarray, new_stm_pos: int, s_: int):
             break
 
 
-@njit
+@njit()
 def useDev(env: np.ndarray, action: int, s_: int, p_idx: int):
     env[s_+action-50] -= 1  # Giảm số lá dev của người chơi
     env[235:239] = 0  # Mỗi turn chỉ được sử dụng 1 thẻ dev
@@ -1076,7 +1076,7 @@ def useDev(env: np.ndarray, action: int, s_: int, p_idx: int):
         env[229] = 7
 
 
-@njit
+@njit()
 def after_useDev(env: np.ndarray):
     env[233] = -1
     env[234] = 0
@@ -1087,7 +1087,7 @@ def after_useDev(env: np.ndarray):
         env[229] = 6
 
 
-@njit
+@njit()
 def after_Rob(env: np.ndarray):
     if env[233] == 0:  # Đang dùng thẻ knight
         after_useDev(env)
@@ -1095,7 +1095,7 @@ def after_Rob(env: np.ndarray):
         env[229] = 6
 
 
-@njit
+@njit()
 def weighted_random(p: np.ndarray):
     a = np.sum(p)
     b = np.random.uniform(0, a)
@@ -1105,7 +1105,7 @@ def weighted_random(p: np.ndarray):
             return i
 
 
-@njit
+@njit()
 def stepEnv(env: np.ndarray, action: int):
     phase = env[229]
     p_idx = int(env[254])
@@ -1658,7 +1658,7 @@ def stepEnv(env: np.ndarray, action: int):
     return
 
 
-@njit
+@njit()
 def checkEnded(env: np.ndarray):
     # Người chơi chỉ có thể chiến thắng khi tới lượt của mình
     # Kể cả trường hợp: A có 9 điểm, B có con đường dài nhất,
@@ -1698,7 +1698,7 @@ def checkEnded(env: np.ndarray):
     return -1
 
 
-@njit
+@njit()
 def getReward(p_state: np.ndarray):
     if p_state[210] == 1.0:
         if p_state[64] < 10:
@@ -1722,17 +1722,17 @@ def getReward(p_state: np.ndarray):
     return -1
 
 
-@njit
+@njit()
 def getStateSize():
     return LEN_P_STATE
 
 
-@njit
+@njit()
 def getActionSize():
     return AMOUNT_ACTION
 
 
-@njit
+@njit()
 def getAgentSize():
     return 4
 

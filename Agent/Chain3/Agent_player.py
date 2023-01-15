@@ -31,7 +31,7 @@ def DataAgent():
     return [np.zeros((getActionSize() ** 2, getActionSize())),
         np.argsort(np.argsort(np.random.rand(getActionSize() ** 2, getActionSize()),axis = 1),axis = 1)*1.0,
         np.zeros((1,2))-1.]
-@njit
+@njit()
 def argSortSpecial(w):
     indexTable = np.empty_like(w)
     indexTable2 = np.empty_like(w)
@@ -41,7 +41,7 @@ def argSortSpecial(w):
         indexTable2[k,:] = np.argsort(indexTable[k,:])
     return indexTable2 * 1.0
 
-@njit
+@njit()
 def Train(state,per):
     if per[2][0][0]==-1 or per[2][0][1]==-1:
         action = np.random.choice(getValidActions(state))
@@ -62,7 +62,7 @@ def Train(state,per):
             per[1] = argSortSpecial(np.random.rand(getActionSize() ** 2, getActionSize())) * 1.0
     return int(action),per
     
-@njit
+@njit()
 def Test(state,per):
     if per[1][0][0]==-1 or per[1][0][1]==-1:
         action = np.random.choice(getValidActions(state))

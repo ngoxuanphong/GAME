@@ -27,7 +27,7 @@ numba_main_2 = env.numba_main_2
 
 from numba.typed import List
 
-@njit
+@njit()
 def DataAgent():
     return [List(np.array([np.zeros((getStateSize(),getActionSize()))])),List(np.array([np.zeros((getStateSize(),getActionSize()))])), List(np.array([np.zeros((getStateSize(),getActionSize()))])),List(np.array([np.zeros((getStateSize(),getActionSize()))]))]
 

@@ -3,7 +3,7 @@ from numba import njit, jit
 import random as rd
 
 
-@njit
+@njit()
 def generate():
     e_state = np.full(164,0)
 
@@ -13,7 +13,7 @@ def generate():
     
     return e_state, lv1, lv2, lv3
 
-@njit
+@njit()
 def initEnv(e_state, lv1, lv2, lv3):
     e_state[:] = 0
     e_state[100:106] = [7,7,7,7,7,5]
@@ -36,7 +36,7 @@ def initEnv(e_state, lv1, lv2, lv3):
 
     e_state[161:] = 1
 
-@njit
+@njit()
 def getAgentState(e_state, lv1, lv2, lv3):
     p_idx = e_state[154] % 4
     p_state = e_state.copy()
@@ -66,7 +66,7 @@ def getAgentState(e_state, lv1, lv2, lv3):
         p_state = np.append(p_state, 1)
     return p_state.astype(np.float64)
 
-@njit
+@njit()
 def checkEnded(e_state):
     score_arr = e_state[np.array([117,129,141,153])]
     max_score = np.max(score_arr)
@@ -99,7 +99,7 @@ def checkEnded(e_state):
         return 0
 
 
-@njit
+@njit()
 def get_list_action_old(player_state_origin:np.int64):
     p_state = player_state_origin.copy()
     p_state = p_state.astype(np.int64)
@@ -174,15 +174,15 @@ normal_cards_infor = np.array([[0, 2, 2, 2, 0, 0, 0], [0, 2, 3, 0, 0, 0, 0], [0,
 noble_cards_infor = np.array([[0, 4, 4, 0, 0], [3, 0, 3, 3, 0], [3, 3, 3, 0, 0], [3, 0, 0, 3, 3], [0, 3, 0, 3, 3], [4, 0, 4, 0, 0], [4, 0, 0, 4, 0], [0, 3, 3, 0, 3], [0, 4, 0, 0, 4], [0, 0, 0, 4, 4]])
 
 
-@njit
+@njit()
 def getActionSize():
     return 198
 
-@njit
+@njit()
 def hamtest():
     return 'a'
 
-@njit
+@njit()
 def getAgentSize():
     return 4
 
@@ -190,7 +190,7 @@ def getAgentSize():
 def getStateSize():
     return 165
 
-@njit
+@njit()
 def check_buy_card(p_state, card_id):
     self_st = p_state[106:112]
     self_st_const = p_state[112:117]
@@ -201,7 +201,7 @@ def check_buy_card(p_state, card_id):
     return False
 
 
-@njit
+@njit()
 def getValidActions(player_state_origin:np.int64):
     list_action_return = np.zeros(198)
     p_state = player_state_origin.copy()
@@ -287,7 +287,7 @@ def getValidActions(player_state_origin:np.int64):
 
     return list_action_return
 
-@njit
+@njit()
 def stepEnv(action, e_state, lv1, lv2, lv3):
     # list_action = getValidActions(getAgentState(e_state, lv1, lv2, lv3))
     # if list_action[action] != 1:
@@ -436,7 +436,7 @@ def stepEnv(action, e_state, lv1, lv2, lv3):
             e_state[160] = 0
 
 
-@njit
+@njit()
 def getReward(p_state):
     score_arr = p_state[np.array([117,129,141,153])]
     max_score = np.max(score_arr)
