@@ -27,7 +27,7 @@ def timeout(max_timeout):
     return timeout_decorator
 
 def CheckAllFunc(_env_, BOOL_CHECK_ENV, msg):
-    for func in ['getActionSize','getStateSize','getAgentSize','getReward','getValidActions','normal_main','numba_main','numba_main_2']:
+    for func in ['getActionSize','getStateSize','getAgentSize','getReward','getValidActions','normal_main','numba_main_2']:
         try:
             getattr(_env_, func)
         except:
