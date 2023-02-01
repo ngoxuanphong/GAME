@@ -1,6 +1,5 @@
 import numpy as np
 from numba import njit, jit
-from system import logger
 import functools
 import multiprocessing.pool
 
@@ -28,7 +27,7 @@ def timeout(max_timeout):
     return timeout_decorator
 
 def CheckAllFunc(_env_, BOOL_CHECK_ENV, msg):
-    for func in ['getActionSize','getStateSize','getAgentSize','getReward','getValidActions','normal_main','numba_main','numba_main_2']:
+    for func in ['getActionSize','getStateSize','getAgentSize','getReward','getValidActions','normal_main','numba_main_2']:
         try:
             getattr(_env_, func)
         except:
@@ -138,14 +137,31 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
     return BOOL_CHECK_ENV
 
 def CheckRunGame(_env_, BOOL_CHECK_ENV, msg):
-    # try:
-        BOOL_CHECK_ENV = RunGame(_env_, BOOL_CHECK_ENV, msg)
-    # except:
-    #     msg.append('Khả năng là bị vòng lặp vô hạn')
-    #     BOOL_CHECK_ENV = False
-    # return BOOL_CHECK_ENV
+    BOOL_CHECK_ENV = RunGame(_env_, BOOL_CHECK_ENV, msg)
+    return BOOL_CHECK_ENV
 
-
+def CheckRandomState(_env_, BOOL_CHECK_ENV, msg):
+    for i in range(10000):
+        p_state1 = np.random.randint(-100, 100, _env_.getStateSize())
+        p_state2 = np.random.randint(0, 1000, _env_.getStateSize())
+        p_state3 = np.random.randn(10)*100
+        try:
+            _env_.getValidActions(p_state1)
+            _env_.getValidActions(p_state2)
+            _env_.getValidActions(p_state3)
+        except:
+            msg.append(f'hàm getValidActions lỗi khi nhận vào random state')
+            BOOL_CHECK_ENV = False
+            return BOOL_CHECK_ENV
+        try:
+            _env_.getReward(p_state1)
+            _env_.getReward(p_state2)
+            _env_.getReward(p_state3)
+        except:
+            msg.append(f'hàm getReward lỗi khi nhận vào random state')
+            BOOL_CHECK_ENV = False
+            return BOOL_CHECK_ENV
+    return BOOL_CHECK_ENV
 
 def check_env(_env_):
     BOOL_CHECK_ENV = True
@@ -153,4 +169,5 @@ def check_env(_env_):
     BOOL_CHECK_ENV = CheckAllFunc(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckReturn(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckRunGame(_env_, BOOL_CHECK_ENV, msg)
+    BOOL_CHECK_ENV = CheckRandomState(_env_, BOOL_CHECK_ENV, msg)
     return BOOL_CHECK_ENV, msg
