@@ -21,3 +21,18 @@ from CheckEnv import check_env
 # print(env7, check_env(env7))
 # print(env8, check_env(env8))
 # print(env9, check_env(env9))
+
+import base.StoneAge.env_new as env_new
+# print(env, check_env(env))
+
+import numpy as np
+for i in range(10000):
+    p_state1 = np.random.randint(-100, 100, env_new.getStateSize())
+    p_state2 = np.random.randint(0, 1000, env_new.getStateSize())
+    p_state3 = np.random.randn(10)*100
+    env_new.getValidActions(p_state1)
+    env_new.getValidActions(p_state2)
+    env_new.getValidActions(p_state3)
+    env_new.getReward(p_state1)
+    env_new.getReward(p_state2)
+    env_new.getReward(p_state3)

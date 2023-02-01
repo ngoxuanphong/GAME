@@ -63,7 +63,7 @@
         [47]: Dừng trả nguyên liệu khi mua thẻ build 1-7
         [48:52]: Lấy người từ thẻ civ
         [52:56]: Lấy người từ thẻ build
-        [56:62]: chọn xúc xắc từ 1 đến 6
+        [57:63]: chọn xúc xắc từ 1 đến 6
         [63]: Chọn dùng thẻ lấy thêm 2 nguyên liệu từ thẻ civ
         [64:68]: Lấy nguyên liệu gỗ gạch, bạc, vàng
 
@@ -91,7 +91,7 @@
     [5:9]: Nguyên liệu đang có
     [9:12]: Thẻ công cụ đang có
     [12:15]: 3 thẻ dùng công cụ 1 lần
-    [15:21]: 7 thẻ dùng lương thực 1 lần(1, 2, 3, 4, 5, 7)
+    [15:18]: State của 3 thẻ dùng công cụ
     [21]: Đã trả thức ăn
     [22:30]: 8 thẻ văn minh các loại(Người, sáo, cây, dệt, đồng hồ, lu, xe, đá)
     [30]: Có thể dùng thẻ lấy 2 nguyên liệu 1 lần
@@ -103,20 +103,21 @@
 [396]: Ô vừa chọn để lấy người
 [397]: Tổng công cụ đã dùng
 [398:402]: giá trị 4 xúc xắc của 4 người khi dùng thẻ civ roll xúc xắc
-[402:]: Phase 
+[402]: Tổng giá trị xúc xắc
+[403:]: Phase 
 """
 
 
 """
-[0:4]: Số nguyên liệu còn lại của mỗi ô
-[4:8]: số thẻ Build còn lại ở mỗi ô
-[8:12]: Số nguyên liệu đã trả trong turn trả nguyên liệu khi mua thẻ civ hoặc build
-[12]: Số lượng nguyên liệu cần phải trả khi trả thay thức ăn
-[13]: GAME ĐÃ END HAY CHƯA
-[14:110]: thông tin của các thẻ civ
+[0:4]: Số nguyên liệu còn lại của mỗi ô (số lượng)
+[4:8]: số thẻ Build còn lại ở mỗi ô (số lượng)
+[8:12]: Số nguyên liệu đã trả trong turn trả nguyên liệu khi mua thẻ civ hoặc build (số lượng)
+[12]: Số lượng nguyên liệu cần phải trả khi trả thay thức ăn (số lượng)
+[13]: GAME ĐÃ END HAY CHƯA (0, 1)
+[14:110]: thông tin của các thẻ civ (0,1)
 [110:142]: Thông tin các thẻ build
 [142:302]: Thông tin của các người chơi [142:142+44*4]
-    0: Điểm
+    0: Điểm 
     1: Lúa
     2: Số người
     3: Số lương thực
@@ -124,18 +125,25 @@
     [5:9]: Nguyên liệu đang có
     [9:12]: Thẻ công cụ đang có
     [12:15]: 3 thẻ dùng công cụ 1 lần
-    [15:21]: 7 thẻ dùng lương thực 1 lần(1, 2, 3, 4, 5, 7)
+    [15:18]: State của 3 thẻ dùng công cụ
     [21]: Đã trả thức ăn
     [22:30]: 8 thẻ văn minh các loại(Người, sáo, cây, dệt, đồng hồ, lu, xe, đá)
-    [30]: Có thể dùng thẻ lấy 2 nguyên liệu 1 lần
+    [30]: Có thể dùng thẻ lấy 2 nguyên liệu 1 lần.
     [31:39]: Số người có của mỗi người ở mỗi ô (Lúa, cụ, sinh, gỗ, gạch, bạc, vàng, thực)
     [39:43]: số người Tính điểm cuối game (lúa, nhà, công cụ, số người)
-[318:322]: Người đang chơi
-[322:326]: Người đang ở có ở các ô civ, cũng là số nguyên liệu cần phải trả
-[326:330]: Người đang có ở các ô build
-[330]: Ô vừa chọn để đặt người
-[331]: Ô vừa chọn để lấy người
-[332]: Tổng công cụ đã dùng
-[333:337]: giá trị 4 xúc xắc của 4 người khi dùng thẻ civ roll xúc xắc
-[337:]: Phase 
+[318:322]: Người đang chơi (tạm bỏ)
+[322:326]: Người đang ở có ở các ô civ, cũng là số nguyên liệu cần phải trả (0,1)
+[326:330]: Người đang có ở các ô build (0,1)
+[330:338]: Thông tin card của người chơi 1(theo góc nhìn của agent) (0,1)
+[338:346]: Thông tin card của người chơi 2(theo góc nhìn của agent) (0,1)
+[346:354]: Thông tin card của người chơi 3(theo góc nhìn của agent) (0,1)
+
+[354: 370]: Ô vừa chọn để đặt người (push)
+[370: 386]: Ô vừa chọn để lấy người (pull)
+[386]: Tổng công cụ đã dùng (Số lượng)
+
+[387:411]: giá trị 4 xúc xắc của 4 người khi dùng thẻ civ roll xúc xắc, mỗi xúc xắc có 6 index (0, 1)
+[411]: Tổng giá trị xúc xắc
+[412:]: Phase 
+
 """
