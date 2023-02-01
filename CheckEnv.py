@@ -124,7 +124,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
     try:
         per = [0, 0, 0, 0, 0, 0, 0]
         win, per = _env_.normal_main([test_numba]*_env_.getAgentSize(), COUNT_TEST, per)
-        if type(win) != list:
+        if type(win) != list and type(win) != np.ndarray:
             msg.append('hàm normal_main trả ra sai đầu ra')
             BOOL_CHECK_ENV = False
         if per[0] != COUNT_TEST*_env_.getAgentSize():
