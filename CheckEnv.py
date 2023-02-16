@@ -1,6 +1,5 @@
 import numpy as np
 from numba import njit, jit
-from system import logger
 import functools
 import multiprocessing.pool
 
@@ -73,9 +72,9 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
 
     def test_no_numba(p_state, per_file):
         arr_action = _env_.getValidActions(p_state)
-        if p_state.dtype != np.float64:
+        if p_state.dtype != np.int32:
             per_file[5] = 1
-        if arr_action.dtype != np.float64:
+        if arr_action.dtype != np.int32:
             per_file[6] = 1
         arr_action = np.where(arr_action == 1)[0]
         act_idx = np.random.randint(0, len(arr_action))
@@ -124,7 +123,7 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
     try:
         per = [0, 0, 0, 0, 0, 0, 0]
         win, per = _env_.normal_main([test_numba]*_env_.getAgentSize(), COUNT_TEST, per)
-        if type(win) != list and type(win) != np.ndarray:
+        if type(win) != list:
             msg.append('hàm normal_main trả ra sai đầu ra')
             BOOL_CHECK_ENV = False
         if per[0] != COUNT_TEST*_env_.getAgentSize():
@@ -138,14 +137,31 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
     return BOOL_CHECK_ENV
 
 def CheckRunGame(_env_, BOOL_CHECK_ENV, msg):
-    # try:
-        BOOL_CHECK_ENV = RunGame(_env_, BOOL_CHECK_ENV, msg)
-    # except:
-    #     msg.append('Khả năng là bị vòng lặp vô hạn')
-    #     BOOL_CHECK_ENV = False
-        return BOOL_CHECK_ENV
+    BOOL_CHECK_ENV = RunGame(_env_, BOOL_CHECK_ENV, msg)
+    return BOOL_CHECK_ENV
 
-
+def CheckRandomState(_env_, BOOL_CHECK_ENV, msg):
+    for i in range(10000):
+        p_state1 = np.random.randint(-100, 100, _env_.getStateSize())
+        p_state2 = np.random.randint(0, 1000, _env_.getStateSize())
+        p_state3 = np.random.randn(_env_.getStateSize())*100
+        try:
+            _env_.getValidActions(p_state1)
+            _env_.getValidActions(p_state2)
+            _env_.getValidActions(p_state3)
+        except:
+            msg.append(f'hàm getValidActions lỗi khi nhận vào random state')
+            BOOL_CHECK_ENV = False
+            return BOOL_CHECK_ENV
+        try:
+            _env_.getReward(p_state1)
+            _env_.getReward(p_state2)
+            _env_.getReward(p_state3)
+        except:
+            msg.append(f'hàm getReward lỗi khi nhận vào random state')
+            BOOL_CHECK_ENV = False
+            return BOOL_CHECK_ENV
+    return BOOL_CHECK_ENV
 
 def check_env(_env_):
     BOOL_CHECK_ENV = True
@@ -153,4 +169,5 @@ def check_env(_env_):
     BOOL_CHECK_ENV = CheckAllFunc(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckReturn(_env_, BOOL_CHECK_ENV, msg)
     BOOL_CHECK_ENV = CheckRunGame(_env_, BOOL_CHECK_ENV, msg)
+    BOOL_CHECK_ENV = CheckRandomState(_env_, BOOL_CHECK_ENV, msg)
     return BOOL_CHECK_ENV, msg
