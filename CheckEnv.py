@@ -144,7 +144,7 @@ def CheckRandomState(_env_, BOOL_CHECK_ENV, msg):
     for i in range(10000):
         p_state1 = np.random.randint(-100, 100, _env_.getStateSize())
         p_state2 = np.random.randint(0, 1000, _env_.getStateSize())
-        p_state3 = np.random.randn(10)*100
+        p_state3 = np.random.randn(_env_.getStateSize())*100
         try:
             _env_.getValidActions(p_state1)
             _env_.getValidActions(p_state2)
