@@ -72,9 +72,9 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
 
     def test_no_numba(p_state, per_file):
         arr_action = _env_.getValidActions(p_state)
-        if p_state.dtype != np.float64:
+        if p_state.dtype != np.int32:
             per_file[5] = 1
-        if arr_action.dtype != np.float64:
+        if arr_action.dtype != np.int32:
             per_file[6] = 1
         arr_action = np.where(arr_action == 1)[0]
         act_idx = np.random.randint(0, len(arr_action))
@@ -144,7 +144,7 @@ def CheckRandomState(_env_, BOOL_CHECK_ENV, msg):
     for i in range(10000):
         p_state1 = np.random.randint(-100, 100, _env_.getStateSize())
         p_state2 = np.random.randint(0, 1000, _env_.getStateSize())
-        p_state3 = np.random.randn(10)*100
+        p_state3 = np.random.randn(_env_.getStateSize())*100
         try:
             _env_.getValidActions(p_state1)
             _env_.getValidActions(p_state2)
