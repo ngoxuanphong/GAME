@@ -9,14 +9,15 @@
 *   [161:164] **3 thẻ ẩn có thể úp** cấp 1, 2, 3
 
 ## :bust_in_silhouette: P_state
+Thông tin nguyên liệu theo thứ tự: red, blue, green, black, write, yellow
 *   [:6] là **các nguyên liệu đang có trên bàn**
 *   [6: 18] **thông tin của người chơi**, gồm có  6 nguyên liệu đang có, 5 nguyên liệu mặc định và điểm
-*   [18:150]:   **12 thẻ bình thường trên bàn**, mỗi thẻ có 7 state gồm: [điểm, loại thẻ, 5 nguyên liệu mua]
+*   [18:150]:   **12 thẻ bình thường trên bàn**, mỗi thẻ có 11 state gồm: [điểm, 5 state loại thẻ, 5 nguyên liệu mua]
 *   [150: 175]:   **5 thẻ Noble trên bàn**, mỗi thẻ có 5 state gồm: [5 loại nguyên liệu cần]
-*   [175:208]:   **3 thẻ úp trên tay**, mỗi thẻ có 7 state gồm: [điểm, loại thẻ, 5 nguyên liệu mua]
+*   [175:208]:   **3 thẻ úp trên tay**, mỗi thẻ có 11 state gồm: [điểm, 5 state loại thẻ, 5 nguyên liệu mua]
 *   [208: 213]:  **5 nguyên liệu đã lấy** trong phase lấy nguyên liệu
 *   [213:216]: **điểm của 3 người chơi còn lại**
-*   [216:219]: **Có thể úp được thẻ ẩn không**, 1 là có, 2 là không. Gồm có 3 thẻ ẩn của 3 loại
+*   [216:219]: **Có thể úp được thẻ ẩn không**, (1, 0). Gồm có 3 thẻ ẩn của 3 loại
 *   [219]: **Số thẻ có thể úp trên bàn**
 *   [220]: **Đã hết game hay chưa**
 

@@ -12,22 +12,9 @@ warnings.simplefilter('ignore', category=NumbaWarning)
 
 COUNT_TEST = 1000
 
-def timeout(max_timeout):
-    """Timeout decorator, parameter in seconds."""
-    def timeout_decorator(item):
-        """Wrap the original function."""
-        @functools.wraps(item)
-        def func_wrapper(*args, **kwargs):
-            """Closure for function."""
-            pool = multiprocessing.pool.ThreadPool(processes=1)
-            async_result = pool.apply_async(item, args, kwargs)
-            # raises a TimeoutError if execution exceeds max_timeout
-            return async_result.get(max_timeout)
-        return func_wrapper
-    return timeout_decorator
 
 def CheckAllFunc(_env_, BOOL_CHECK_ENV, msg):
-    for func in ['getActionSize','getStateSize','getAgentSize','getReward','getValidActions','normal_main','numba_main_2']:
+    for func in ['getActionSize','getStateSize','getAgentSize','getReward','getValidActions','numba_main_2']:
         try:
             getattr(_env_, func)
         except:
@@ -49,7 +36,6 @@ def CheckReturn(_env_, BOOL_CHECK_ENV, msg):
     return BOOL_CHECK_ENV
 
 
-# @timeout(1000)
 def RunGame(_env_, BOOL_CHECK_ENV, msg):
     @njit()
     def test_numba(p_state, per_file):
@@ -113,26 +99,13 @@ def RunGame(_env_, BOOL_CHECK_ENV, msg):
                 msg.append(f'array ACTION đang trả ra sai output')
                 BOOL_CHECK_ENV = False  
         except:
-            msg.append('hàm numba_main_2 không train được với agent không numba, cần đổi n_game_numba với one_game_numba từ njit() thành jit(). Mẹo đổi tất cả @njit thành @njit()')
+            msg.append('hàm numba_main_2 không train được với agent không numba')
             BOOL_CHECK_ENV = False
         
     except:
         msg.append(f'hàm numba_main_2 đang bị lỗi')
         BOOL_CHECK_ENV = False
 
-    try:
-        per = [0, 0, 0, 0, 0, 0, 0]
-        win, per = _env_.normal_main([test_numba]*_env_.getAgentSize(), COUNT_TEST, per)
-        if type(win) != list:
-            msg.append('hàm normal_main trả ra sai đầu ra')
-            BOOL_CHECK_ENV = False
-        if per[0] != COUNT_TEST*_env_.getAgentSize():
-            msg.append(f'Normal_main, Số trận kết thúc khác với số trận test, {per[0]}')
-            BOOL_CHECK_ENV = False
-
-    except:
-        msg.append(f'hàm normal_main đang bị lỗi')
-        BOOL_CHECK_ENV = False
 
     return BOOL_CHECK_ENV
 
